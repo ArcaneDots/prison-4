@@ -1,3 +1,9 @@
+include_directories ("${PROJECT_SOURCE_DIR}/cellblock")
+add_subdirectory(cellblock)
+
+# include_directories ("${PROJECT_SOURCE_DIR}/test")
+# add_subdirectory(test)
+
 include_directories(${QRENCODE_INCLUDE_DIR} ${DMTX_INCLUDE_DIR})
 SET(    prison_SRC
         abstractbarcode.cpp
@@ -5,11 +11,15 @@ SET(    prison_SRC
         barcodeitem.cpp
         datamatrixbarcode.cpp
         qrcodebarcode.cpp
+        ean13barcode.cpp
+        ean8barcode.cpp
+        upcabarcode.cpp
+        upcebarcode.cpp
         )
 
-add_library(prison SHARED ${prison_SRC})
-target_link_libraries(prison ${DMTX_LIBRARIES} ${QRENCODE_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
-
+add_library(prison SHARED ${prison_SRC} ) 
+target_link_libraries(prison product_engines base_engine  ${DMTX_LIBRARIES} ${QRENCODE_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
+#  linear_engines
 set_target_properties(prison PROPERTIES VERSION "0.0.0" SOVERSION "0" LINK_INTERFACE_LIBRARIES "" DEFINE_SYMBOL BUILDING_PRISON)
 
 set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
@@ -27,6 +37,14 @@ install( FILES
          DataMatrixBarcode
          qrcodebarcode.h
          QRCodeBarcode
+         Ean13Barcode
+         ean13barcode.h
+         Ean8Barcode
+         ean8barcode.h
+         UpcABarcode
+         upcabarcode.h
+         UpcEBarcode
+         upcebarcode.h
          prison_export.h
          DESTINATION ${CMAKE_INSTALL_PREFIX}/include/prison COMPONENT devel
          )

@@ -24,66 +24,44 @@
 
 */
 
-#include <QMap>
-#include <QPainter>
-#include "cellblock/product/ean13engine.h"
+#ifndef PRISON_UPCABARCODE_H
+#define PRISON_UPCABARCODE_H
 
-#include "ean13barcode.h"
+#include <prison/abstractbarcode.h>
+#include <prison/prison_export.h>
 
-using namespace prison;
+namespace prison {
 
 /**
- * @cond PRIVATE
+ * UPC-A barcode generator. 
+ * 
+ * Supports supplemental(EAN-2,EAN-5) code as defined in the EAN-13 standard.  
  */
-class Ean13Barcode::Private : public product::Ean13Engine 
+class PRISON_EXPORT UpcABarcode : public prison::AbstractBarcode
 {
-public:
-    Private();
-    virtual ~Private(); 
+  public:
+     /**
+     * creates a UPC-A barcode generator object
+     * 
+     * @todo 
+     */
+    UpcABarcode();
+    /**
+     * destructor
+     */
+    virtual ~UpcABarcode();
+    /**
+    * This is the function doing the actual work in drawing the barcode on a QImage object.
+    * 
+    * @param size The requested size of the barcode, 
+    * @return QImage containing a scaled image of the UPC-A barcode
+    */
+    virtual QImage toImage(const QSizeF& size);
     
-    QStringList formatedText;
-    QString oldData;
-    QImage oldImage;  
+  private:
+    class Private;
+    Private *d;    
 };
-/**
- * @endcond
- */
+};
 
-Ean13Barcode::Private::Private() :
-  formatedText(),
-  oldData(),
-  oldImage()
-{
-
-}
-Ean13Barcode::Private::~Private()
-{
-  // empty
-}
-
-
-Ean13Barcode::Ean13Barcode() : 
-  d(new Ean13Barcode::Private())
-{    
-  // empty
-}
-
-Ean13Barcode::~Ean13Barcode() 
-{
-  delete d;
-}
-
-QImage Ean13Barcode::toImage(const QSizeF& size) 
-{ 
-  qDebug() << "Ean13Barcode::toImage() : data " << data();
-  if (!data().isEmpty()) {
-    d->setBarcodeString(data(), CodeEngine::AutoProduct);
-  }
-  QSizeF currentMinimumSize(minimumSize());
-  QImage image(d->getImage(size, currentMinimumSize, 
-			   foregroundColor(), backgroundColor()));
-  setMinimumSize(currentMinimumSize);
-  return image;
-}
-
-
+#endif // PRISON_UPCABARCODE_H

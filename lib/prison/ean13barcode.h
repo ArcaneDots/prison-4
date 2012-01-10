@@ -42,8 +42,6 @@ class PRISON_EXPORT Ean13Barcode : public prison::AbstractBarcode
   public:
      /**
      * creates a EAN 13 barcode generator
-     * 
-     * @todo add flag to auto compress EAN-13 codes that have four or more consecutive zeros
      */
     Ean13Barcode();
     /**
@@ -58,7 +56,7 @@ class PRISON_EXPORT Ean13Barcode : public prison::AbstractBarcode
     */
     virtual QImage toImage(const QSizeF& size);
     
-  private:
+protected:
     class Private;
     Private *d;    
 };

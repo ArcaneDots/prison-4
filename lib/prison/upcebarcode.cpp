@@ -26,18 +26,17 @@
 
 #include <QMap>
 #include <QPainter>
-#include "cellblock/product/ean13engine.h"
-
-#include "ean13barcode.h"
+#include "cellblock/product/upceengine.h"
+#include "upcebarcode.h"
 
 using namespace prison;
 
 /**
  * @cond PRIVATE
  */
-class Ean13Barcode::Private : public product::Ean13Engine 
+class UpcEBarcode::Private : public product::UpcEEngine 
 {
-public:
+ public:
     Private();
     virtual ~Private(); 
     
@@ -49,35 +48,35 @@ public:
  * @endcond
  */
 
-Ean13Barcode::Private::Private() :
+UpcEBarcode::Private::Private() :
   formatedText(),
   oldData(),
   oldImage()
 {
 
 }
-Ean13Barcode::Private::~Private()
+UpcEBarcode::Private::~Private()
 {
   // empty
 }
 
 
-Ean13Barcode::Ean13Barcode() : 
-  d(new Ean13Barcode::Private())
+UpcEBarcode::UpcEBarcode() : 
+  d(new UpcEBarcode::Private())
 {    
   // empty
 }
 
-Ean13Barcode::~Ean13Barcode() 
+UpcEBarcode::~UpcEBarcode() 
 {
   delete d;
 }
 
-QImage Ean13Barcode::toImage(const QSizeF& size) 
+QImage UpcEBarcode::toImage(const QSizeF& size) 
 { 
-  qDebug() << "Ean13Barcode::toImage() : data " << data();
+  qDebug() << "UpcEBarcode::toImage() : data " << data();
   if (!data().isEmpty()) {
-    d->setBarcodeString(data(), CodeEngine::AutoProduct);
+    d->setBarcodeString(data());
   }
   QSizeF currentMinimumSize(minimumSize());
   QImage image(d->getImage(size, currentMinimumSize, 

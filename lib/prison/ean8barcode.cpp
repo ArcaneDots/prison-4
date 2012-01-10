@@ -26,18 +26,17 @@
 
 #include <QMap>
 #include <QPainter>
-#include "cellblock/product/ean13engine.h"
-
-#include "ean13barcode.h"
+#include "cellblock/product/ean8engine.h"
+#include "ean8barcode.h"
 
 using namespace prison;
 
 /**
  * @cond PRIVATE
  */
-class Ean13Barcode::Private : public product::Ean13Engine 
+class Ean8Barcode::Private : public product::Ean8Engine 
 {
-public:
+ public:
     Private();
     virtual ~Private(); 
     
@@ -49,35 +48,35 @@ public:
  * @endcond
  */
 
-Ean13Barcode::Private::Private() :
+Ean8Barcode::Private::Private() :
   formatedText(),
   oldData(),
   oldImage()
 {
 
 }
-Ean13Barcode::Private::~Private()
+Ean8Barcode::Private::~Private()
 {
   // empty
 }
 
 
-Ean13Barcode::Ean13Barcode() : 
-  d(new Ean13Barcode::Private())
+Ean8Barcode::Ean8Barcode() : 
+  d(new Ean8Barcode::Private())
 {    
   // empty
 }
 
-Ean13Barcode::~Ean13Barcode() 
+Ean8Barcode::~Ean8Barcode() 
 {
   delete d;
 }
 
-QImage Ean13Barcode::toImage(const QSizeF& size) 
+QImage Ean8Barcode::toImage(const QSizeF& size) 
 { 
-  qDebug() << "Ean13Barcode::toImage() : data " << data();
+  qDebug() << "Ean8Barcode::toImage() : data " << data();
   if (!data().isEmpty()) {
-    d->setBarcodeString(data(), CodeEngine::AutoProduct);
+    d->setBarcodeString(data());
   }
   QSizeF currentMinimumSize(minimumSize());
   QImage image(d->getImage(size, currentMinimumSize, 
