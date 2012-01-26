@@ -23,7 +23,7 @@
 #include <QtGui/QPainter>
 
 #include "productengine.h"
-
+using namespace codeEngine;
 using namespace product;
 
 ProductEngine::ProductEngine(const QString& defaultString, 
@@ -79,7 +79,7 @@ void ProductEngine::initialize()
 
 
 void ProductEngine::setBarcodeString(const QString& userBarcode, 
-				  CodeEngine::ConstructCodes flags)
+				  codeEngine::ConstructCodes flags)
 {
   qDebug("ProductEngine setBarcodeString() : start");
   
@@ -99,7 +99,7 @@ void ProductEngine::setBarcodeString(const QString& userBarcode,
   // reset failure code and output variables  
   m_constructionFlags = flags;
   qDebug() << "construction flags = " << m_constructionFlags;
-  m_isValid = CodeEngine::OK; 
+  m_isValid = codeEngine::OK; 
   m_formatedSymbols.clear();
   m_encodedSymbols.clear();
   
@@ -115,7 +115,7 @@ void ProductEngine::setBarcodeString(const QString& userBarcode,
     qDebug("ProductEngine setBarcodeString() : processing user symbols");
     userSymbols = this->processSymbolList(parsedSymbols);
   }
-  if (userSymbols.isEmpty() || !m_isValid.testFlag(CodeEngine::OK)) {
+  if (userSymbols.isEmpty() || !m_isValid.testFlag(codeEngine::OK)) {
     userSymbols = this->processSymbolList(m_defaultString.split(" "));
   }    
   // save and output final set of symbols
@@ -148,7 +148,7 @@ QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
   // basic length sanity check
   if ((symbolLength < m_minLength) || (symbolLength > m_maxLength)) {
     qDebug("ProductEngine processSymbolList() : length out of range");
-    m_isValid |= CodeEngine::LengthOutOfRange;
+    m_isValid |= codeEngine::LengthOutOfRange;
     return QStringList();
   }
   
@@ -159,7 +159,7 @@ QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
       getSymbolIndex(userSymbols.at(upc_common::NUMBER_SYSTEM_INDEX));
     if ((currentNumberSystem != upc_common::NS__REGULAR_UPC_CODES_1) && 
 	(currentNumberSystem != upc_common::NS__RESERVED_1)) {
-      m_isValid |= CodeEngine::StandardsViolationError;
+      m_isValid |= codeEngine::StandardsViolationError;
       return QStringList();
     }  
     Q_ASSERT((currentNumberSystem == upc_common::NS__REGULAR_UPC_CODES_1) || 
@@ -197,7 +197,7 @@ QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
     case 4:
     default:   
       qDebug() << "ProductEngine processSymbolList() : bad length";
-      m_isValid != CodeEngine::LengthOutOfRange;
+      m_isValid != codeEngine::LengthOutOfRange;
       return QStringList();
       break;
   }   
@@ -206,7 +206,7 @@ QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
     (extendedBlock.size() == ean2::BLOCK_SIZE) || 
     (extendedBlock.size() == ean5::BLOCK_SIZE)); 
   
-  const int calcuatedCheckDigit = this->calculateCheckDigit(
+  const int calcuatedCheckDigit = this->calculateCheckValue(
     convertSymbolsToIndexes(mainBlock_wo_Check));  
   qDebug() << "ProductEngine processSymbolList() : calculated check symbol" 
    << calcuatedCheckDigit;
@@ -215,24 +215,24 @@ QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
   fullMainBlock << mainBlock_wo_Check;  
   
   if (foundCheckDigit == NOT_FOUND) {
-    if (m_constructionFlags.testFlag(CodeEngine::AddCheckDigits)) {
+    if (m_constructionFlags.testFlag(codeEngine::AddCheckDigits)) {
       qDebug("ProductEngine processSymbolList() : Inserting missing checkDigit");	  
       fullMainBlock << getSymbolAtIndex(calcuatedCheckDigit);  
     } else {
       qDebug("ProductEngine processSymbolList() : missing check digit");
-      m_isValid |= CodeEngine::MissingRequiredCheckDigits;
+      m_isValid |= codeEngine::MissingRequiredCheckDigits;
       return QStringList();
     } 
   } else if (foundCheckDigit == calcuatedCheckDigit) {      
       qDebug("ProductEngine processSymbolList() : append valid included check digit");
       fullMainBlock << getSymbolAtIndex(foundCheckDigit);
   } else {
-    if (m_constructionFlags.testFlag(CodeEngine::UpdateCheckDigit)) {
+    if (m_constructionFlags.testFlag(codeEngine::UpdateCheckDigit)) {
       qDebug("ProductEngine processSymbolList() : replacing bad check digit");
       fullMainBlock << getSymbolAtIndex(calcuatedCheckDigit);
     } else {
       qDebug("ProductEngine processSymbolList() : bad check digit");
-      m_isValid |= CodeEngine::InvalidCheckDigits;	
+      m_isValid |= codeEngine::InvalidCheckDigits;	
       return QStringList();
     }
   }      
@@ -248,7 +248,7 @@ QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
   return updatedUserSymbols;
 }
 
-int ProductEngine::calculateCheckDigit(const shared::LookupIndexArray& symbolArray) const
+int ProductEngine::calculateCheckValue(const shared::LookupIndexArray& symbolArray) const
 {  
   qDebug("ProductEngine calculateCheckDigit() -> CommonChecksumOddEven(3,1)"); 
   if (m_productCode != upc_common::PS__UPC_E) {

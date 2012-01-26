@@ -57,7 +57,7 @@ public:
    * @param flag contruction hints; Defaults to "Auto".
    **/
   void setBarcodeString(const QString &userBarcode, 
-		CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
+		codeEngine::ConstructCodes flags = codeEngine::AutoProduct);
   /**
    * Set current barcode string
    * 

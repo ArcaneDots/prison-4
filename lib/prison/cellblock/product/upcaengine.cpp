@@ -44,7 +44,7 @@ UpcAEngine::~UpcAEngine()
   qDebug("UpcAEngine destructor");
 }
 
-void UpcAEngine::setBarcodeString(const QString& userBarcode, CodeEngine::ConstructCodes flags)
+void UpcAEngine::setBarcodeString(const QString& userBarcode, codeEngine::ConstructCodes flags)
 {
     product::ProductEngine::setBarcodeString(userBarcode, flags);
 }
@@ -53,9 +53,9 @@ void UpcAEngine::setBarcodeString(ProductEngine* ptrProductEngine)
 {
   qDebug("UpcAEngine setBarcodeString(ptrProductEngine) : start");  
   if (ptrProductEngine == 0 || 
-    !ptrProductEngine->getStatusFlags().testFlag(CodeEngine::OK)) {
+    !ptrProductEngine->getStatusFlags().testFlag(codeEngine::OK)) {
   qDebug("UpcAEngine setBarcodeString(ptrProductEngine) : bad source");  
-    m_isValid = CodeEngine::UnknownError;
+    m_isValid = codeEngine::UnknownError;
     return;
   }
   
@@ -77,7 +77,7 @@ void UpcAEngine::setBarcodeString(ProductEngine* ptrProductEngine)
   }
   
   // reset members
-  m_isValid = CodeEngine::OK; 
+  m_isValid = codeEngine::OK; 
   m_formatedSymbols.clear();
   m_encodedSymbols.clear();
   
@@ -128,7 +128,7 @@ QStringList UpcAEngine::compressUpc(const QStringList& symbolList) const
   
   // -- compress to a UPC-E if possible --
   QRegExp upceMatch("[0|1](\\d{1,5})0{4,5}(\\d{1,3})\\d)");
-  if (m_isValid.testFlag(CodeEngine::OK) &&
+  if (m_isValid.testFlag(codeEngine::OK) &&
     upceMatch.exactMatch(symbolList.join(""))) {    
     QStringList manf(upceMatch.capturedTexts().at(0));
     QStringList product(upceMatch.capturedTexts().at(1));

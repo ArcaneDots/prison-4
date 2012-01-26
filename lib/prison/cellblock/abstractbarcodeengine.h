@@ -31,6 +31,8 @@
 #include <QtCore/QMap>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
+#include <QtGui/QImage>
+
 #include "shareddefines.h"
 #include "indexedregexp.h"
 
@@ -44,7 +46,7 @@
  */
 
 
-namespace CodeEngine
+namespace codeEngine
 { 
    /**
     * Error flags
@@ -212,7 +214,7 @@ public:
    * @sa encodeSymbols() to build machine readable output "barcode"
    **/
   virtual void setBarcodeString(const QString &userBarcode, 
-		CodeEngine::ConstructCodes flags = CodeEngine::AutoLinear); 
+		codeEngine::ConstructCodes flags = codeEngine::AutoLinear); 
   // -- inline get/set members --
   /**
    * Get a string of symbols encoded according to the barcode's specification
@@ -236,11 +238,21 @@ public:
    * 
    * The barcode will display a default value in case the user's is not  
    */
-  inline CodeEngine::ErrorCodes getStatusFlags() const 
+  inline codeEngine::ErrorCodes getStatusFlags() const 
   {
     return m_isValid;
   }   
-    
+  /**
+   * Get QImage of barcode data
+   *
+   * @param requestedSize size of wigdet viewable area
+   * @param minimumSize size reqired to correctly display the barcode information
+   * @param foregroundColor text and bar color
+   * @param background color of "white" space
+   * @return QImage
+   **/
+  virtual QImage getImage(const QSizeF &requestedSize, QSizeF &minimumSize, 
+		  QColor foregroundColor, QColor backgroundColor) = 0;    
 protected:            
   /**
    * Parse user input string into list of valid symbols (strings)
@@ -264,9 +276,12 @@ protected:
    * @note parameters;
    * @note requiredCheckDigits and maxCheckDigits
    * 
+   * @param symbolsList list of parse symbols
+   * @param firstBlockSize number of symbol in first blocks
    * @returns number of check digits found 
    */
-  virtual QStringList processSymbolList(const QStringList &userSymbols);
+  virtual QStringList processSymbolList(const QStringList &symbolsList, 
+					int &firstBlockSize);
   /**
    * Calculate check sum digit for a array of symbol look-up indexes
    * 
@@ -277,7 +292,7 @@ protected:
    * @param symbolArray array of symbol's look-up index
    * @return number of valid check digit
    */
-  virtual int calculateCheckDigit(const shared::LookupIndexArray& symbolArray) const;       
+  virtual int calculateCheckValue(const shared::LookupIndexArray& symbolArray) const;       
   /**
    * Get the value when added to the check sum makes it a multiple of the modulus
    * 
@@ -544,13 +559,13 @@ protected:
    * 
    * @note current behavior: used default string when user input is invalid
    */
-  mutable CodeEngine::ErrorCodes m_isValid;
+  mutable codeEngine::ErrorCodes m_isValid;
   /**
    * Input processing flags
    * 
    * @note not currently implemented
    */
-  CodeEngine::ConstructCodes m_constructionFlags;
+  codeEngine::ConstructCodes m_constructionFlags;
     
 private:
   

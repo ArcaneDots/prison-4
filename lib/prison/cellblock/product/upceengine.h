@@ -61,7 +61,7 @@ public:
    * @param symbolArray array of symbol indexes
    * @return valid check digit
    */
-  virtual int calculateCheckDigit(
+  virtual int calculateCheckValue(
     const LookupIndexArray &symbolArray) const;
   /**
    * Attempt to get UPC-E version of the inputed product code

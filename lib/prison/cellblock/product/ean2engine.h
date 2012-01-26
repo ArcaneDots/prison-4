@@ -50,7 +50,7 @@ public:
    * @param symbolArray array of symbol indexes
    * @return valid check digit
    */
-  virtual int calculateCheckDigit(const shared::LookupIndexArray &symbolArray) const;
+  virtual int calculateCheckValue(const shared::LookupIndexArray &symbolArray) const;
    /**
    * Seperate digits into logical blocks based on encoded layout
    * 

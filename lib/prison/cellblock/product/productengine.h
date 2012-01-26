@@ -26,6 +26,7 @@
 #include "../abstractbarcodeengine.h"
 #include "upceandefines_p.h"
 
+using namespace shared;
 namespace product 
 {
 
@@ -54,17 +55,13 @@ public:
    */
   virtual ~ProductEngine();
   /**
-   * Class specicfic initialization
-   */
-  virtual void initialize();
-  /**
    * Set current barcode string
    *
    * @param userBarcode user string containing barcode symbols 
    * @param flag contruction hints; Defaults to "Auto".
    **/
   virtual void setBarcodeString(const QString &userBarcode, 
-		CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
+		codeEngine::ConstructCodes flags = codeEngine::AutoProduct);
   /**
    * Set current barcode string
    * 
@@ -90,6 +87,10 @@ public:
 		  QColor foregroundColor, QColor backgroundColor);
 protected:
   /**
+   * Class specicfic initialization
+   */
+  virtual void initialize();
+  /**
    * Validate product codes and splits off the extended code (EAN-2/5)
    * 
    * Verifies the check digit value and the valid sizes with the range 
@@ -109,7 +110,7 @@ protected:
    * @param symbolArray array of symbol indexes
    * @return valid check digit
    */
-  virtual int calculateCheckDigit(const shared::LookupIndexArray &symbolArray) const;
+  virtual int calculateCheckValue(const shared::LookupIndexArray &symbolArray) const;
   /**
    * Calculate Ean-2 check digit
    * 

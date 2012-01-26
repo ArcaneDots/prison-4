@@ -42,7 +42,7 @@ public:
    * @param symbolArray array of symbol indexes
    * @return valid check digit
    */
-  virtual int calculateCheckDigit(const shared::LookupIndexArray &symbolArray) const;
+  virtual int calculateCheckValue(const shared::LookupIndexArray &symbolArray) const;
 };
 };
 #endif // EAN5ENGINE_H

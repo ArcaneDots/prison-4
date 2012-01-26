@@ -43,7 +43,7 @@ UpcEEngine::~UpcEEngine()
   qDebug("UpcEEngine destructor");
 }
 
-int UpcEEngine::calculateCheckDigit(const LookupIndexArray &symbolArray) const
+int UpcEEngine::calculateCheckValue(const LookupIndexArray &symbolArray) const
 {
   qDebug("UpcEEngine calculateCheckDigit : start");
   Q_ASSERT(m_productCode == upc_common::PS__UPC_E);
@@ -59,7 +59,7 @@ int UpcEEngine::calculateCheckDigit(const LookupIndexArray &symbolArray) const
   const QStringList expandedUpcA(expandUpc(upceSymbolList));
   qDebug() << "UpcEEngine calculateCheckDigit() : expandedUpcA : " 
     << expandedUpcA;
-  return ProductEngine::calculateCheckDigit(
+  return ProductEngine::calculateCheckValue(
     convertSymbolsToIndexes(expandedUpcA));
 }
 

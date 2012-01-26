@@ -46,7 +46,7 @@ Ean8Engine::~Ean8Engine()
   qDebug("Ean8Engine destructor");
 }
 
-void Ean8Engine::setBarcodeString(const QString& userBarcode, CodeEngine::ConstructCodes flags)
+void Ean8Engine::setBarcodeString(const QString& userBarcode, codeEngine::ConstructCodes flags)
 {
     product::ProductEngine::setBarcodeString(userBarcode, flags);
 }
@@ -55,9 +55,9 @@ void Ean8Engine::setBarcodeString(ProductEngine* ptrProductEngine)
 {  
   qDebug("Ean8Engine setBarcodeString(ptrProductEngine) : start");   
   if (ptrProductEngine == 0 || 
-    !ptrProductEngine->getStatusFlags().testFlag(CodeEngine::OK)) {
+    !ptrProductEngine->getStatusFlags().testFlag(codeEngine::OK)) {
     qDebug("Ean8Engine setBarcodeString(ptrProductEngine) : bad source engine");   
-    m_isValid = CodeEngine::UnknownError;
+    m_isValid = codeEngine::UnknownError;
     return;
   }
   Q_ASSERT(getProductCode() == upc_common::PS__EAN_8 && 
@@ -66,7 +66,7 @@ void Ean8Engine::setBarcodeString(ProductEngine* ptrProductEngine)
   QStringList userSymbols(((Ean8Engine *)ptrProductEngine)->getSymbolList());
   
   // reset members
-  m_isValid = CodeEngine::OK; 
+  m_isValid = codeEngine::OK; 
   m_formatedSymbols.clear();
   m_encodedSymbols.clear();
   

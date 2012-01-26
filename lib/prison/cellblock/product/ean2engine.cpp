@@ -48,7 +48,7 @@ QStringList Ean2Engine::processSymbolList(const QStringList &userSymbols)
 }
 
 
-int Ean2Engine::calculateCheckDigit(const shared::LookupIndexArray& symbolArray) const
+int Ean2Engine::calculateCheckValue(const shared::LookupIndexArray& symbolArray) const
 {
   qDebug("Ean2Engine calculateCheckDigit()"); 
   return UpcAEngine::calculateEan2CheckDigit(symbolArray);

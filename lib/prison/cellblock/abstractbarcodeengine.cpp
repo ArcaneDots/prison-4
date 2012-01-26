@@ -20,6 +20,7 @@
 #include <numeric>
 #include "abstractbarcodeengine.h"
 
+using namespace codeEngine;
 using namespace shared;
 
 /**
@@ -103,7 +104,7 @@ AbstractBarcodeEngine::AbstractBarcodeEngine(const QString &defaultString,
 	m_formatedSymbols(),
 	m_encodedSymbols(),
 	m_barPositions(),
-	m_isValid(CodeEngine::UnknownError),
+	m_isValid(codeEngine::UnknownError),
 	m_constructionFlags(),
 	d(new AbstractBarcodeEngine::Private)
 {
@@ -126,7 +127,7 @@ void AbstractBarcodeEngine::initialize()
 
 
 void AbstractBarcodeEngine::setBarcodeString(const QString& userBarcode, 
-					    CodeEngine::ConstructCodes flags)
+					    codeEngine::ConstructCodes flags)
 {
   qDebug("AbstractBarcodeEngine setBarcodeString() : start");
   
@@ -140,7 +141,7 @@ void AbstractBarcodeEngine::setBarcodeString(const QString& userBarcode,
   }  
   // reset failure code and output variables
   m_constructionFlags = flags;
-  m_isValid = CodeEngine::OK; 
+  m_isValid = codeEngine::OK; 
   m_formatedSymbols.clear();
   m_encodedSymbols.clear();  
   // save user input for later comparsion
@@ -155,22 +156,22 @@ void AbstractBarcodeEngine::setBarcodeString(const QString& userBarcode,
   
   if (!userSymbols.isEmpty()) {
     if ((userSymbols.size() < m_minLength) ) {
-      m_isValid |= CodeEngine::LengthOutOfRange;
+      m_isValid |= codeEngine::LengthOutOfRange;
     } 
     // may not have a maximun length
     if (m_maxLength != NOT_FOUND && userSymbols.size() > m_maxLength) {      
-      m_isValid |= CodeEngine::LengthOutOfRange;
+      m_isValid |= codeEngine::LengthOutOfRange;
     }
   } else {
-    m_isValid |= CodeEngine::MissingInput;
+    m_isValid |= codeEngine::MissingInput;
   }
   // subclass specific symbol validation/processing  
-  if (m_isValid.testFlag(CodeEngine::OK)) {
+  if (m_isValid.testFlag(codeEngine::OK)) {
     qDebug("AbstractBarcodeEngine setBarcodeString() : processing user symbols");
     userSymbols = this->processSymbolList(userSymbols);
   } 
   // switch to default value in case user's input fails in processSymbolList() 
-  if (!m_isValid.testFlag(CodeEngine::OK)) {
+  if (!m_isValid.testFlag(codeEngine::OK)) {
     qDebug("AbstractBarcodeEngine setBarcodeString() : revert to default");
     userSymbols = m_defaultString.split(" ");
     userSymbols = this->processSymbolList(userSymbols);
@@ -235,45 +236,65 @@ QStringList AbstractBarcodeEngine::parseSymbolString(const QString& symbolString
 
   if (userSymbolsList.isEmpty()) {
     qDebug("AbstractBarcodeEngine parseSymbolString() : no valid symbols");
-    m_isValid |= CodeEngine::UnknownSymbols;
+    m_isValid |= codeEngine::UnknownSymbols;
   }
   qDebug("AbstractBarcodeEngine parseSymbolString() : end");
   return userSymbolsList;
 }
 
-QStringList AbstractBarcodeEngine::processSymbolList(const QStringList& userSymbols)
+QStringList AbstractBarcodeEngine::processSymbolList(const QStringList &symbolsList, 
+						     int &firstBlockSize)
 {
   qDebug("AbstractBarcodeEngine processSymbolList() : start");  
   // assumes check digit is at end of symbol "stream"
   Q_ASSERT(m_internalCheckDigit == false);
   
   // check digit are at the end of ths list
-  int numberCheckDigitsFound = 0;  
+  QStringList inputSymbols(symbolsList);
+//   int numberCheckDigitsFound = 0;  
+   = NOT_FOUND;
   shared::LookupIndexArray symbolIndexes(
-    this->convertSymbolsToIndexes(userSymbols));
+    this->convertSymbolsToIndexes(symbolsList));
   shared::LookupIndexArray calcSymbolIndexes;  
-  // start at second to last index
-  shared::LookupIndexArray::reverse_iterator itrCheckdigit = symbolIndexes.rbegin();    
-  while (itrCheckdigit != symbolIndexes.rend() && 
-    numberCheckDigitsFound < m_maxCheckDigits) { 
-    // get next list of symbol indexes minus the possible check digit value
-    std::copy(itrCheckdigit - 1, symbolIndexes.rend(), 
-      std::back_inserter(calcSymbolIndexes));
-    if (*(itrCheckdigit) != this->calculateCheckDigit(calcSymbolIndexes)) {
-      break;
+  // one check symbol
+  Q_ASSERT(m_maxCheckDigits == 1 && m_requiredCheckDigits == m_maxCheckDigits);
+//   // start at second to last index
+//   shared::LookupIndexArray::reverse_iterator itrCheckdigit = symbolIndexes.rbegin();
+//   // get next list of symbol indexes minus the possible check digit value
+  std::copy_backward(symbolIndexes.begin(), symbolIndexes.back() - 1, 
+		     std::back_inserter(calcSymbolIndexes));
+  //(itrCheckdigit - 1, symbolIndexes.rend(), 
+  int foundCheckValue = this->calculateCheckValue(calcSymbolIndexes);
+  
+  if (foundCheckValue == NOT_FOUND || foundCheckValue != inputSymbols.back()) {
+    QString foundCheckSymbol (getSymbolAtIndex(foundCheckValue));
+    if (m_constructionFlags.testFlag(codeEngine::AddCheckDigits)) {
+      inputSymbols.append(foundCheckSymbol);
+    } else if (m_constructionFlags.testFlag(codeEngine::UpdateCheckDigit)){
+      inputSymbols.back() = foundCheckSymbol;
+    } else {
+      inputSymbols.clear();
+      m_isValid != codeEngine::InvalidCheckDigits;
     }
-    calcSymbolIndexes.clear();
-    numberCheckDigitsFound++;
-    itrCheckdigit++;
-  }  
-  m_isValid |= (numberCheckDigitsFound < m_requiredCheckDigits) ?
-     CodeEngine::MissingRequiredCheckDigits : CodeEngine::OK;
+  }    
+//   while (itrCheckdigit != symbolIndexes.rend() && 
+//     numberCheckDigitsFound < m_maxCheckDigits) { 
+//       std::back_inserter(calcSymbolIndexes));
+//     if (*(itrCheckdigit) != this->calculateCheckValue(calcSymbolIndexes)) {
+//       break;
+//     }
+//     calcSymbolIndexes.clear();
+//     numberCheckDigitsFound++;
+//     itrCheckdigit++;
+//   }  
+//   m_isValid |= (numberCheckDigitsFound < m_requiredCheckDigits) ?
+//      codeEngine::MissingRequiredCheckDigits : codeEngine::OK;
   qDebug("AbstractBarcodeEngine processSymbolList() : end");
-  return userSymbols;
+  return symbolsList;
 }
 
 
-int AbstractBarcodeEngine::calculateCheckDigit(const LookupIndexArray &symbolArray) const
+int AbstractBarcodeEngine::calculateCheckValue(const LookupIndexArray &symbolArray) const
 {
   // do not use this function for product codes
   qDebug("AbstractBarcodeEngine calculateCheckDigit() : start");
