@@ -9,6 +9,8 @@ SET(    prison_SRC
         abstractbarcode.cpp
         barcodewidget.cpp
         barcodeitem.cpp
+        code39barcode.cpp
+        code93barcode.cpp
         datamatrixbarcode.cpp
         qrcodebarcode.cpp
         ean13barcode.cpp
@@ -24,6 +26,20 @@ set_target_properties(prison PROPERTIES VERSION "0.0.0" SOVERSION "0" LINK_INTER
 
 set(LIB_SUFFIX "" CACHE STRING "Define suffix of directory name (32/64)" )
 
+include(CheckCXXCompilerFlag)
+
+if (CMAKE_COMPILER_IS_GNUCXX AND NOT WIN32)
+    check_cxx_compiler_flag(-fvisibility=hidden _HAVE_GCC_VISIBILITY)
+    if (_HAVE_GCC_VISIBILITY)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+
+        check_cxx_compiler_flag(-fvisibility-inlines-hidden _HAVE_GCC_VISIBILITY_INLINES)
+        if (_HAVE_GCC_VISIBILITY_INLINES)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
+        endif (_HAVE_GCC_VISIBILITY_INLINES)
+    endif (_HAVE_GCC_VISIBILITY)
+endif (CMAKE_COMPILER_IS_GNUCXX AND NOT WIN32)
+
 install( TARGETS prison DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX} )
 
 install( FILES
@@ -33,6 +49,10 @@ install( FILES
          BarcodeItem
          barcodewidget.h
          BarcodeWidget
+         code39barcode.h
+         Code39Barcode
+         code93barcode.h
+         Code93Barcode
          datamatrixbarcode.h
          DataMatrixBarcode
          qrcodebarcode.h

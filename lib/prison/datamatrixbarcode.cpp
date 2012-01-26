@@ -53,20 +53,24 @@ QImage DataMatrixBarcode::toImage(const QSizeF& size) {
   if(data().size()==0 || width == 0 || data().size() > 1200) {
     return QImage();
   }
-  
+
   DmtxEncode * enc = dmtxEncodeCreate();
   dmtxEncodeSetProp( enc, DmtxPropPixelPacking, DmtxPack32bppRGBX );
   dmtxEncodeSetProp( enc, DmtxPropWidth, width );
   dmtxEncodeSetProp( enc, DmtxPropHeight, width );
 
   QByteArray trimmedData(data().trimmed().toUtf8());
-  dmtxEncodeDataMatrix(enc, trimmedData.length(),
-                       reinterpret_cast<unsigned char*>(trimmedData.data()));
+  DmtxPassFail result =  dmtxEncodeDataMatrix(enc, trimmedData.length(),
+                                              reinterpret_cast<unsigned char*>(trimmedData.data()));
+  if(result == DmtxFail) {
+    dmtxEncodeDestroy(&enc);
+    return QImage();
+  }
   Q_ASSERT(enc->image->width == enc->image->height);
-  
+
   setMinimumSize(QSizeF(enc->image->width,enc->image->height));
   QImage ret;
-  
+
   if(foregroundColor()==Qt::black && backgroundColor() == Qt::white) {
     QImage tmp(enc->image->pxl,enc->image->width,enc->image->height, QImage::Format_ARGB32);
     //we need to copy, because QImage generated from a char pointer requires the
