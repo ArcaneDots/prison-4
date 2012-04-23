@@ -21,44 +21,34 @@
 #include <algorithm>
 #include <iterator>
 
-//#include "symbolList_linkedlist.h"
-#include "../cellblock/workshop/symbolList_linkedlist.h" // 
+
+#include "symbollist_linkedlist.h"
 
 SymbolList::SymbolList() :
   d(new SymbolList::LinkedList()),
   m_head(d.constData()->getBegin()),
   m_tail(d.constData()->getEnd()),
-  m_BlockStarts()
+  m_currentBlock()
 {  
   qDebug("SymbolList - default constructor()");  
-//   d = new SymbolList::LinkedList();
-//   m_head = d.constData()->getBegin();
-//   m_tail = d.constData()->getEnd();
 }
 
 SymbolList::SymbolList(const Symbol& symbol):
-  d(new SymbolList::LinkedList(new Symbol(symbol))),
+  d(new SymbolList::LinkedList(symbol)),
   m_head(d.constData()->getBegin()),
   m_tail(d.constData()->getEnd()),
-  m_BlockStarts()
+  m_currentBlock()
 {
   qDebug("SymbolList - constructor(const Symbol&)");
-  //push_back<Symbol>(symbol);
 }
 
 SymbolList::SymbolList (const BarcodeSetInfo& barcodeSymbol) :
   d(new SymbolList::LinkedList(barcodeSymbol)),
   m_head(d.constData()->getBegin()),
   m_tail(d.constData()->getEnd()),
-  m_BlockStarts()
+  m_currentBlock()
 {
-  //qDebug("SymbolList constructor(const BarcodeSetInfo&) : start");
-//   if (barcodeSymbol->isValid()) {
-//     qDebug("SymbolList constructor(const BarcodeSetInfo&) : setParser");
-//     d->setParser(Symbol(barcodeSymbol));
-//   }
-  //qDebug("SymbolList constructor(const BarcodeSetInfo&) : end");
-  
+  //qDebug("SymbolList constructor(const BarcodeSetInfo&) ");  
 }
 
 SymbolList::SymbolList(const BarcodeSetInfo& barcodeSymbol, 
@@ -66,40 +56,44 @@ SymbolList::SymbolList(const BarcodeSetInfo& barcodeSymbol,
   d(new SymbolList::LinkedList(barcodeSymbol)),
   m_head(d.constData()->getBegin()),
   m_tail(d.constData()->getEnd()),
-  m_BlockStarts()
+  m_currentBlock()
 {
-  insert(end(), userString);
-  //qDebug("SymbolList constructor(const BarcodeSetInfo&, const QString&) : start");
-//   if (barcodeSymbol->isValid()) {
-//     qDebug("SymbolList constructor(const BarcodeSetInfo&, const QString&) : both");
-//     d->setParser(Symbol(barcodeSymbol));
-//     insert(begin(), Symbol(barcodeSymbol, userString));
-//   } else {
-//     qDebug("SymbolList constructor(const BarcodeSetInfo&, const QString&) : string");
-//     insert(begin(), Symbol(userString));
-//   }
-  //qDebug("SymbolList constructor(const BarcodeSetInfo&, const QString&) : end");
+  //qDebug("SymbolList constructor(const BarcodeSetInfo&, const QString&)");
+  insert(begin(), userString);
 }
 
 SymbolList::SymbolList(const SymbolList& other) :
   d(other.d),
   m_head(d.constData()->getBegin()),
   m_tail(d.constData()->getEnd()),
-  m_BlockStarts()
+  m_currentBlock()
 {  
   qDebug("SymbolList copy constructor");
   //qDebug("SymbolList copy constructor : end");
 }
 
-SymbolList::SymbolList(const SymbolList& other,
+SymbolList::SymbolList(const SharedList& listData,
                        SubRange subRange) :
-  d(other.d),
+  d(listData),
   m_head(subRange.first),
   m_tail(subRange.second),
-  m_BlockStarts()
+  m_currentBlock()
 {
   qDebug("SymbolList sub-constructor");
 }
+
+SymbolList::SymbolList(const SharedList& listData, 
+		       BlockNames::SubStrings sectionName) :
+  d(listData),
+  m_head(0),
+  m_tail(0),
+  m_currentBlock(sectionName) 
+{
+  SubRange namedRange = d->getNamedRange(sectionName);
+  m_head = namedRange.first;
+  m_tail = namedRange.second;
+}
+
 
 SymbolList::~SymbolList()
 {  
@@ -117,7 +111,7 @@ SymbolList::const_pointer SymbolList::const_iterator::operator->() const
 }
 
 
-SymbolList::const_iterator SymbolList::const_iterator::operator++()
+SymbolList::const_iterator & SymbolList::const_iterator::operator++()
 {
   if (_curpos->m_next != 0) {
     _curpos = _curpos->m_next;
@@ -126,7 +120,7 @@ SymbolList::const_iterator SymbolList::const_iterator::operator++()
 }
 
 
-SymbolList::const_iterator SymbolList::const_iterator::operator--()
+SymbolList::const_iterator & SymbolList::const_iterator::operator--()
 {
   if (_curpos->m_previous != 0) {
     _curpos = _curpos->m_previous;
@@ -138,6 +132,19 @@ BlockNames::SubStrings SymbolList::const_iterator::getSectionName() const
 {
   return _curpos->m_section;
 }
+
+bool SymbolList::const_iterator::setSectionName(BlockNames::SubStrings sectionName)
+{
+  bool result = false;
+  if (_curpos->m_symbol->hasValue() && _curpos->m_section != sectionName) {
+    list_node * previous = _curpos->m_previous;
+    if (previous != 0 && previous->m_section < sectionName) {
+      _curpos->m_section = sectionName;
+    }
+  }
+  return _curpos->m_section == sectionName;
+}
+
 
 SymbolList::reference SymbolList::iterator::operator*() const
 {
@@ -179,16 +186,6 @@ SymbolList::iterator SymbolList::begin()
 SymbolList::iterator SymbolList::end() 
 { return iterator(m_tail); };
 
-// bool SymbolList::setParser (const Symbol& s )
-// {
-//   qDebug("SymbolList setParser() : start");
-//   if (!s).isValid() || s.isValid()) {
-//     d->setParser(s);
-//   }
-//   qDebug("SymbolList setParser() : end");
-//   return d->getParseSymbol().isValid();// m_symbolParser->isValid();
-// }
-
 size_t SymbolList::size() const
 {
   size_t curr_size = d->m_size;
@@ -207,108 +204,58 @@ bool SymbolList::empty() const
   return isEmpty; 
 }
 
-// SymbolList::iterator SymbolList::_insert(SymbolList::iterator position, 
-// 					 SymbolList::list_node* nodes)
+// SymbolList::const_iterator SymbolList::getSectionStart(BlockNames::SubStrings name)
 // {
-//   return d->insert(position, nodes);
-//   //return d->attachSpaningNodes(position, nodes);
+//   return (m_BlockStarts.find(BlockStart(name)))->getStartNode();
 // }
 
-// // begin, end
-// SymbolList::const_iterator SymbolList::begin() const
-// {  
-//   return (isChild()) ? m_begin : const_iterator(m_head);
-// //   const_iterator _begin(*&m_head);
-// //   if (isChild()) {
-// //     _begin = m_begin;
-// //   }
-// //   return _begin;
-// }
-// 
-// SymbolList::const_iterator SymbolList::end() const
+// bool SymbolList::setSectionStart(BlockNames::SubStrings name, SymbolList::const_iterator& start)
 // {
-//   return (isChild()) ? m_end : const_iterator(m_tail);
-// //   const_iterator _end(*&m_tail->m_next);
-// //   if (isChild()) {
-// //     _end = m_end;
-// //   }
-// //   return _end;
-// }
-// SymbolList::iterator SymbolList::begin()
-// {
-//   iterator _begin(m_head);
-//   if (isChild()) {    
-//     _begin =  iterator(m_begin);
+//   std::set<SymbolList::BlockStart>::iterator blockInfo = 
+//     m_BlockStarts.find(BlockStart(name));
+//   iterator initalStart = (blockInfo == m_BlockStarts.end()) ? end() : blockInfo->getStartNode();
+//   iterator userStart(start);
+//   
+//   // inside named section : shrink range
+//   if (userStart._curpos->m_section == name) {
+//     BlockStartSet::iterator prevBlockInfo(blockInfo);
+//     prevBlockInfo--;
+//     BlockNames::SubStrings prevName = prevBlockInfo->getBlockId();
+//     if (prevName == name) {
+//       prevName = BlockNames::NONE;
+//     }
+//     d->updateRangeSectionId(initalStart, userStart, prevName);
 //   }
-//   return  _begin;
+//   
+//   // to the right of section : expand range to right
+//   if (userStart._curpos->m_section < name) {
+//     BlockStartSet::iterator nextBlockInfo(blockInfo);
+//     nextBlockInfo++;
+//     iterator sectionEnd = 
+//       (blockInfo != nextBlockInfo) ? nextBlockInfo->getStartNode() : end();
+//     BlockNames::SubStrings curr_name = BlockNames::NOT_DEFINED;
+//     BlockStartSet::iterator curBlock = m_BlockStarts.end();
+//     while (userStart != sectionEnd) {  
+//       if (curBlock == m_BlockStarts.end()) {
+//         curBlock = 
+// 	  m_BlockStarts.find(BlockStart(userStart._curpos->m_section));
+//       } else { curBlock++; }
+//       BlockStartSet::iterator nextBlock(curBlock);
+//       nextBlock++;
+//       iterator currSectionEnd = sectionEnd;
+//       if (nextBlock->getBlockId() != name){
+// 	currSectionEnd = nextBlock->getStartNode();
+//       } 
+//       d->updateRangeSectionId(userStart,currSectionEnd, name);
+//       // on the start iterator of a previous section 
+//       if (userStart == curBlock->getStartNode()) {
+//       // delete block
+// 	m_BlockStarts.erase(curBlock);
+//       }
+//       userStart = currSectionEnd;
+//     }
+//   }
 // }
-// 
-// SymbolList::iterator SymbolList::end()
-// { 
-//   iterator _end(m_tail);
-//   if (isChild()) {    
-//     _end = iterator(m_end);
-//   }   
-// //  return (isChild()) ? iterator(m_end) : iterator(m_tail->m_next);
-// //   iterator _end(0);
-// //   if (isChild()) {    
-// //     _end = iterator(m_end);
-// //   }
-//   return iterator(_end);
-// }
-
-SymbolList::const_iterator SymbolList::getSectionStart(BlockNames::SubStrings name)
-{
-  return (m_BlockStarts.find(BlockStart(name)))->getStartNode();
-}
-
-bool SymbolList::setSectionStart(BlockNames::SubStrings name, SymbolList::const_iterator& start)
-{
-  std::set<SymbolList::BlockStart>::iterator blockInfo = 
-    m_BlockStarts.find(BlockStart(name));
-  iterator initalStart = (blockInfo == m_BlockStarts.end()) ? end() : blockInfo->getStartNode();
-  iterator userStart(start);
-  
-  // inside named section : shrink range
-  if (userStart._curpos->m_section == name) {
-    BlockStartSet::iterator prevBlockInfo(blockInfo);
-    prevBlockInfo--;
-    BlockNames::SubStrings prevName = prevBlockInfo->getBlockId();
-    if (prevName == name) {
-      prevName = BlockNames::NONE;
-    }
-    d->updateRangeSectionId(initalStart, userStart, prevName);
-  }
-  
-  // to the right of section : expand range to right
-  if (userStart._curpos->m_section < name) {
-    BlockStartSet::iterator nextBlockInfo(blockInfo);
-    nextBlockInfo++;
-    iterator sectionEnd = 
-      (blockInfo != nextBlockInfo) ? nextBlockInfo->getStartNode() : end();
-    BlockNames::SubStrings curr_name = NOT_DEFINED;
-    BlockStartSet::iterator curBlock = m_BlockStarts.end();
-    while (userStart != sectionEnd) {  
-      if (curBlock == m_BlockStarts.end()) {
-        curBlock = 
-	  m_BlockStarts.find(BlockStart(userStart._curpos->m_section));
-      } else { curBlock++; }
-      BlockStartSet::iterator nextBlock(curBlock);
-      nextBlock++;
-      iterator currSectionEnd = sectionEnd;
-      if (nextBlock->getBlockId() != name){
-	currSectionEnd = nextBlock->getStartNode();
-      } 
-      d->updateRangeSectionId(userStart,currSectionEnd, name);
-      // on the start iterator of a previous section 
-      if (userStart == curBlock->getStartNode()) {
-      // delete block
-	m_BlockStarts.erase(curBlock);
-      }
-      userStart = currSectionEnd;
-    }
-  }
-}
 
 // list manipulation fuctions
 
@@ -340,8 +287,6 @@ SymbolList::list_node* SymbolList::LinkedList::cutNodes(SymbolList::iterator fir
 }
 SymbolList::iterator SymbolList::LinkedList::attachSpaningNodes(SymbolList::iterator position, 
 					     SymbolList::list_node * spaningNodes)
-// SymbolList::iterator SymbolList::attachSpaningNodes(SymbolList::iterator position, 
-// 					     SymbolList::list_node * spaningNodes)
 {
   qDebug("SymbolList spliceNodes() : start");
   Q_ASSERT(spaningNodes != 0);
@@ -445,8 +390,7 @@ void SymbolList::splice(SymbolList::iterator position, SymbolList& x)
 
 void SymbolList::splice ( iterator position, SymbolList& x, iterator i )
 {
-  d->insert(position, *i);  //cutNodes(i, i));
-  //d->attachSpaningNodes(position, cutNodes(i, i));
+  d->insert(position, *i); 
   x.erase(i, ++i);
 }
 
@@ -463,7 +407,7 @@ void SymbolList::splice(SymbolList::iterator position, SymbolList& x,
 
 
 
-SymbolList::iterator SymbolList::_insert ( SymbolList::iterator position,
+SymbolList::iterator SymbolList::_insert( SymbolList::iterator position,
 					  const Symbol& x )
 { 
   return d->insert(position, x);
@@ -473,7 +417,7 @@ SymbolList::iterator SymbolList::_insert(SymbolList::iterator position,
 					const QList<Symbol>& symbols)
 { 
   qDebug("SymbolList _insert(QList<Symbol>) ");
-   return d->insert(position, symbols);
+  return d->insert(position, symbols);
 }
 
 SymbolList::iterator SymbolList::_insert ( iterator position,  const QStringList& stringlist ) 
@@ -492,39 +436,14 @@ SymbolList::iterator SymbolList::_insert ( iterator position,  const QStringList
 SymbolList::iterator SymbolList::_insert ( SymbolList::iterator position, 
 					  const SymbolList& x )
 {
+  //qDebug("SymbolList _insert(SymbolList)");
   return d->insert(position, x);
-  //qDebug("SymbolList _insert(SymbolList) : start");
-  //iterator result(d->insert(position, x));
-  //qDebug("SymbolList _insert(SymbolList) : end");
-  //return result;
 }
-
-// bool SymbolList::isIteratorInRange(const_iterator position,
-// 				   const_iterator _begin, 
-// 				   const_iterator _end) const
-// {
-//   Q_ASSERT(d == 0);
-//   bool result = false;
-//   const_iterator itrComp = _begin;
-//   while(itrComp != _end) {
-//     result = (itrComp == position);
-//     if (result) { break; }
-//   }
-//   return result;
-// }
 
 Symbol SymbolList::getParserSymbol() const
 {
   return d->getParseSymbol();
 }
-
-
-// void SymbolList::insert ( SymbolList::iterator position, int n, const Symbol& x )
-// {
-//   for (int count = 0; count < n; count++) {
-//     _insert(position, x);
-//   }
-// }
 
 SymbolList::iterator SymbolList::erase(SymbolList::iterator position)
 {  
@@ -553,30 +472,19 @@ void SymbolList::clear()
 
 SymbolList SymbolList::clone() const
 {
-  return SymbolList(getFullsymbolSet());
+  return SymbolList(getFullSymbolSet());
 }
 
 void SymbolList::swap(SymbolList& x)
 {
+  std::swap(d, x.d);
   std::swap(m_head, x.m_head);
   std::swap(m_tail, x.m_tail);
-  std::swap(d, x.d);
-  //std::swap(m_size, x.m_size);
-  //std::swap(m_symbolParser, x.m_symbolParser);
-  //std::swap(m_validSymbols, x.m_validSymbols);
-  std::swap(m_BlockStarts, x.m_BlockStarts);
-//   SymbolList temp(x);
-//   std::swap(m_head, temp.m_head);
-//   std::swap(m_tail, temp.m_tail);
-//   std::swap(d, temp.d);
-//   std::swap(m_size, temp.m_size);
-//   std::swap(m_symbolParser, temp.m_symbolParser);
-//   std::swap(m_validSymbols, temp.m_validSymbols);
-//   std::swap(m_BlockStarts, temp.m_BlockStarts);
+  std::swap(m_currentBlock, x.m_currentBlock);
 }
 
 
-const BarcodeSetInfo SymbolList::getFullsymbolSet() const
+BarcodeSetInfo SymbolList::getFullSymbolSet() const
 {
   d->getParseSymbol();
 }
@@ -598,19 +506,12 @@ const SymbolList SymbolList::mid( int pos, int length ) const
     }  
   }
   SubRange subRange(start, stop);
-  return SymbolList(*this, subRange);
+  return SymbolList(this->d, subRange);
 }
 
-
-bool SymbolList::isSameSymbolSet ( const SymbolList& s ) const
-{
-  return (!this->isValid() || !s.isValid()) ? 
-    true :(this->getFullsymbolSet() == s.getFullsymbolSet());
-}
-
-shared::LookupIndexArray SymbolList::getIndexValues() const
+barcodeEngine::LookupIndexArray SymbolList::getIndexValues() const
 { 
-  shared::LookupIndexArray indexArray;
+  barcodeEngine::LookupIndexArray indexArray;
   const_iterator itrSymbol = begin();
   while (itrSymbol != end()) {
     LookupIndexArray indexes(itrSymbol->getIndexes());
@@ -640,26 +541,6 @@ QList< Symbol > SymbolList::toSymbols() const
   return symbols; 
 }
 
-
-
-
-SymbolList::SubRange SymbolList::getBlockRange(BlockNames::SubStrings id)
-{ 
-  list_node * start = 0;
-  list_node * stop = 0;
-  BlockStart finder(id);
-  BlockStartSet::const_iterator itrBlock = m_BlockStarts.find(finder);
-  if (itrBlock != m_BlockStarts.end()) {
-    start = itrBlock->getStartNode()._curpos;
-    itrBlock++;
-    if (itrBlock != m_BlockStarts.end()) {
-      stop = itrBlock->getStartNode()._curpos;
-    }
-  }
-  SubRange result(start, stop);
-  return result;  
-}
-
 /**
  * special header symbols 
  * 
@@ -667,7 +548,7 @@ SymbolList::SubRange SymbolList::getBlockRange(BlockNames::SubStrings id)
  */
 SymbolList SymbolList::prefix()
 {
-  return SymbolList(*this, getBlockRange(BlockNames::PREFIX));
+  return SymbolList(this->d, BlockNames::PREFIX);
 }
 
 /**
@@ -675,7 +556,7 @@ SymbolList SymbolList::prefix()
  */
 SymbolList SymbolList::main_code()
 {
-  return SymbolList(*this, getBlockRange(BlockNames::MAIN_CODE));
+  return SymbolList(this->d, BlockNames::MAIN_CODE);
 }
 
 /**
@@ -683,14 +564,14 @@ SymbolList SymbolList::main_code()
  */
 SymbolList SymbolList::manf()
 {
-  return SymbolList(*this, getBlockRange(BlockNames::MANUFACTOR));
+  return SymbolList(this->d, BlockNames::MANUFACTOR);
 }
 /**
  * Product code : product code
  */
 SymbolList SymbolList::product()
 {
-  return SymbolList(*this, getBlockRange(BlockNames::PRODUCT));
+  return SymbolList(this->d, BlockNames::PRODUCT);
 }
 
 /**
@@ -698,22 +579,22 @@ SymbolList SymbolList::product()
  */
 SymbolList SymbolList::check_value()
 {
-  return SymbolList(*this, getBlockRange(BlockNames::CHECK_VALUE));
+  return SymbolList(this->d, BlockNames::CHECK_VALUE);
 }
 
 SymbolList SymbolList::extended_code()
 {
-  return SymbolList(*this, getBlockRange(BlockNames::EXTENDED_CODE));
+  return SymbolList(this->d, BlockNames::EXTENDED_CODE);
 }
 
 SymbolList SymbolList::check_value_C()
 {
-  return SymbolList(*this, getBlockRange(BlockNames::CHECK_VALUE_C));
+  return SymbolList(this->d, BlockNames::CHECK_VALUE_C);
 }
 
 SymbolList SymbolList::check_value_K()
 {
-  return SymbolList(*this, getBlockRange(BlockNames::CHECK_VALUE_K));
+  return SymbolList(this->d, BlockNames::CHECK_VALUE_K);
 }
 
 const Symbol& SymbolList::at(int index) const
@@ -743,94 +624,22 @@ Symbol& SymbolList::back()
 }
 // operator(s)
 
-// const SymbolList * SymbolList::getParent() const
-// {
-//   return (d == 0) ? this : d->getParent();
-// }
-
-
-// bool SymbolList::isParentOf(const SymbolList& rhs) const
-// {
-//   return (this == rhs.getParent());
-// }
-
 void SymbolList::assign(SymbolList::size_type n, const Symbol& x)
 {
-  // FIXME add block support
-  SharedSymbol parsingSymbol(new Symbol(d->getParseSymbol())); 
-  d = new LinkedList(parsingSymbol);
+  d = new LinkedList(d->getParseSymbol());
   // insert "source" node range into destintion
   d->insert(d->getEnd(), n, x);
-//   SharedList tempD(new LinkedList(parsingSymbol));
-//   SharedList oldD = d;
-//   
-//   iterator first(oldD->getBegin());
-//   iterator last(oldD->getEnd());
-//   
-//   iterator position(d->getEnd());
-//   
-//   iterator dst_first(this->begin());
-//   iterator dst_last(this->end());
-//   
-//   // copy everything except source and destintion node ranges to new "d" 
-//   d = new LinkedList(parsingSymbol);
-//   while (first != last) {
-//     if (first == dst_first) {
-//       if (dst_first != dst_last) {
-// 	position = d->getEnd();
-// 	dst_first++;
-//       }
-//     } else {
-//       d->insert(d->getBegin(), first._curpos);
-//     }
-//     first++;
-//   }
-//   // insert "source" node range into destintion
-//   d->insert(position, n, x);
 }
 
 void SymbolList::assign(const QStringList & other)
 {
-    // FIXME add block support
-  SharedSymbol parserSymbol(new Symbol(d->getParseSymbol())); 
-  d = new LinkedList(parserSymbol);
+  d = new LinkedList(d->getParseSymbol());
   // insert "source" node range into destintion
   QStringList::const_iterator first(other.begin());
   QStringList::const_iterator last(other.end());
   while (first != last) {
     d->insert(d->getEnd(), *first++, true);
   }
-//   // FIXME add block support
-//   SharedSymbol parserSymbol(new Symbol(d->getParseSymbol()));
-//   SharedList oldD(d);
-//   
-//   iterator first(oldD->getBegin());
-//   iterator last(oldD->getEnd());
-//   
-//   iterator position(d->getEnd());
-//   
-//   iterator dst_first(this->begin());
-//   iterator dst_last(this->end());
-//   
-//   // copy everything except source and destintion node ranges to new "d" 
-//   d = new LinkedList(parserSymbol);
-//   while (first != last) {
-//     if (first == dst_first) {
-//       if (dst_first != dst_last) {
-// 	position = d->getEnd();
-// 	dst_first++;
-//       }
-//     } else {
-//       d->insert(d->getBegin(), first._curpos);
-//     }
-//     first++;
-//   }
-//   // insert "source" node range into destintion
-//   QStringList::const_iterator str_first(other.begin());
-//   QStringList::const_iterator str_last(other.end());
-//   while (str_first != str_last) {
-//     d->insert(position, *str_first++, true);
-//   }
 }
 
 void SymbolList::assign ( const SymbolList& other )
@@ -882,72 +691,6 @@ SymbolList& SymbolList::operator= ( const SymbolList& rhs )
   assign(rhs);
   return *this;
 }
-//   if (first != oldD->getBegin()) {
-//     d->insert(d->getEnd(), oldD->getBegin(), first);
-//   }
-//   m_head = d->getEnd();
-//   d->insert(d->getEnd(), rhs);
-//   m_tail = d->getEnd();
-//   if (last != oldD->getEnd()) {
-//     d->insert(d->getEnd(), last, oldD->getEnd());    
-//   }
-  //return d->move(*this, rhs);
-//}
-//   // replace 
-//   iterator start_dst(begin());
-//   iterator stop_dst(end());
-//   iterator first_src(rhs.begin());
-//   iterator last_src(rhs.end());
-//   if (d == rhs.d) {
-//     while (first_src != last_src) {
-//       if (start_dst != stop_dst) {
-// 	start_dst++ = *first_src++;
-//       } else {
-// 	BlockNames::SubStrings sectionName = first_src.getSectionName();
-// 	d->insert(start_dst, new list_node(*first_src++, sectionName));
-//       }
-//     }
-//     // remove extra nodes in destintion SymbolList
-//     while (start_dst != stop_dst) {
-//       d->erase(start_dst++);
-//     }
-// //     if (d->getBegin() != m_head) {
-// //       start = m_head;
-// //     } 
-// //     if (d->getEnd() != m_tail) {
-// //       stop = m_tail;
-// //     }
-// //     splice(m_head, rhs);      
-//   } else {
-//     d->insert(begin(), rhs.begin(), rhs.end());
-//   }
-  // prevent self assignment
-//   if (!isRelated(*this, rhs)) {
-//     //SymbolList temp(rhs);
-//     clear();
-//     m_symbolParser = rhs.m_symbolParser;
-//     iterator first = rhs.begin();
-//     iterator last = rhs.end();
-//     BlockNames::SubStrings currSection = BlockNames::NONE;
-//     while (first != last) {
-//       if (m_tail != 0) {
-// 	m_tail->m_next = new list_node(*first++);
-// 	m_tail = m_tail->m_next;
-//       } else {	
-// 	m_tail = new list_node(*first++);
-// 	m_head = m_tail;
-//       }
-//       if (m_tail->m_section > 0 != currSection) {
-// 	currSection = m_tail->m_section;
-// 	m_BlockStarts.insert(BlockStart(currSection, last));
-//       }
-//       
-//     }
-//     //insert(end(), temp.begin(), temp.end());
-//     //m_BlockStarts = temp.m_BlockStarts;
-//   }
-//   return *this;
-// }
 
 /**
  * Get number of nodes in a range
@@ -976,13 +719,8 @@ SymbolList& SymbolList::operator<<(const Symbol& symbol)
 
 bool hasSameSet(const SymbolList& lhs, const SymbolList& rhs)
 {
-  return (lhs.getFullsymbolSet() == rhs.getFullsymbolSet());
+  return (lhs.getFullSymbolSet() == rhs.getFullSymbolSet());
 }
-
-// bool isRelated(const SymbolList& lhs, const SymbolList& rhs)
-// {
-//   return (lhs.getParent() == rhs.getParent());
-// }
 
 bool operator==(const SymbolList& lhs, const SymbolList& rhs)
 {
@@ -995,18 +733,12 @@ QList<Symbol> operator<< (QList<Symbol> lh, QList<Symbol> rh )
   return lh;    
 }
 
-// QStringList& operator<< ( QStringList stringList, const SymbolList& s )
-// {
-//   
-// }
-// 
 QList<Symbol> operator<<(SymbolList& lh, const SymbolList& rh)
 {
   QList<Symbol> s(lh.toSymbols());
   s.append(rh.toSymbols());
   return s;
 }
-
 
 SymbolList operator<< ( const SymbolList& symbolList, const QString& stringSymbols )
 {
@@ -1029,7 +761,7 @@ QDebug operator<< ( QDebug debugString, const SymbolList& s )
 
 bool SymbolList::LinkedList::parseSelf()
 {
-  //qDebug("SymbolList parseSelf() : start");
+  //qDebug("SymbolList::LinkedList parseSelf() : start");
   if (m_symbolParser->isValid() && !m_validSymbols) {
     iterator first(getBegin());
     iterator last(getEnd());
@@ -1051,7 +783,7 @@ bool SymbolList::LinkedList::parseSelf()
     }    
     m_validSymbols = true;
   }
-  //qDebug("SymbolList parseSelf() : end");
+  //qDebug("SymbolList::LinkedList parseSelf() : end");
   return m_validSymbols;
 }
 

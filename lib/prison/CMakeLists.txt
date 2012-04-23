@@ -1,8 +1,6 @@
 include_directories ("${PROJECT_SOURCE_DIR}/cellblock")
 add_subdirectory(cellblock)
 
-# include_directories ("${PROJECT_SOURCE_DIR}/test")
-# add_subdirectory(test)
 
 include_directories(${QRENCODE_INCLUDE_DIR} ${DMTX_INCLUDE_DIR})
 SET(    prison_SRC
@@ -20,7 +18,7 @@ SET(    prison_SRC
         )
 
 add_library(prison SHARED ${prison_SRC} ) 
-target_link_libraries(prison product_engines base_engine  ${DMTX_LIBRARIES} ${QRENCODE_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
+target_link_libraries(prison product_engines base_engine symbol_table_engine ${DMTX_LIBRARIES} ${QRENCODE_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
 #  linear_engines
 set_target_properties(prison PROPERTIES VERSION "0.0.0" SOVERSION "0" LINK_INTERFACE_LIBRARIES "" DEFINE_SYMBOL BUILDING_PRISON)
 

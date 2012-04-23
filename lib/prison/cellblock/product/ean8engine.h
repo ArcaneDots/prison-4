@@ -57,7 +57,7 @@ public:
    * @param flag contruction hints; Defaults to "Auto".
    **/
   void setBarcodeString(const QString &userBarcode, 
-		codeEngine::ConstructCodes flags = codeEngine::AutoProduct);
+		engineFlags::ConstructCodes flags = engineFlags::AutoProduct);
   /**
    * Set current barcode string
    * 
@@ -71,7 +71,7 @@ public:
    * 
    * @returns list of valid symbols
    */
-  QStringList getSymbolList() const;
+  SymbolList getSymbolList() const;
 //   /**
 //    * Attempt to get UPC-E version of the inputed product code
 //    */

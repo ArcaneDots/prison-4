@@ -26,11 +26,11 @@
 #include "../abstractbarcodeengine.h"
 #include "upceandefines_p.h"
 
-using namespace shared;
+using namespace barcodeEngine;
 namespace product 
 {
 
-class ProductEngine : public shared::AbstractBarcodeEngine
+class ProductEngine : public barcodeEngine::base
 {
 public:
   /**
@@ -55,13 +55,13 @@ public:
    */
   virtual ~ProductEngine();
   /**
-   * Set current barcode string
+   * Set current barcode string from user input
    *
    * @param userBarcode user string containing barcode symbols 
    * @param flag contruction hints; Defaults to "Auto".
    **/
   virtual void setBarcodeString(const QString &userBarcode, 
-		codeEngine::ConstructCodes flags = codeEngine::AutoProduct);
+		engineFlags::ConstructCodes flags = engineFlags::AutoProduct);
   /**
    * Set current barcode string
    * 
@@ -98,31 +98,31 @@ protected:
    * @param symbolSrc list containing all symbol
    * @param splitIndex[out] start of extended block 
    */
-  virtual QStringList processSymbolList(const QStringList& userSymbols);
+  virtual SymbolList processSymbolList(const SymbolList& userSymbols);
   /**
    * Calculate EAN checksum digit for a particular barcode
    *
    * Move right to left, starting with right-most value as odd, odd * 3, even * 1
-   * @sa AbstractBarcodeEngine::CommonChecksumOddEven()
+   * @sa AbstractBarengineFlags::CommonChecksumOddEven()
    *
    * @note (checksum value + check digit) & 10 == 0
    *
    * @param symbolArray array of symbol indexes
    * @return valid check digit
    */
-  virtual int calculateCheckValue(const shared::LookupIndexArray &symbolArray) const;
+  virtual int calculateCheckValue(const SymbolList &symbolArray) const;
   /**
    * Calculate Ean-2 check digit
    * 
    * @return check digit 
    */
-  int calculateEan2CheckDigit(const shared::LookupIndexArray &symbolArray) const;
+  int calculateEan2CheckDigit(const SymbolList &symbols) const;
   /**
    * Calculate Ean-5 check digit
    * 
    * @return check digit 
    */
-  int calculateEan5CheckDigit(const shared::LookupIndexArray &symbolArray) const;
+  int calculateEan5CheckDigit(const SymbolList &symbols) const;
   /**
    * Seperate digits/symbols into logical blocks based on encoded layout
    *
@@ -136,20 +136,20 @@ protected:
    * @param symbolSrc list containing all symbol
    * @param splitIndex 
    **/
-  virtual void formatSymbols(const QStringList& symbolSrc);
+  virtual void formatSymbols(const SymbolList& symbolSrc);
   /**
    * Format digits in the main block
    * 
    * UPC-A  format: [0][1-5][6-(10)][12-13|15]
    * @param mainBlock list of symbols
    */
-  virtual QStringList formatMainBlock(const QStringList &mainBlock) const;  
+  virtual QStringList formatMainBlock(const SymbolList &mainBlock) const;  
   /**
    * Format digits in the extended block (EAN-2/EAN-5)
    * 
    * @param extendedBlock list of symbols
    */
-  QString formatExtendedBlock(const QStringList& extendedBlock) const;  
+  QString formatExtendedBlock(const SymbolList& extendedBlock) const;  
   /**
    * Encode complete number according to current barcode type
    *
@@ -158,7 +158,7 @@ protected:
    * @param symbolSrc full list of symbols
    * @param splitIndex index of the "end" of the first half
    */
-  virtual void encodeSymbols(const QStringList &symbolSrc); 
+  virtual void encodeSymbols(const SymbolList &symbolSrc); 
   /**
    * Encode complete number according to current barcode type
    * 
@@ -168,7 +168,7 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */ 
-  virtual QStringList encodeMainBlock(const QStringList &mainBlock) const; 
+  virtual QStringList encodeMainBlock(const SymbolList &mainBlock) const; 
   /**
    * Attempt to encode any remaining symbols as UPC SUPPLEMENTAL digits
    * 
@@ -180,7 +180,7 @@ protected:
    * @param extendedBlock list of symbols
    * @returns encoded version of passed symbol list 
    */
-  QStringList encodeExtendedBlock(const QStringList &extendedBlock) const;  
+  QStringList encodeExtendedBlock(const SymbolList &extendedBlock) const;  
   /**
    * Get productCode specific encoding pattern for the first block of symbols
    * 
@@ -218,7 +218,7 @@ protected:
   /**
    * Load all encoding patterns based on combo of system number (0-1) and check digit
    */
-  virtual void fillWidthEncodingList();   
+  virtual EncodingMap fillWidthEncodingList();   
   /**
    * Zero-based index of the product code's check digit
    * 
@@ -266,17 +266,9 @@ protected:
    */
   QStringList m_parity5WidthEncoding;    
   /**
-   * "Left-hand Odd" symbol encoding used by all product codes
+   * symbol encoding used by all product codes
    */
-  QStringList m_leftOddEncodingList;
-  /**
-   * "Left-hand Even" symbol encoding used by all product codes
-   */
-  QStringList m_leftEvenEncodingList;
-  /**
-   * "Right-hand" symbol encoding used by all product codes
-   */
-  QStringList m_rightEncodingList;
+  LookupTableEntry<QString> m_EncodingList;
 };
 };
 #endif // PRODUCTENGINE_H

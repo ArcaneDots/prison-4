@@ -48,22 +48,21 @@ public:
 	     int maxLength = upcA::MAX_LEN,
 	     int checkDigitOffset = upcA::CHECK_DIGIT_OFFSET,
 	     int blockSize = upcA::BLOCK_SIZE,
-	     upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__UPC_A);
- 
+	     upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__UPC_A); 
   /**
    * destructor
    */
   virtual ~UpcAEngine();
   /**
-   * Set current barcode string
+   * Set current barcode string from user input
    *
    * @param userBarcode user string containing barcode symbols 
    * @param flag contruction hints; Defaults to "Auto".
    **/
   void setBarcodeString(const QString &userBarcode, 
-		codeEngine::ConstructCodes flags = codeEngine::AutoProduct);
+		engineFlags::ConstructCodes flags = engineFlags::AutoProduct);
   /**
-   * Set current barcode string
+   * Set current barcode string from another productCode object
    * 
    * @note not tested
    *
@@ -77,7 +76,7 @@ public:
    * 
    * @returns product code or empty list in case conversion is not possible 
    */
-  virtual QStringList toUpcE();
+  virtual SymbolList toUpcE();
   /**
    * Attempt to get UPC-A version of the inputed product code
    * 
@@ -85,7 +84,7 @@ public:
    * 
    * @returns product code or empty list in case conversion is not possible
    */
-  virtual QStringList toUpcA();
+  virtual SymbolList toUpcA();
   /**
    * Attempt to get EAN-13 version of the inputed product code
    * 
@@ -93,7 +92,7 @@ public:
    * 
    * @returns product code or empty list in case conversion is not possible
    */
-  virtual QStringList toEan13();
+  virtual SymbolList toEan13();
   
 protected:
   /**
@@ -108,7 +107,7 @@ protected:
    * @param compressedUpc list of symbols, not including check digit
    * @param compressionMethod method used to compress the UPC-A code
    */
-  QStringList compressUpc(const QStringList &symbolList) const;
+  SymbolList compressUpc(const SymbolList &upcASymbols) const;
   /**
    * Expand the UPC-E barcode information into UPC-A format 
    *
@@ -121,7 +120,7 @@ protected:
    * @param compressedUpc list of symbols, not including check digit
    * @param compressionMethod method used to compress the UPC-A code
    */
-  QStringList expandUpc(const QStringList &compressedUpc) const;
+  SymbolList expandUpc(const SymbolList &compressedUpc) const;
 };
 };
 

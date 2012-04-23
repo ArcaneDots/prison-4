@@ -35,8 +35,8 @@ Ean5Engine::~Ean5Engine()
   // empty
 }
 
-int Ean5Engine::calculateCheckValue(const shared::LookupIndexArray& symbolArray) const
+int Ean5Engine::calculateCheckValue(const SymbolList& symbolArray) const
 {
-    return UpcAEngine::calculateEan5CheckDigit(symbolArray);
+  return UpcAEngine::calculateEan5CheckDigit(symbolArray);
 }
 

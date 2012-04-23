@@ -23,7 +23,7 @@
 
 #include "upcaengine.h"
 
-using namespace shared;
+using namespace barcodeEngine;
 
 namespace product 
 {
@@ -61,8 +61,7 @@ public:
    * @param symbolArray array of symbol indexes
    * @return valid check digit
    */
-  virtual int calculateCheckValue(
-    const LookupIndexArray &symbolArray) const;
+  virtual int calculateCheckValue(const SymbolList &symbols) const;
   /**
    * Attempt to get UPC-E version of the inputed product code
    * 
@@ -70,7 +69,7 @@ public:
    * 
    * @returns product code or empty list in case conversion is not possible
    */
-  virtual QStringList toUpcE() const;
+  virtual SymbolList toUpcE() const;
   /**
    * Attempt to get UPC-A version of the inputed product code
    * 
@@ -78,7 +77,7 @@ public:
    * 
    * @returns product code or empty list in case conversion is not possible
    */
-  virtual QStringList toUpcA() const;
+  virtual SymbolList toUpcA() const;
   /**
    * Attempt to get EAN-13 version of the inputed product code
    * 
@@ -86,7 +85,7 @@ public:
    * 
    * @returns product code or empty list in case conversion is not possible
    */
-  virtual QStringList toEan13() const;
+  virtual SymbolList toEan13() const;
 protected:
   /**
    * Seperate digits into logical blocks based on encoded layout
@@ -95,7 +94,7 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */
-  virtual QStringList formatMainBlock(const QStringList &mainBlock) const;    
+  virtual QStringList formatMainBlock(const SymbolList &mainBlock) const;    
   /**
    * Encode complete number according to current barcode type
    *
@@ -104,7 +103,7 @@ protected:
    * @param symbolSrc full list of symbols
    * @param splitIndex index of the "end" of the first half
    */
-  virtual void encodeSymbols(const QStringList &symbolSrc); 
+  virtual void encodeSymbols(const SymbolList &symbolSrc); 
   /**
    * Encode complete number according to current barcode type
    * 
@@ -114,11 +113,11 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */ 
-  virtual QStringList encodeMainBlock(const QStringList &mainBlock) const;   
+  virtual QStringList encodeMainBlock(const SymbolList &mainBlock) const;   
   /**
    * Load all encoding patterns based on combo of system number (0-1) and check digit
    */
-  virtual void fillWidthEncodingList();       
+  virtual StringTableEntry fillWidthEncodingList();       
   /**
    * system number "0" encoding list
    */

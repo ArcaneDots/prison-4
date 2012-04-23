@@ -50,7 +50,7 @@ public:
    * @param symbolArray array of symbol indexes
    * @return valid check digit
    */
-  virtual int calculateCheckValue(const shared::LookupIndexArray &symbolArray) const;
+  virtual int calculateCheckValue(const SymbolList &symbolArray) const;
    /**
    * Seperate digits into logical blocks based on encoded layout
    * 
@@ -59,7 +59,7 @@ public:
    * EAN-8  format:    [0-4][5-(8)][9-11|13]
    * EAN-13 format: [0][1-6][7-(12)][13-14|17] 
    */
-  virtual void formatSymbols(const QStringList& symbolSrc, int splitIndex);    
+  virtual void formatSymbols(const SymbolList& symbolSrc, int splitIndex);    
   /**
    * Encode complete number according to current barcode type
    * 
@@ -68,7 +68,7 @@ public:
    * EAN-8  format:    [0-4][5-(8)][9-11|13]
    * EAN-13 format: [-][1-6][7 - 12][13-14|17] 
    */ 
-  virtual void encodeSymbols(const QStringList& symbolSrc, int splitIndex);
+  virtual void encodeSymbols(const SymbolList& symbolSrc, int splitIndex);
     
 };
 };

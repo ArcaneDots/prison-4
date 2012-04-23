@@ -21,7 +21,7 @@
 #include "ean8engine.h"
 
 using namespace product;
-using namespace shared;
+using namespace barcodeEngine;
 
 Ean8Engine::Ean8Engine(const QString& defaultString, 
 		       int minLength, 
@@ -46,7 +46,7 @@ Ean8Engine::~Ean8Engine()
   qDebug("Ean8Engine destructor");
 }
 
-void Ean8Engine::setBarcodeString(const QString& userBarcode, codeEngine::ConstructCodes flags)
+void Ean8Engine::setBarcodeString(const QString& userBarcode, engineFlags::ConstructCodes flags)
 {
     product::ProductEngine::setBarcodeString(userBarcode, flags);
 }
@@ -55,30 +55,30 @@ void Ean8Engine::setBarcodeString(ProductEngine* ptrProductEngine)
 {  
   qDebug("Ean8Engine setBarcodeString(ptrProductEngine) : start");   
   if (ptrProductEngine == 0 || 
-    !ptrProductEngine->getStatusFlags().testFlag(codeEngine::OK)) {
+    !ptrProductEngine->getStatusFlags().testFlag(engineFlags::OK)) {
     qDebug("Ean8Engine setBarcodeString(ptrProductEngine) : bad source engine");   
-    m_isValid = codeEngine::UnknownError;
+    m_isValid = engineFlags::UnknownError;
     return;
   }
   Q_ASSERT(getProductCode() == upc_common::PS__EAN_8 && 
     ptrProductEngine->getProductCode() == getProductCode());
   initialize();
-  QStringList userSymbols(((Ean8Engine *)ptrProductEngine)->getSymbolList());
+  SymbolList userSymbols(((Ean8Engine *)ptrProductEngine)->getSymbolList());
   
   // reset members
-  m_isValid = codeEngine::OK; 
+  m_isValid = engineFlags::OK; 
   m_formatedSymbols.clear();
   m_encodedSymbols.clear();
   
   // -- assume input is valid --
   m_userSymbols = userSymbols;
-  m_userInputString = m_userSymbols.join("");
+  m_userInputString = m_userSymbols.toQStringList().join("");
   this->formatSymbols(userSymbols);  
   this->encodeSymbols(userSymbols);
   qDebug("Ean8Engine setBarcodeString(ptrProductEngine) : end");    
 }
 
-QStringList Ean8Engine::getSymbolList() const
+SymbolList Ean8Engine::getSymbolList() const
 {
   return m_userSymbols;
 }

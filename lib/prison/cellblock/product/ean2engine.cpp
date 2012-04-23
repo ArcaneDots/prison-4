@@ -48,13 +48,13 @@ QStringList Ean2Engine::processSymbolList(const QStringList &userSymbols)
 }
 
 
-int Ean2Engine::calculateCheckValue(const shared::LookupIndexArray& symbolArray) const
+int Ean2Engine::calculateCheckValue(const SymbolList& symbolArray) const
 {
   qDebug("Ean2Engine calculateCheckDigit()"); 
   return UpcAEngine::calculateEan2CheckDigit(symbolArray);
 }
 
-void Ean2Engine::formatSymbols(const QStringList &symbolSrc, int splitIndex)
+void Ean2Engine::formatSymbols(const SymbolList &symbolSrc, int splitIndex)
 {
   qDebug("Ean2Engine formatSymbols()"); 
   Q_ASSERT(upc_common::PS__EAN_2 == m_productCode);
@@ -62,7 +62,7 @@ void Ean2Engine::formatSymbols(const QStringList &symbolSrc, int splitIndex)
   //m_formatedSymbols << m_userSymbols.join("");
 }
 
-void Ean2Engine::encodeSymbols(const QStringList &symbolSrc, int splitIndex)
+void Ean2Engine::encodeSymbols(const SymbolList &symbolSrc, int splitIndex)
 {
   qDebug("Ean2Engine encodeSymbols()"); 
   Q_ASSERT(upc_common::PS__EAN_2 == m_productCode);

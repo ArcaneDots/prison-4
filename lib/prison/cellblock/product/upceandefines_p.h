@@ -27,7 +27,7 @@
 #ifndef UPC_EAN_DEFINES_H
 #define UPC_EAN_DEFINES_H
 
-#include "../shareddefines.h"
+//#include "./workshop/shareddefines.h"
 /**
  * values shared by all procduct codes; EAN-13, UPC-A, UPC-E, EAN-8
  * 

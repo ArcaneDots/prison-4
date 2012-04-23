@@ -40,7 +40,7 @@ namespace prison {
  * based on seperate database of values.
  * As well as supplemental(EAN-2,EAN-5) code as defined in the EAN-13 standard.  
  */
-class PRISON_EXPORT Ean8Barcode : public Ean13Barcode//public prison::AbstractBarcode
+class PRISON_EXPORT Ean8Barcode : public prison::AbstractBarcode//public Ean13Barcode
 {
   public:
      /**

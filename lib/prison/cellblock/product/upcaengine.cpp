@@ -44,23 +44,23 @@ UpcAEngine::~UpcAEngine()
   qDebug("UpcAEngine destructor");
 }
 
-void UpcAEngine::setBarcodeString(const QString& userBarcode, codeEngine::ConstructCodes flags)
+void UpcAEngine::setBarcodeString(const QString& userBarcode, engineFlags::ConstructCodes flags)
 {
-    product::ProductEngine::setBarcodeString(userBarcode, flags);
+  product::ProductEngine::setBarcodeString(userBarcode, flags);
 }
 
 void UpcAEngine::setBarcodeString(ProductEngine* ptrProductEngine)
 {
   qDebug("UpcAEngine setBarcodeString(ptrProductEngine) : start");  
   if (ptrProductEngine == 0 || 
-    !ptrProductEngine->getStatusFlags().testFlag(codeEngine::OK)) {
+    !ptrProductEngine->getStatusFlags().testFlag(engineFlags::OK)) {
   qDebug("UpcAEngine setBarcodeString(ptrProductEngine) : bad source");  
-    m_isValid = codeEngine::UnknownError;
+    m_isValid = engineFlags::UnknownError;
     return;
   }
   
-  initialize();
-  QStringList userSymbols;
+  //initialize();
+  SymbolList userSymbols(getBarcodeSetInfo());
   switch(getProductCode()) {
     case upc_common::PS__EAN_13:
       userSymbols = ((UpcAEngine *)ptrProductEngine)->toEan13();
@@ -77,100 +77,112 @@ void UpcAEngine::setBarcodeString(ProductEngine* ptrProductEngine)
   }
   
   // reset members
-  m_isValid = codeEngine::OK; 
+  m_isValid = engineFlags::OK; 
   m_formatedSymbols.clear();
   m_encodedSymbols.clear();
   
   // -- assume input is valid --
-  if (!userSymbols.isEmpty()) {
+  if (!userSymbols.empty()) {
     m_userSymbols = userSymbols;
-    m_userInputString = m_userSymbols.join("");
+    m_userInputString = m_userSymbols.toQStringList().join("");
     this->formatSymbols(userSymbols);  
     this->encodeSymbols(userSymbols);
   }
   qDebug("UpcAEngine setBarcodeString(ptrProductEngine) : end");    
 }
 
-QStringList UpcAEngine::toEan13()
+SymbolList UpcAEngine::toEan13()
 {
   qDebug("UpcAEngine toEan13");
-  QStringList localEan13;
-  localEan13 << "0" << m_userSymbols;
+  SymbolList localEan13(m_userSymbols);
+  localEan13.push_front("0");
+  //localEan13 << "0" << m_userSymbols;
   return localEan13;
 }
 
-QStringList UpcAEngine::toUpcA()
+SymbolList UpcAEngine::toUpcA()
 {
   qDebug("UpcAEngine toUpcA");
   return m_userSymbols;
 }
 
-QStringList UpcAEngine::toUpcE()
+SymbolList UpcAEngine::toUpcE()
 {
   qDebug("UpcAEngine toUpcE");
   return compressUpc(m_userSymbols);
 }
 
-QStringList UpcAEngine::compressUpc(const QStringList& symbolList) const
+SymbolList UpcAEngine::compressUpc(const SymbolList& upcASymbols) const
 {
   qDebug("UpcAEngine toUpcE() : start");
-  qDebug() << "UpcAEngine toUpcE() : input " << symbolList;
-  qDebug() << "UpcAEngine toUpcE() : input size " << symbolList.size();
-  Q_ASSERT(symbolList.size() >= upcA::MIN && symbolList.size() <= upcA::MAX);
+  qDebug() << "UpcAEngine toUpcE() : input " << upcASymbols;
+  qDebug() << "UpcAEngine toUpcE() : input size " << upcASymbols.size();
+  Q_ASSERT(upcASymbols.size() >= upcA::MIN && upcASymbols.size() <= upcA::MAX);
   
   // 1. manf dd[0-2]00, prod code 00ddd -> mmppp[0-2]
   // 2. manf dd[3-9]00, prod code 000dd -> mmmpp3
   // 3. manf dddd0, prod code 0000d 	-> mmmmp4
   // 4. manf ddddd, prod code 0000[5-9] -> mmmmm[5-9] 
   
-  QStringList localUpcE;
+  SymbolList localUpcE(upcASymbols.clone());
+  SymbolList nonZeroCode(upcASymbols.clone());
+  //localUpcE.clear();
   // strip off number system and check digit symbols
   
   // -- compress to a UPC-E if possible --
   QRegExp upceMatch("[0|1](\\d{1,5})0{4,5}(\\d{1,3})\\d)");
-  if (m_isValid.testFlag(codeEngine::OK) &&
-    upceMatch.exactMatch(symbolList.join(""))) {    
-    QStringList manf(upceMatch.capturedTexts().at(0));
-    QStringList product(upceMatch.capturedTexts().at(1));
-    qDebug() << "UpcAEngine toUpcE() : manufactor code: " << manf;   
-    qDebug() << "UpcAEngine toUpcE() : product Code: " << product;   
+  if (m_isValid.testFlag(engineFlags::OK) &&
+    upceMatch.exactMatch(upcASymbols.toQStringList().join(""))) {   
+    nonZeroCode.manf() = upceMatch.capturedTexts().at(0);
+    nonZeroCode.product() = upceMatch.capturedTexts().at(1);
+//     QString manf(upceMatch.capturedTexts().at(0));
+//     QString product(upceMatch.capturedTexts().at(1));
+    qDebug() << "UpcAEngine toUpcE() : manufactor code: " << nonZeroCode.manf();   
+    qDebug() << "UpcAEngine toUpcE() : product Code: " << nonZeroCode.product();   
   
-    if (manf.size() == 3 && product.size() == 3 && getSymbolIndex(manf.back()) < 3) {
+    if (nonZeroCode.manf().size() == 3 && 
+      nonZeroCode.product().size() == 3 && 
+      nonZeroCode.manf().back().getIndex() < 3) {
     qDebug("UpcAEngine toUpcE(): 1. manf dd[0-2]00, prod code 00ddd -> mmppp[0-2]");
-	localUpcE << manf.mid(0,2); 
-	localUpcE << product << manf.back();	  
-    } else if (manf.size() == 4 && product.size() == 2 && getSymbolIndex(manf.back()) == 3) {
+	localUpcE += nonZeroCode.manf().mid(0,2); 
+	localUpcE += nonZeroCode.product() + nonZeroCode.manf().back();	  
+    } else if (nonZeroCode.manf().size() == 4 && 
+      nonZeroCode.product().size() == 2 && 
+      nonZeroCode.manf().back().getIndex() == 3) {
       qDebug("UpcAEngine toUpcE(): 2. manf ddd300, prod code 000dd -> mmmpp3"); 
-	localUpcE << manf.mid(0,3); 
-	localUpcE << product << manf.back();	  
-    } else if (manf.size() == 4 && product.size() == 1 && getSymbolIndex(product.back()) < 5) {
+	localUpcE << nonZeroCode.manf().mid(0,3); 
+	localUpcE << nonZeroCode.product() + nonZeroCode.manf().back();	  
+    } else if (nonZeroCode.manf().size() == 4 && 
+      nonZeroCode.product().size() == 1 && 
+      nonZeroCode.product().back().getIndex() < 5) {
     qDebug("UpcAEngine toUpcE(): 3. manf dddd0, prod code 0000d -> mmmmp4");
-	localUpcE << manf; 
-	localUpcE << product << "4";	  
-    } else if (manf.size() == 5 && product.size() == 1) {
+	localUpcE << nonZeroCode.manf(); 
+	localUpcE << nonZeroCode.product() + "4";	  
+    } else if (nonZeroCode.manf().size() == 5 && 
+      nonZeroCode.product().size() == 1) {
       qDebug("UpcAEngine toUpcE(): 4. manf ddddd, prod code 0000[5-9] -> mmmmm[5-9]");
-	localUpcE << manf; 
-	localUpcE << product;	  
+	localUpcE << nonZeroCode.manf(); 
+	localUpcE << nonZeroCode.product();	  
     } else {
       qDebug("UpcAEngine toUpcE() : unknown compression method");
       localUpcE.clear();
     }    
    
-    qDebug() << "UpcAEngine toUpcE():" << manf << " " << product << " -> " << localUpcE;
+    qDebug() << "UpcAEngine toUpcE():" << nonZeroCode.manf() << " " << nonZeroCode.product() << " -> " << localUpcE;
     qDebug() << "UpcAEngine toUpcE(): to UPC-E: " <<  localUpcE;    
-    Q_ASSERT(localUpcE.isEmpty() ||
+    Q_ASSERT(localUpcE.empty() ||
       localUpcE.size() >= upcE::MIN && localUpcE.size() <= upcE::MAX);
     qDebug("UpcAEngine expandUpc() : end");
   }
   return localUpcE;
 }
 
-QStringList UpcAEngine::expandUpc(const QStringList& symbolList) const 
+SymbolList UpcAEngine::expandUpc(const SymbolList& upcESymbols) const 
 {
   qDebug("UpcEEngine expandUpc() : start");
-  Q_ASSERT(symbolList.size() >= upcE::MIN && symbolList.size() <= upcE::MAX);
-  qDebug() << "UpcEEngine expandUpc() : input " << symbolList;
-  qDebug() << "UpcEEngine expandUpc() : input size " << symbolList.size();
+  Q_ASSERT(upcESymbols.size() >= upcE::MIN && upcESymbols.size() <= upcE::MAX);
+  qDebug() << "UpcEEngine expandUpc() : input " << upcESymbols;
+  qDebug() << "UpcEEngine expandUpc() : input size " << upcESymbols.size();
   
   // 1. manf dd[0-2]00, prod code 00ddd -> mmppp[0-2]
   // 2. manf dd[3-9]00, prod code 000dd -> mmmpp3
@@ -178,35 +190,36 @@ QStringList UpcAEngine::expandUpc(const QStringList& symbolList) const
   // 4. manf ddddd, prod code 0000[5-9] -> mmmmm[5-9] 
   
   // -- validate by expanding -> UPC-A --
-  QStringList expandedUpcA; 
+  SymbolList expandedUpcA(upcESymbols);
+  expandedUpcA.clear();
   
-  QString compressionSymbol = symbolList.at(upcE::COMPRESS_METHOD_INDEX);
-  int compressionMethod = getSymbolIndex(compressionSymbol);
+  Symbol compressionSymbol = upcESymbols.at(upcE::COMPRESS_METHOD_INDEX);
+  int compressionMethod = compressionSymbol.getIndex();
   qDebug() << "UpcEEngine expandUpc() : Compression Symbol: " << compressionSymbol;
   qDebug() << "UpcEEngine expandUpc() : Compression method: " << compressionMethod;
 
-  expandedUpcA << symbolList.at(upc_common::NUMBER_SYSTEM_INDEX);
-  QStringList compressedUpc(symbolList.mid(1, 6));
+  expandedUpcA << upcESymbols.at(upc_common::NUMBER_SYSTEM_INDEX);
+  SymbolList compressedUpc(upcESymbols.mid(1, 6));
   qDebug() << "UpcEEngine expandUpc() : compressedUpc: " << compressedUpc;
-  QStringList manf;
-  QStringList product;
+  SymbolList manf(compressedUpc.clone());
+  SymbolList product(compressedUpc.clone());
   switch (compressionMethod) {
     case 0:
     case 1:
     case 2:
       qDebug("UpcEEngine expandUpc(): 1. mmppp[0-2] -> manf dd[0-2]00, prod code 00ddd");
-      manf << compressedUpc.mid(0, 2) << compressionSymbol << "0" << "0";
-      product << "0" << "0"<< compressedUpc.mid(2,3);
+      manf += compressedUpc.mid(0, 2) + compressionSymbol + "0" + "0";
+      product += "00" + compressedUpc.mid(2,3);
       break;
     case 3:
       qDebug("UpcEEngine expandUpc(): 2. mmmpp3 -> manf ddd30, prod code 000dd"); 
-      manf << compressedUpc.mid(0, 3) << compressionSymbol << "0";
-      product << "0" << "0" << "0" << compressedUpc.mid(3, 2);
+      manf << compressedUpc.mid(0, 3) + compressionSymbol + "0";
+      product += "000" + compressedUpc.mid(3, 2);
       break;
     case 4:
       qDebug("UpcEEngine expandUpc(): 3. mmmmp4 -> manf dddd0, prod code 0000d");
-      manf << compressedUpc.mid(0, 4) << "0";
-      product << "0" << "0" << "0" << "0"<< compressedUpc.mid(4,1);
+      manf += compressedUpc.mid(0, 4) + "0";
+      product += "0000" + compressedUpc.mid(4,1);
       break;
     case 5:
     case 6:
@@ -215,7 +228,7 @@ QStringList UpcAEngine::expandUpc(const QStringList& symbolList) const
     case 9:
       qDebug("UpcEEngine expandUpc(): 4. mmmmm[5-9] -> manf ddddd, prod code 0000[5-9]"); 
       manf << compressedUpc.mid(0, 5);
-      product << "0" << "0" << "0" << "0"<< compressionSymbol;
+      product += "0000" + compressionSymbol;
       break;
     default:
       // should never reach this case; UPC-E -> UPC-A should alway be sucessful 

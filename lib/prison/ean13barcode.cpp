@@ -77,7 +77,7 @@ QImage Ean13Barcode::toImage(const QSizeF& size)
 { 
   qDebug() << "Ean13Barcode::toImage() : data " << data();
   if (!data().isEmpty()) {
-    d->setBarcodeString(data(), codeEngine::AutoProduct);
+    d->setBarcodeString(data(), engineFlags::AutoProduct);
   }
   QSizeF currentMinimumSize(minimumSize());
   QImage image(d->getImage(size, currentMinimumSize, 

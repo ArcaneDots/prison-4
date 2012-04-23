@@ -20,72 +20,72 @@
 #include <numeric>
 #include "abstractbarcodeengine.h"
 
-using namespace codeEngine;
-using namespace shared;
+using namespace engineFlags;
+using namespace barcodeEngine;
 
 /**
  * @cond PRIVATE
  */
-class AbstractBarcodeEngine::Private 
-{
- public:
-    Private();
-    virtual ~Private();
-    
-    /**
-     * collection of regular expressions used to find each multi-character symbols
-     */
-    mutable shared::RegexpCollection m_regexpCollection;
-    /**
-     * Pointer to symbol index look-up table containing all valid symbols 
-     * 
-     * This points to actual symbol list so they can be accessed via a const getter functions. 
-     * It also allows the same set getter functions to support barcodes with single or 
-     * multiple symbol sets (i.e. Code128) without having to rewritten in the subclass.
-     * @note The getter functions will fail if the pointer is "null".
-     * @note A sub-classed barcode with multiple symbol sets will have to define a 
-     * @note function that moves the pointer between symbol sets. 
-     */
-    QStringList * m_symbolLookup; 
-    /**
-     * Pointer to an indexed look-up table containing all valid symbol encoding 
-     * 
-     * Using a pointer actual symbol list to be accessed via a const getter functions. 
-     * This allows the same set getter functions to support barcodes with single or 
-     * multiple symbol sets (i.e. Code128) without having to rewritten in the subclass.
-     * 
-     * @note A sub-classed barcode with multiple symbol sets has to define a function
-     * @note that switches the pointer between symbol sets. 
-     * @note The getter functions will fail if the pointer is "null".
-     */
-    QStringList * m_encodingLookup;
-    /**
-     * actual list of symbols
-     * 
-     * @sa define local copy in a class that uses a different symbol set and 
-     * @sa point m_symbolLookup so its subclasses can perform symbol conversions. 
-     */
-    QStringList m_localSymbolLookup;     
-};
+// class AbstractBarengineFlags::Private 
+// {
+//  public:
+//     Private();
+//     virtual ~Private();
+//     
+//   
+//     BarcodeSetInfo m_barcodeSymbolInfo;
+//     /**
+//      * collection of regular expressions used to find each multi-character symbols
+//      */
+//     mutable shared::RegexpCollection m_regexpCollection;
+//     /**
+//      * Pointer to symbol index look-up table containing all valid symbols 
+//      * 
+//      * This points to actual symbol list so they can be accessed via a const getter functions. 
+//      * It also allows the same set getter functions to support barcodes with single or 
+//      * multiple symbol sets (i.e. Code128) without having to rewritten in the subclass.
+//      * @note The getter functions will fail if the pointer is "null".
+//      * @note A sub-classed barcode with multiple symbol sets will have to define a 
+//      * @note function that moves the pointer between symbol sets. 
+//      */
+//     QStringList * m_symbolLookup; 
+//     /**
+//      * Pointer to an indexed look-up table containing all valid symbol encoding 
+//      * 
+//      * Using a pointer actual symbol list to be accessed via a const getter functions. 
+//      * This allows the same set getter functions to support barcodes with single or 
+//      * multiple symbol sets (i.e. Code128) without having to rewritten in the subclass.
+//      * 
+//      * @note A sub-classed barcode with multiple symbol sets has to define a function
+//      * @note that switches the pointer between symbol sets. 
+//      * @note The getter functions will fail if the pointer is "null".
+//      */
+//     QStringList * m_encodingLookup;
+//     /**
+//      * actual list of symbols
+//      * 
+//      * @sa define local copy in a class that uses a different symbol set and 
+//      * @sa point m_symbolLookup so its subclasses can perform symbol conversions. 
+//      */
+//     QStringList m_localSymbolLookup;     
+//};
 
 /**
  * @endcond
  */
 
-shared::AbstractBarcodeEngine::Private::Private() :
-  m_symbolLookup(0),
-  m_encodingLookup(0),
-  m_localSymbolLookup()
-{
+// barcodeEngine::base::Private::Private() :
+//   m_barcodeSymbolInfo(0)
+// {
+// 
+// }
+// 
+// barcodeEngine::base::Private::~Private()
+// {
+//   // empty
+// }
 
-}
-
-shared::AbstractBarcodeEngine::Private::~Private()
-{
-  // empty
-}
-
-AbstractBarcodeEngine::AbstractBarcodeEngine(const QString &defaultString,
+barcodeEngine::base::base(const QString &defaultString,
 			  int minLength, 
 			  int maxLength,
 			  bool multiCharSymbols,
@@ -104,75 +104,73 @@ AbstractBarcodeEngine::AbstractBarcodeEngine(const QString &defaultString,
 	m_formatedSymbols(),
 	m_encodedSymbols(),
 	m_barPositions(),
-	m_isValid(codeEngine::UnknownError),
+	m_isValid(engineFlags::UnknownError),
 	m_constructionFlags(),
-	d(new AbstractBarcodeEngine::Private)
+	m_barcodeSymbolInfo()
+	//d(new AbstractBarengineFlags::Private)
 {
-  qDebug("AbstractBarcodeEngine constructor");
-  initialize();
+  qDebug("AbstractBarengineFlags constructor");
+  //initialize();
 }
 
-AbstractBarcodeEngine::~AbstractBarcodeEngine()
+barcodeEngine::base::~base()
 {
-  qDebug("AbstractBarcodeEngine destructor");
-  delete d;
+  qDebug("AbstractBarengineFlags destructor");
+  //delete d;
 }
 
-void AbstractBarcodeEngine::initialize()
+void barcodeEngine::base::initialize()
 {
-  qDebug("AbstractBarcodeEngine initialize");
+  qDebug("AbstractBarengineFlags initialize()");
   // add symbol sets and thier encodings
-  fillSymbolList();
+  //fillSymbolList();
 }
 
 
-void AbstractBarcodeEngine::setBarcodeString(const QString& userBarcode, 
-					    codeEngine::ConstructCodes flags)
+void barcodeEngine::base::setBarcodeString(const QString& userBarcode, 
+					    engineFlags::ConstructCodes flags)
 {
-  qDebug("AbstractBarcodeEngine setBarcodeString() : start");
+  qDebug("AbstractBarengineFlags setBarcodeString() : start");
   
   // verify that the symbol related shared pointers actually initialized 
-  //initialize();  
-  Q_ASSERT(d->m_symbolLookup != 0);
-  Q_ASSERT(d->m_encodingLookup != 0);   
+  Q_ASSERT(m_barcodeSymbolInfo.constData()->isValid());
   // ignore the identical input  
   if (userBarcode == m_userInputString) {
     return;
   }  
   // reset failure code and output variables
   m_constructionFlags = flags;
-  m_isValid = codeEngine::OK; 
+  m_isValid = engineFlags::OK; 
   m_formatedSymbols.clear();
   m_encodedSymbols.clear();  
   // save user input for later comparsion
   m_userInputString = userBarcode;
-  QStringList userSymbols;  
   // parse string into list of text symbols and validate
-  userSymbols = parseSymbolString(userBarcode);    
+  SymbolList userSymbols(getBarcodeSetInfo(), userBarcode);    
   // basic validation
   qDebug() << "expected minLength = " << m_minLength;
   qDebug() << "expected maxLength = " << m_maxLength;
   qDebug() << "expected internal check digit = " << m_internalCheckDigit;
   
-  if (!userSymbols.isEmpty()) {
+  if (!userSymbols.empty()) {
     if ((userSymbols.size() < m_minLength) ) {
-      m_isValid |= codeEngine::LengthOutOfRange;
+      m_isValid |= engineFlags::LengthOutOfRange;
     } 
     // may not have a maximun length
     if (m_maxLength != NOT_FOUND && userSymbols.size() > m_maxLength) {      
-      m_isValid |= codeEngine::LengthOutOfRange;
+      m_isValid |= engineFlags::LengthOutOfRange;
     }
   } else {
-    m_isValid |= codeEngine::MissingInput;
+    m_isValid |= engineFlags::MissingInput;
   }
   // subclass specific symbol validation/processing  
-  if (m_isValid.testFlag(codeEngine::OK)) {
-    qDebug("AbstractBarcodeEngine setBarcodeString() : processing user symbols");
+  if (m_isValid.testFlag(engineFlags::OK)) {
+    qDebug("AbstractBarengineFlags setBarcodeString() : processing user symbols");
     userSymbols = this->processSymbolList(userSymbols);
   } 
   // switch to default value in case user's input fails in processSymbolList() 
-  if (!m_isValid.testFlag(codeEngine::OK)) {
-    qDebug("AbstractBarcodeEngine setBarcodeString() : revert to default");
+  if (!m_isValid.testFlag(engineFlags::OK)) {
+    qDebug("AbstractBarengineFlags setBarcodeString() : revert to default");
     userSymbols = m_defaultString.split(" ");
     userSymbols = this->processSymbolList(userSymbols);
   }  
@@ -184,180 +182,165 @@ void AbstractBarcodeEngine::setBarcodeString(const QString& userBarcode,
   }
   this->formatSymbols(userSymbols);  
   this->encodeSymbols(userSymbols);  
-  qDebug("AbstractBarcodeEngine setBarcodeString() : end");
+  qDebug("AbstractBarengineFlags setBarcodeString() : end");
 }
 
-QStringList AbstractBarcodeEngine::parseSymbolString(const QString& symbolString) const
-{ 
-  qDebug("AbstractBarcodeEngine parseSymbolString() : start");
-  // empty argument  
-  if (symbolString.isEmpty()) {
-    qDebug("AbstractBarcodeEngine parseSymbolString() : empty");
-    return QStringList();
-  }  
-  qDebug("AbstractBarcodeEngine parseSymbolString() : not empty");
-  // verify whether expecting and defined multi-Charactor Symbol regexp patterns
-  Q_ASSERT_X(m_multiCharSymbols == !d->m_regexpCollection.empty(),
-	     "Conflicted mult-charactor symbols settings",
-	     "Inconsistent mult-charactor symbols settings");  
-  // initialize the colection of regexp patterns and their starting indexes 
-  if (!d->m_regexpCollection.empty()) {
-    shared::RegexpCollection::const_iterator currentRegExpItr = 
-      d->m_regexpCollection.begin();
-      
-    while(currentRegExpItr != d->m_regexpCollection.end()){    
-	currentRegExpItr->setSourceString(symbolString);
-	currentRegExpItr++;
-    }
-    std::sort(d->m_regexpCollection.begin(), d->m_regexpCollection.end());
-  }
-  qDebug("AbstractBarcodeEngine parseSymbolString() : start parsing");
-  // step through input string
-  QStringList userSymbolsList;  
-  for (int userIndex = 0; userIndex < symbolString.size(); ) {      
-    if (!d->m_regexpCollection.empty() && 
-      d->m_regexpCollection.begin()->isValid()) { 
-      userSymbolsList << d->m_regexpCollection.begin()->getMatchingString();   
-      userIndex += userSymbolsList.back().size();
-      d->m_regexpCollection.begin()->nextMatch();
+// QStringList AbstractBarengineFlags::parseSymbolString(const QString& symbolString) const
+// { 
+//   qDebug("AbstractBarengineFlags parseSymbolString() : start");
+//   // empty argument  
+//   if (symbolString.isEmpty()) {
+//     qDebug("AbstractBarengineFlags parseSymbolString() : empty");
+//     return QStringList();
+//   }  
+//   qDebug("AbstractBarengineFlags parseSymbolString() : not empty");
+//   // verify whether expecting and defined multi-Charactor Symbol regexp patterns
+//   Q_ASSERT_X(m_multiCharSymbols == !d->m_regexpCollection.empty(),
+// 	     "Conflicted mult-charactor symbols settings",
+// 	     "Inconsistent mult-charactor symbols settings");  
+//   // initialize the colection of regexp patterns and their starting indexes 
+//   if (!d->m_regexpCollection.empty()) {
+//     shared::RegexpCollection::const_iterator currentRegExpItr = 
+//       d->m_regexpCollection.begin();
+//       
+//     while(currentRegExpItr != d->m_regexpCollection.end()){    
+// 	currentRegExpItr->setSourceString(symbolString);
+// 	currentRegExpItr++;
+//     }
+//     std::sort(d->m_regexpCollection.begin(), d->m_regexpCollection.end());
+//   }
+//   qDebug("AbstractBarengineFlags parseSymbolString() : start parsing");
+//   // step through input string
+//   QStringList userSymbolsList;  
+//   for (int userIndex = 0; userIndex < symbolString.size(); ) {      
+//     if (!d->m_regexpCollection.empty() && 
+//       d->m_regexpCollection.begin()->isValid()) { 
+//       userSymbolsList << d->m_regexpCollection.begin()->getMatchingString();   
+//       userIndex += userSymbolsList.back().size();
+//       d->m_regexpCollection.begin()->nextMatch();
+// 
+//       //  resort collection so closest matching symbol is first
+//       std::sort(d->m_regexpCollection.begin(), d->m_regexpCollection.end());  
+//     } 
+//     else {
+//       userSymbolsList << symbolString.at(userIndex++);
+//     }
+//     if (getSymbolIndex(userSymbolsList.back()) == NOT_FOUND) {
+//       qDebug("AbstractBarengineFlags parseSymbolString() : unknown symbol");
+//       qDebug() << "removing : " << userSymbolsList.back();
+//       userSymbolsList.pop_back();
+//     }
+//   } // while    
+// 
+//   if (userSymbolsList.isEmpty()) {
+//     qDebug("AbstractBarengineFlags parseSymbolString() : no valid symbols");
+//     m_isValid |= engineFlags::UnknownSymbols;
+//   }
+//   qDebug("AbstractBarengineFlags parseSymbolString() : end");
+//   return userSymbolsList;
+// }
 
-      //  resort collection so closest matching symbol is first
-      std::sort(d->m_regexpCollection.begin(), d->m_regexpCollection.end());  
-    } 
-    else {
-      userSymbolsList << symbolString.at(userIndex++);
-    }
-    if (getSymbolIndex(userSymbolsList.back()) == NOT_FOUND) {
-      qDebug("AbstractBarcodeEngine parseSymbolString() : unknown symbol");
-      qDebug() << "removing : " << userSymbolsList.back();
-      userSymbolsList.pop_back();
-    }
-  } // while    
-
-  if (userSymbolsList.isEmpty()) {
-    qDebug("AbstractBarcodeEngine parseSymbolString() : no valid symbols");
-    m_isValid |= codeEngine::UnknownSymbols;
-  }
-  qDebug("AbstractBarcodeEngine parseSymbolString() : end");
-  return userSymbolsList;
-}
-
-QStringList AbstractBarcodeEngine::processSymbolList(const QStringList &symbolsList, 
-						     int &firstBlockSize)
+SymbolList barcodeEngine::base::processSymbolList(const SymbolList &inputSymbols)/*, 
+						     int &firstBlockSize)*/
 {
-  qDebug("AbstractBarcodeEngine processSymbolList() : start");  
+  qDebug("AbstractBarengineFlags processSymbolList() : start");  
   // assumes check digit is at end of symbol "stream"
   Q_ASSERT(m_internalCheckDigit == false);
   
   // check digit are at the end of ths list
-  QStringList inputSymbols(symbolsList);
-//   int numberCheckDigitsFound = 0;  
-   = NOT_FOUND;
-  shared::LookupIndexArray symbolIndexes(
-    this->convertSymbolsToIndexes(symbolsList));
-  shared::LookupIndexArray calcSymbolIndexes;  
+  SymbolList parsedSymbols(inputSymbols);
+  SymbolList calcSymbolIndexes(parsedSymbols.clone()); 
+  std::reverse_copy(parsedSymbols.begin(), 
+                     parsedSymbols.begin()+= (parsedSymbols.size() - 1), 
+                      std::back_inserter<SymbolList>(calcSymbolIndexes));
   // one check symbol
   Q_ASSERT(m_maxCheckDigits == 1 && m_requiredCheckDigits == m_maxCheckDigits);
-//   // start at second to last index
-//   shared::LookupIndexArray::reverse_iterator itrCheckdigit = symbolIndexes.rbegin();
-//   // get next list of symbol indexes minus the possible check digit value
-  std::copy_backward(symbolIndexes.begin(), symbolIndexes.back() - 1, 
-		     std::back_inserter(calcSymbolIndexes));
-  //(itrCheckdigit - 1, symbolIndexes.rend(), 
+  
   int foundCheckValue = this->calculateCheckValue(calcSymbolIndexes);
   
-  if (foundCheckValue == NOT_FOUND || foundCheckValue != inputSymbols.back()) {
-    QString foundCheckSymbol (getSymbolAtIndex(foundCheckValue));
-    if (m_constructionFlags.testFlag(codeEngine::AddCheckDigits)) {
-      inputSymbols.append(foundCheckSymbol);
-    } else if (m_constructionFlags.testFlag(codeEngine::UpdateCheckDigit)){
-      inputSymbols.back() = foundCheckSymbol;
+  // special case: handle extend symbol ??
+  if (foundCheckValue == NOT_FOUND || 
+      foundCheckValue != parsedSymbols.back().getIndex()) {
+    Symbol foundCheckSymbol(getCheckSymbol(foundCheckValue));
+    if (m_constructionFlags.testFlag(engineFlags::AddCheckDigits)) {
+      parsedSymbols << foundCheckSymbol;
+    } else if (m_constructionFlags.testFlag(engineFlags::UpdateCheckDigit)){
+      parsedSymbols.pop_back();
+      parsedSymbols << foundCheckSymbol;
     } else {
-      inputSymbols.clear();
-      m_isValid != codeEngine::InvalidCheckDigits;
+      parsedSymbols.clear();
+      m_isValid != engineFlags::InvalidCheckDigits;
     }
   }    
-//   while (itrCheckdigit != symbolIndexes.rend() && 
-//     numberCheckDigitsFound < m_maxCheckDigits) { 
-//       std::back_inserter(calcSymbolIndexes));
-//     if (*(itrCheckdigit) != this->calculateCheckValue(calcSymbolIndexes)) {
-//       break;
-//     }
-//     calcSymbolIndexes.clear();
-//     numberCheckDigitsFound++;
-//     itrCheckdigit++;
-//   }  
-//   m_isValid |= (numberCheckDigitsFound < m_requiredCheckDigits) ?
-//      codeEngine::MissingRequiredCheckDigits : codeEngine::OK;
-  qDebug("AbstractBarcodeEngine processSymbolList() : end");
-  return symbolsList;
+  qDebug("AbstractBarengineFlags processSymbolList() : end");
+  return inputSymbols;
 }
 
 
-int AbstractBarcodeEngine::calculateCheckValue(const LookupIndexArray &symbolArray) const
+int base::calculateCheckValue(const SymbolList &inputSymbols) const
 {
-  // do not use this function for product codes
-  qDebug("AbstractBarcodeEngine calculateCheckDigit() : start");
+  // check value must be at the far right of the barcode; do not use this function for product codes
+  qDebug("AbstractBarengineFlags calculateCheckDigit() : start");
   Q_ASSERT(m_internalCheckDigit == false);  
-  qDebug("AbstractBarcodeEngine calculateCheckDigit() : end");
-  
+  qDebug("AbstractBarengineFlags calculateCheckDigit() : end");
+  const barcodeEngine::LookupIndexArray symbolArray(inputSymbols.getIndexValues());
   return SimpleRemainderCheckDigit(
     std::accumulate(symbolArray.begin(), symbolArray.end(), 0));
 }
 
-int AbstractBarcodeEngine::CommonChecksumOddEven(
-  const shared::LookupIndexArray& symbolArray, 
+int base::CommonChecksumOddEven(
+  const SymbolList& inputSymbols, 
   int oddMultipler, 
   int evenMultipler, 
   bool reverse) const
 {
-  qDebug("AbstractBarcodeEngine CommonChecksumOddEven() : start");
-  Q_ASSERT(!symbolArray.empty());
-  Q_ASSERT(oddMultipler > 0 && evenMultipler > 0);
-  shared::LookupIndexArray l_symbolArray;  
+  qDebug("AbstractBarengineFlags CommonChecksumOddEven() : start");
+  const barcodeEngine::LookupIndexArray symbolArray(inputSymbols.getIndexValues());
+  barcodeEngine::LookupIndexArray l_symbolArray;  
   
   if (true == reverse) {
-    qDebug("AbstractBarcodeEngine CommonChecksumOddEven() : reverse copy");
+    qDebug("AbstractBarengineFlags CommonChecksumOddEven() : reverse copy");
     std::copy(symbolArray.rbegin(), symbolArray.rend(), 
 	      std::back_inserter(l_symbolArray));
   } else {
-    qDebug("AbstractBarcodeEngine CommonChecksumOddEven() : copy");
+    qDebug("AbstractBarengineFlags CommonChecksumOddEven() : copy");
     std::copy(symbolArray.begin(), symbolArray.end(), 
 	      std::back_inserter(l_symbolArray));
   }
-  qDebug("AbstractBarcodeEngine CommonChecksumOddEven() : end");
+  qDebug("AbstractBarengineFlags CommonChecksumOddEven() : end");
   Q_ASSERT(l_symbolArray.size() == symbolArray.size());
   return NextMultipleCheckDigit(
     std::accumulate(l_symbolArray.begin(), l_symbolArray.end(), 0, 
-      shared::EvenOddChecksum<int>(oddMultipler, evenMultipler))); 
+      barcodeEngine::EvenOddChecksum<int>(oddMultipler, evenMultipler))); 
 }
 
-int AbstractBarcodeEngine::CommonChecksumLinear(
-      const shared::LookupIndexArray& symbolArray, bool reverse) const
+int base::CommonChecksumLinear(
+      const SymbolList& inputSymbols, bool reverse) const
 {
-  qDebug("AbstractBarcodeEngine CommonChecksumLinear() : start");
+  qDebug("AbstractBarengineFlags CommonChecksumLinear() : start");
+  const barcodeEngine::LookupIndexArray symbolArray(inputSymbols.getIndexValues());
   Q_ASSERT(!symbolArray.empty());
-  shared::LookupIndexArray l_symbolArray;
+  barcodeEngine::LookupIndexArray l_symbolArray;
   
   if (reverse) {
-    qDebug("AbstractBarcodeEngine CommonChecksumLinear() : reverse copy");
+    qDebug("AbstractBarengineFlags CommonChecksumLinear() : reverse copy");
     std::copy(symbolArray.rbegin(), symbolArray.rend(), 
 	      std::back_inserter(l_symbolArray));
   } else {
-    qDebug("AbstractBarcodeEngine CommonChecksumLinear() : copy");
+    qDebug("AbstractBarengineFlags CommonChecksumLinear() : copy");
     std::copy(symbolArray.begin(), symbolArray.end(), 
 	      std::back_inserter(l_symbolArray));
   }
-  qDebug("AbstractBarcodeEngine CommonChecksumLinear() : end");
+  qDebug("AbstractBarengineFlags CommonChecksumLinear() : end");
   Q_ASSERT(!l_symbolArray.size() == symbolArray.size());
   return this->SimpleRemainderCheckDigit(
     std::accumulate(symbolArray.begin(), symbolArray.end(), 
-		*symbolArray.begin(), shared::LinearMultiple<int>(m_checksumModulus)));
+		*symbolArray.begin(), barcodeEngine::LinearMultiple<int>(m_checksumModulus)));
 }
 
-int AbstractBarcodeEngine::NextMultipleCheckDigit(int checksum) const
+int base::NextMultipleCheckDigit(int checksum) const
 {
-  qDebug("AbstractBarcodeEngine NextMultipleCheckDigit()");
+  qDebug("AbstractBarengineFlags NextMultipleCheckDigit()");
   Q_ASSERT(checksum >= 0);
   int checkValue = m_checksumModulus - SimpleRemainderCheckDigit(checksum);
   Q_ASSERT(checkValue > 0 && checkValue <= m_checksumModulus);
@@ -367,50 +350,50 @@ int AbstractBarcodeEngine::NextMultipleCheckDigit(int checksum) const
   return checkValue;
 }
 
-int AbstractBarcodeEngine::SimpleRemainderCheckDigit(int checksum) const
+int base::SimpleRemainderCheckDigit(int checksum) const
 {
   Q_ASSERT(checksum >= 0);
   return checksum % m_checksumModulus;
 }    
 
-shared::LookupIndexArray AbstractBarcodeEngine::convertSymbolsToIndexes(
-  const QStringList& symbolList) const
-{
-  qDebug("AbstractBarcodeEngine convertSymbolsToIndexes() : start");
-  Q_ASSERT(!symbolList.empty());
-  shared::LookupIndexArray symbolArray;
-  QStringList::const_iterator itrSymbol = symbolList.begin();
-  while (itrSymbol != symbolList.end()) {
-    symbolArray.push_back(getSymbolIndex(*itrSymbol++));
-  }
-  Q_ASSERT(symbolList.size() == symbolArray.size());
-  qDebug("AbstractBarcodeEngine convertSymbolsToIndexes() : end");
-  return symbolArray;
-}
+// shared::LookupIndexArray AbstractBarengineFlags::convertSymbolsToIndexes(
+//   const QStringList& symbolList) const
+// {
+//   qDebug("AbstractBarengineFlags convertSymbolsToIndexes() : start");
+//   Q_ASSERT(!symbolList.empty());
+//   shared::LookupIndexArray symbolArray;
+//   QStringList::const_iterator itrSymbol = symbolList.begin();
+//   while (itrSymbol != symbolList.end()) {
+//     symbolArray.push_back(getSymbolIndex(*itrSymbol++));
+//   }
+//   Q_ASSERT(symbolList.size() == symbolArray.size());
+//   qDebug("AbstractBarengineFlags convertSymbolsToIndexes() : end");
+//   return symbolArray;
+// }
 
-int AbstractBarcodeEngine::getSymbolIndex(const QString &symbol) const
-{
-  Q_ASSERT(d->m_symbolLookup != 0 && !symbol.isEmpty());
-  return d->m_symbolLookup->indexOf(symbol);
-}
+// int AbstractBarengineFlags::getSymbolIndex(const QString &symbol) const
+// {
+//   Q_ASSERT(d->m_symbolLookup != 0 && !symbol.isEmpty());
+//   return d->m_symbolLookup->indexOf(symbol);
+// }
+// 
+// const QString AbstractBarengineFlags::getSymbolAtIndex(int symbolIndex) const
+// {  
+//   Q_ASSERT(d->m_symbolLookup != 0 && symbolIndex != NOT_FOUND);
+//   return d->m_symbolLookup->value(symbolIndex, QString());
+// }
+// 
+// QString AbstractBarengineFlags::getSymbolEncoding(const QString& symbol) const
+// {  
+//   Q_ASSERT(d->m_encodingLookup != 0 && !symbol.isEmpty());
+//   int symbolIndex = getSymbolIndex(symbol);
+//   return convertWidthEncodingToBinary(d->m_encodingLookup->at(symbolIndex));
+// }
 
-const QString AbstractBarcodeEngine::getSymbolAtIndex(int symbolIndex) const
-{  
-  Q_ASSERT(d->m_symbolLookup != 0 && symbolIndex != NOT_FOUND);
-  return d->m_symbolLookup->value(symbolIndex, QString());
-}
-
-QString AbstractBarcodeEngine::getSymbolEncoding(const QString& symbol) const
-{  
-  Q_ASSERT(d->m_encodingLookup != 0 && !symbol.isEmpty());
-  int symbolIndex = getSymbolIndex(symbol);
-  return convertWidthEncodingToBinary(d->m_encodingLookup->at(symbolIndex));
-}
-
-QString AbstractBarcodeEngine::getEncodedSymbols(shared::BarPositionsMap &barLocations, 
+QString base::getEncodedSymbols(barcodeEngine::BarPositionsMap &barLocations, 
 						     int barThicknessMultiple)
 {
-  qDebug("AbstractBarcodeEngine getEncodedSymbols() : start");
+  qDebug("AbstractBarengineFlags getEncodedSymbols() : start");
   barLocations = m_barPositions;  
   QString encodedSymbols;
   
@@ -419,21 +402,21 @@ QString AbstractBarcodeEngine::getEncodedSymbols(shared::BarPositionsMap &barLoc
     while (symbolIter != m_encodedSymbols.end()) {
       encodedSymbols.append(QString(barThicknessMultiple, *symbolIter++));
     }    
-    shared::BarPositionsMap::iterator posItr = barLocations.begin();     
+    barcodeEngine::BarPositionsMap::iterator posItr = barLocations.begin();     
     while (posItr != barLocations.end()) {
 	(posItr++).value() *= barThicknessMultiple;
     }    
   }  
   qDebug() << "m_barPositions :" << m_barPositions;
-  qDebug("AbstractBarcodeEngine getEncodedSymbols() : end");
+  qDebug("AbstractBarengineFlags getEncodedSymbols() : end");
   return m_encodedSymbols;
 }
 
-const QString AbstractBarcodeEngine::convertWidthEncodingToBinary(
+const QString base::convertWidthEncodingToBinary(
   const QString& widthEncodedSymbol) const
 {
   // FIXME support all encoding correctly
-  qDebug("AbstractBarcodeEngine convertWidthEncodingToBinary() : start");  
+  qDebug("AbstractBarengineFlags convertWidthEncodingToBinary() : start");  
   Q_ASSERT(!widthEncodedSymbol.isEmpty());
   QRegExp widthEncoded("^[N|W]+$");
   QRegExp binaryEncoded("^[0-9]+$");
@@ -458,77 +441,105 @@ const QString AbstractBarcodeEngine::convertWidthEncodingToBinary(
   }
   Q_ASSERT(binaryString.size() >= widthEncodedSymbol.size() && 
     binaryString.size() <= widthEncodedSymbol.size());
-  qDebug("AbstractBarcodeEngine convertWidthEncodingToBinary() : end");  
+  qDebug("AbstractBarengineFlags convertWidthEncodingToBinary() : end");  
   return binaryString;
 }
 
 // --- setup barcode text and "bar" encoding ---
 
-void AbstractBarcodeEngine::formatSymbols(const QStringList& symbolSrc)
+void base::formatSymbols(const SymbolList& symbolSrc)
 {
-  qDebug("AbstractBarcodeEngine formatSymbols() : start");
-  Q_ASSERT(!symbolSrc.isEmpty());
-  m_formatedSymbols = QStringList(symbolSrc.join(""));
-  qDebug("AbstractBarcodeEngine formatSymbols() : end");
+  qDebug("AbstractBarengineFlags formatSymbols() : start");
+  Q_ASSERT(!symbolSrc.empty());
+  m_formatedSymbols = QStringList(symbolSrc.toQStringList().join(""));
+  qDebug("AbstractBarengineFlags formatSymbols() : end");
 }
 
-void AbstractBarcodeEngine::encodeSymbols(const QStringList& symbolSrc) 
+void base::encodeSymbols(const SymbolList& symbolSrc) 
 {
-  qDebug("AbstractBarcodeEngine encodeSymbols() : start");
-  Q_ASSERT(!symbolSrc.isEmpty());
-  QStringList::const_iterator itrSymbol = symbolSrc.constBegin();
+  qDebug("AbstractBarengineFlags encodeSymbols() : start");
+  Q_ASSERT(!symbolSrc.empty());
+  SymbolList::const_iterator itrSymbol = symbolSrc.begin();
   while(itrSymbol !=  symbolSrc.end()) {
-    m_encodedSymbols.append(this->getSymbolEncoding(*itrSymbol++));
+    m_encodedSymbols.append(itrSymbol->getEncoding());
+    itrSymbol++;
+    //m_encodedSymbols.append(this->getSymbolEncoding(*itrSymbol++));
   }
   Q_ASSERT(!m_encodedSymbols.isEmpty());
-  qDebug("AbstractBarcodeEngine encodeSymbols() : end");
+  qDebug("AbstractBarengineFlags encodeSymbols() : end");
 }
 
-void AbstractBarcodeEngine::fillSymbolList()
+const BarcodeSetInfo& base::getBarcodeSetInfo() const
 {
-  qDebug("AbstractBarcodeEngine fillSymbolList() : start");
-  // symbols : 0-9
-  if (d->m_localSymbolLookup.isEmpty()) {
-    for (int index = 0; index < baseSymbols::NUM_SYMBOLS; index++) {
-      d->m_localSymbolLookup << QString(baseSymbols::SYMBOL_LOOKUP[index]);
-    }
-    qDebug("AbstractBarcodeEngine fillSymbolList() : symbols added"); 
-    setSymbolLookupTable(d->m_localSymbolLookup); 
+  return m_barcodeSymbolInfo;
+}
+
+void barcodeEngine::base::setBarcodeSetInfo (const BarcodeSymbolSet& barcodeSymbolSet )
+{
+  if (barcodeSymbolSet.isValid()) {
+    m_barcodeSymbolInfo = new BarcodeSymbolSet(barcodeSymbolSet);
   }
 }
 
-void AbstractBarcodeEngine::setSymbolAndEncodingLookupTable(
-				const QStringList& symbolSet, 
-				const QStringList& encodingSet)
+Symbol barcodeEngine::base::getCheckSymbol ( int index ) const
 {
-  setSymbolLookupTable(symbolSet);
-  setSymbolEncodingLookupTable(encodingSet);
+  return Symbol( getBarcodeSetInfo(), index);
 }
 
-void AbstractBarcodeEngine::setSymbolLookupTable(const QStringList& symbolSet)
+StringTableEntry barcodeEngine::base::fillSymbolList()
 {
-  Q_ASSERT(&symbolSet != 0);
-  d->m_symbolLookup = const_cast<QStringList *>(&symbolSet);
+  qDebug("AbstractBarengineFlags fillSymbolList() : start");
+  QList<QString> localSymbolStrings;
+  // symbols : 0-9
+  for (int index = 0; index < baseSymbols::NUM_SYMBOLS; index++) {
+    localSymbolStrings.append(QString(baseSymbols::SYMBOL_LOOKUP[index]));
+  }
+  qDebug() << "AbstractBarengineFlags fillSymbolList() : symbols " << localSymbolStrings;
+  qDebug("AbstractBarengineFlags fillSymbolList() : end");
+
+  return StringTableEntry(localSymbolStrings);
 }
 
-QStringList AbstractBarcodeEngine::getSymbolLookupTable() const
-{
-  return *d->m_symbolLookup;
-}
+// void AbstractBarengineFlags::setSymbolAndEncodingLookupTable(
+// 				const QStringList& symbolSet, 
+// 				const QStringList& encodingSet)
+// {
+//   setSymbolLookupTable(symbolSet);
+//   setSymbolEncodingLookupTable(encodingSet);
+// }
 
-void AbstractBarcodeEngine::setSymbolEncodingLookupTable(
-  const QStringList& symbolEncodingSet)
-{
-  Q_ASSERT(&symbolEncodingSet != 0);
-  d->m_encodingLookup = const_cast<QStringList *>(&symbolEncodingSet);
-}
+// void AbstractBarengineFlags::setSymbolLookupTable(const QStringList& symbolSet)
+// {
+//   Q_ASSERT(&symbolSet != 0);
+//   d->m_symbolLookup = const_cast<QStringList *>(&symbolSet);
+// }
 
-QStringList AbstractBarcodeEngine::getSymbolEncodingLookupTable() const
-{
-  return *d->m_encodingLookup;
-}
+// QStringList AbstractBarengineFlags::getSymbolLookupTable() const
+// {
+//   return *d->m_symbolLookup;
+// }
 
-void AbstractBarcodeEngine::AddMultiSymbolRegexpString(const QString& symbolPattern)
+// void AbstractBarengineFlags::addEncodingLookupTableEntry(
+//   const QStringList& symbolEncodingSet)
+// {
+//   Q_ASSERT(&symbolEncodingSet != 0);
+//   d->m_encodingLookup = const_cast<QStringList *>(&symbolEncodingSet);
+// }
+// 
+// void AbstractBarengineFlags::addEncodingLookupTableEntry ( const QString& EntryKey, 
+//                                             const QStringList& symbolEncodingSet )
+// {
+//   Q_ASSERT(&symbolEncodingSet != 0);
+//   d->m_encodingLookup = const_cast<QStringList *>(&symbolEncodingSet);
+// }
+
+
+// QStringList AbstractBarengineFlags::getSymbolEncodingLookupTable() const
+// {
+//   return *d->m_encodingLookup;
+// }
+
+void barcodeEngine::base::AddMultiSymbolRegexpString(const QString& symbolPattern)
 {
-  d->m_regexpCollection.push_back(IndexedRegExp(symbolPattern));
+  //d->m_regexpCollection.push_back(IndexedRegExp(symbolPattern));
 }

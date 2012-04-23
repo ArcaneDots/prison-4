@@ -46,7 +46,7 @@ public:
    * 
    * @returns product code or empty list in case conversion is not possible
    */
-  virtual QStringList toUpcE() const;
+  virtual SymbolList toUpcE() const;
   /**
    * Attempt to get UPC-A version of the inputed product code
    * 
@@ -54,7 +54,7 @@ public:
    * 
    * @returns product code or empty list in case conversion is not possible
    */
-  virtual QStringList toUpcA() const;
+  virtual SymbolList toUpcA() const;
   /**
    * Attempt to get EAN-13 version of the inputed product code
    * 
@@ -62,7 +62,7 @@ public:
    * 
    * @returns product code or empty list in case conversion is not possible
    */
-  virtual QStringList toEan13() const;
+  virtual SymbolList toEan13() const;
 protected:
   /**
    * Get productCode specific encoding pattern for the first block of symbols
@@ -70,10 +70,10 @@ protected:
    * @param indexedPattern index of assiocated pattern
    */
   virtual QString getFirstBlockEncodePattern(int indexedPattern = 0) const;
-    /**
+  /**
    * Load all encoding patterns based on combo of system number (0-1) and check digit
    */
-  virtual void fillWidthEncodingList(); 
+  virtual EncodingMap fillWidthEncodingList(); 
   /**
    * encoding patterns for EAN-13 first block
    */

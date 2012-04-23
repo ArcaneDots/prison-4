@@ -1,6 +1,6 @@
 /*
     <one line to give the library's name and an idea of what it does.>
-    Copyright (C) 2011  Ian gmail <ianhollander@gmail.com>
+    Copyright (C) 2012  Ian gmail <ianhollander@gmail.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -18,31 +18,15 @@
 */
 
 
-#ifndef EAN5ENGINE_H
-#define EAN5ENGINE_H
+#include "linear/code11.h"
 
-#include "ean2engine.h"
-
-namespace product
-{
-class Ean5Engine : public Ean2Engine
+Code11::Code11()
 {
 
-public:
-    Ean5Engine(const QString& defaultString = ean5::DEFAULT_VALUE,
-	       int blockSize = ean5::BLOCK_SIZE);
-    virtual ~Ean5Engine();
-    /**
-   * Calculate EAN checksum digit used for parity encoding 
-   * 
-   * right to left, starting with  right-most value as odd, odd * 3, even * 1
-   * 
-   * @note Will not check whether supplied string has an invalid length. 
-   * 
-   * @param symbolArray array of symbol indexes
-   * @return valid check digit
-   */
-  virtual int calculateCheckValue(const SymbolList &symbolArray) const;
-};
-};
-#endif // EAN5ENGINE_H
+}
+
+Code11::~Code11()
+{
+
+}
+

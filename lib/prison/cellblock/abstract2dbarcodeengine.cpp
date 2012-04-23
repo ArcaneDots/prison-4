@@ -23,7 +23,7 @@
 
 
 
-Abstract2DBarcodeEngine::Abstract2DBarcodeEngine(const QString& defaultString, 
+Abstract2DBarengineFlags::Abstract2DBarengineFlags(const QString& defaultString, 
 						 int minLength, 
 						 int maxLength, 
 						 int checksumModulus, 
@@ -32,7 +32,7 @@ Abstract2DBarcodeEngine::Abstract2DBarcodeEngine(const QString& defaultString,
 						 int checkDigitOffset, 
 						 int maxSymbolLength,
 						 int barStates) : 
-						 AbstractBarcodeEngine(defaultString,
+						 AbstractBarengineFlags(defaultString,
 								       minLength, 
 								       maxLength, 
 								       checksumModulus,
@@ -45,29 +45,29 @@ Abstract2DBarcodeEngine::Abstract2DBarcodeEngine(const QString& defaultString,
 
 }
 
-Abstract2DBarcodeEngine::~Abstract2DBarcodeEngine()
+Abstract2DBarengineFlags::~Abstract2DBarengineFlags()
 {
 
 }
 
-void Abstract2DBarcodeEngine::setBarcodeString(const QString& userBarcode, AbstractBarcodeEngine::Options flag)
+void Abstract2DBarengineFlags::setBarcodeString(const QString& userBarcode, AbstractBarengineFlags::Options flag)
 {
-    AbstractBarcodeEngine::setBarcodeString(userBarcode, flag);
+    AbstractBarengineFlags::setBarcodeString(userBarcode, flag);
 }
 
-QStringList Abstract2DBarcodeEngine::parseSymbolString(const QString& symbolString)
+QStringList Abstract2DBarengineFlags::parseSymbolString(const QString& symbolString)
 {
-    return AbstractBarcodeEngine::parseSymbolString(symbolString);
+    return AbstractBarengineFlags::parseSymbolString(symbolString);
 }
 
-void Abstract2DBarcodeEngine::formatSymbols()
+void Abstract2DBarengineFlags::formatSymbols()
 {
-    AbstractBarcodeEngine::formatSymbols();
+    AbstractBarengineFlags::formatSymbols();
 }
 
-void Abstract2DBarcodeEngine::encodeSymbols()
+void Abstract2DBarengineFlags::encodeSymbols()
 {
-    AbstractBarcodeEngine::encodeSymbols();
+    AbstractBarengineFlags::encodeSymbols();
 }
 
 

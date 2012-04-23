@@ -45,30 +45,30 @@ Ean13Engine::~Ean13Engine()
 
 void Ean13Engine::initialize()
 {
-  qDebug("Ean13Engine initialize");
+  qDebug("Ean13Engine initialize()");
   product::ProductEngine::initialize();
-  fillWidthEncodingList();
+  //fillWidthEncodingList();
 }
 
-QStringList Ean13Engine::toUpcE() const
+SymbolList Ean13Engine::toUpcE() const
 {
   qDebug("Ean13Engine toUpcE");
-  if (m_userSymbols.at(1) == "0" || m_userSymbols.at(1) == "1") {
+  if (m_userSymbols.at(1).toString() == "0" || m_userSymbols.at(1).toString() == "1") {
     return compressUpc(m_userSymbols.mid(1));
   }
-  return QStringList();
+  return m_userSymbols.clone();
 }
 
-QStringList Ean13Engine::toUpcA() const
+SymbolList Ean13Engine::toUpcA() const
 {  
   qDebug("Ean13Engine toUpcA");
-  if (m_userSymbols.at(0) == "0") {
+  if (m_userSymbols.at(0).toString() == "0") {
     return m_userSymbols.mid(1);
-  }
-  return QStringList();
+  }  
+  return m_userSymbols.clone();
 }
 
-QStringList Ean13Engine::toEan13() const
+SymbolList Ean13Engine::toEan13() const
 {
   qDebug("Ean13Engine toEan13");
   return m_userSymbols;
@@ -82,12 +82,13 @@ QString Ean13Engine::getFirstBlockEncodePattern(int indexedPattern) const
   return m_parity13WidthEncoding.at(indexedPattern);
 }
 
-void Ean13Engine::fillWidthEncodingList()
+EncodingMap Ean13Engine::fillWidthEncodingList()
 {  
   qDebug("Ean13Engine fillWidthEncodingList() : start");
   for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {
     m_parity13WidthEncoding.append(ean13::PARITY_13[i]);
   }  
   qDebug("Ean13Engine fillWidthEncodingList() : end");
+  return ProductEngine::fillWidthEncodingList();
 }
 
