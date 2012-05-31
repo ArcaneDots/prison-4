@@ -1,0 +1,8 @@
+# Hashes of file build rules.
+047f9a43f3f2f5667add3bbf156974e7 lib/prison/cellblock/workshop/tests/__/moc_lookuptableentry.cxx
+8f1a59832398d7ae31d8c83948eaefa2 lib/prison/cellblock/workshop/tests/barcodeSymbolSet_test.moc
+017243cbed2e76b577d0d50fa5876453 lib/prison/cellblock/workshop/tests/lookupTableEntry_test.moc
+4951c71f3a5573b6ba4c712c67b1399b lib/prison/cellblock/workshop/tests/moc_lookupTableEntry_test.cxx
+11612cb70d1925ea67257de0c1f7267d lib/prison/cellblock/workshop/tests/symbolDatum_test.moc
+309cb36402d267f867129a1f26842210 lib/prison/cellblock/workshop/tests/symbol_test.moc
+61d7a183d92cab783453ce683e2abf66 testapp/prison.moc

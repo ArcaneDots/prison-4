@@ -1,0 +1,6 @@
+SymbolTest 0 0
+lookupTableTests 20 0.0015869
+SymbolDatumTests 10 0.000781083
+BarcodeSetTests 7 0.00171958
+SymbolTests 8 0.000932008
+---

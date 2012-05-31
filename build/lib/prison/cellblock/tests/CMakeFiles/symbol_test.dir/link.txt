@@ -1,0 +1,1 @@
+/usr/bin/c++   -g    CMakeFiles/symbol_test.dir/symbol_test.cpp.o  -o symbol_test -rdynamic ../libbase_engine.so -lQtGui -lQtCore -Wl,-rpath,/home/ian/Projects/prison/build/lib/prison/cellblock 

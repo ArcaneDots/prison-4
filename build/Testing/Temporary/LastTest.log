@@ -1,0 +1,195 @@
+Start testing: Apr 22 19:05 EDT
+----------------------------------------------------------
+1/4 Testing: lookupTableTests
+1/4 Test: lookupTableTests
+Command: "/home/ian/Projects/prison/build/lib/prison/cellblock/workshop/tests/lookupTableTests"
+Directory: /home/ian/Projects/prison/build/lib/prison/cellblock/workshop/tests
+"lookupTableTests" start time: Apr 22 19:05 EDT
+Output:
+----------------------------------------------------------
+********* Start testing of Test_LookupTableEntry *********
+Config: Using QTest library 4.8.1, Qt 4.8.1
+PASS   : Test_LookupTableEntry::initTestCase()
+QDEBUG : Test_LookupTableEntry::constructorD() contents:   key : "[_default_]" list :   (  "1"   ,  "2"   ,  "3"   ,  "4"   ,  "5"   ,  "6"   ,  "7"   ,  "8"   ,  "9"   ,  "10"   ,  "11"    ) 
+PASS   : Test_LookupTableEntry::constructorD()
+PASS   : Test_LookupTableEntry::constructorDValue()
+PASS   : Test_LookupTableEntry::constructorCopy()
+PASS   : Test_LookupTableEntry::cleanupTestCase()
+Totals: 5 passed, 0 failed, 0 skipped
+********* Finished testing of Test_LookupTableEntry *********
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"lookupTableTests" end time: Apr 22 19:05 EDT
+"lookupTableTests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/4 Testing: BarcodeSetTests
+2/4 Test: BarcodeSetTests
+Command: "/home/ian/Projects/prison/build/lib/prison/cellblock/workshop/tests/BarcodeSetTests"
+Directory: /home/ian/Projects/prison/build/lib/prison/cellblock/workshop/tests
+"BarcodeSetTests" start time: Apr 22 19:05 EDT
+Output:
+----------------------------------------------------------
+********* Start testing of Test_BarcodeSymbolSet *********
+Config: Using QTest library 4.8.1, Qt 4.8.1
+PASS   : Test_BarcodeSymbolSet::initTestCase()
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet encoding constructor : start
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols() : start
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols() : symbols   key : "[_default_]" list :   (  "0"   ,  "1"   ,  "2"   ,  "3"   ,  "4"   ,  "5"   ,  "6"   ,  "7"   ,  "8"   ,  "9"    ) 
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols() : encoding   key : "Even" list :   (  "E0"   ,  "E1"   ,  "E2"   ,  "E3"   ,  "E4"   ,  "E5"   ,  "E6"   ,  "E7"   ,  "E8"   ,  "E9"    )  key : "Odd" list :   (  "O0"   ,  "O1"   ,  "O2"   ,  "O3"   ,  "O4"   ,  "O5"   ,  "O6"   ,  "O7"   ,  "O8"   ,  "O9"    )  key : "Right" list :   (  "R0"   ,  "R1"   ,  "R2"   ,  "R3"   ,  "R4"   ,  "R5"   ,  "R6"   ,  "R7"   ,  "R8"   ,  "R9"    ) 
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols() : matched  false 
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E0" )  String_Pair( "Odd" , "O0" )  String_Pair( "Right" , "R0" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E1" )  String_Pair( "Odd" , "O1" )  String_Pair( "Right" , "R1" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E2" )  String_Pair( "Odd" , "O2" )  String_Pair( "Right" , "R2" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E3" )  String_Pair( "Odd" , "O3" )  String_Pair( "Right" , "R3" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E4" )  String_Pair( "Odd" , "O4" )  String_Pair( "Right" , "R4" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E5" )  String_Pair( "Odd" , "O5" )  String_Pair( "Right" , "R5" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E6" )  String_Pair( "Odd" , "O6" )  String_Pair( "Right" , "R6" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E7" )  String_Pair( "Odd" , "O7" )  String_Pair( "Right" , "R7" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E8" )  String_Pair( "Odd" , "O8" )  String_Pair( "Right" , "R8" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E9" )  String_Pair( "Odd" , "O9" )  String_Pair( "Right" , "R9" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols :  (SymbolDatum #0 = "0" String_Pair( "Even" , "E0" )  String_Pair( "Odd" , "O0" )  String_Pair( "Right" , "R0" )  () , SymbolDatum #1 = "1" String_Pair( "Even" , "E1" )  String_Pair( "Odd" , "O1" )  String_Pair( "Right" , "R1" )  () , SymbolDatum #2 = "2" String_Pair( "Even" , "E2" )  String_Pair( "Odd" , "O2" )  String_Pair( "Right" , "R2" )  () , SymbolDatum #3 = "3" String_Pair( "Even" , "E3" )  String_Pair( "Odd" , "O3" )  String_Pair( "Right" , "R3" )  () , SymbolDatum #4 = "4" String_Pair( "Even" , "E4" )  String_Pair( "Odd" , "O4" )  String_Pair( "Right" , "R4" )  () , SymbolDatum #5 = "5" String_Pair( "Even" , "E5" )  String_Pair( "Odd" , "O5" )  String_Pair( "Right" , "R5" )  () , SymbolDatum #6 = "6" String_Pair( "Even" , "E6" )  String_Pair( "Odd" , "O6" )  String_Pair( "Right" , "R6" )  () , SymbolDatum #7 = "7" String_Pair( "Even" , "E7" )  String_Pair( "Odd" , "O7" )  String_Pair( "Right" , "R7" )  () , SymbolDatum #8 = "8" String_Pair( "Even" , "E8" )  String_Pair( "Odd" , "O8" )  String_Pair( "Right" , "R8" )  () , SymbolDatum #9 = "9" String_Pair( "Even" , "E9" )  String_Pair( "Odd" , "O9" )  String_Pair( "Right" , "R9" )  () ) 
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet generateEncodableSymbols : end
+QDEBUG : Test_BarcodeSymbolSet::constructorD() BarcodeSymbolSet encoding constructor : end
+PASS   : Test_BarcodeSymbolSet::constructorD()
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet encoding constructor : start
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols() : start
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols() : symbols   key : "[_default_]" list :   (  "0"   ,  "1"   ,  "2"   ,  "3"   ,  "4"   ,  "5"   ,  "6"   ,  "7"   ,  "8"   ,  "9"    ) 
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols() : encoding   key : "Even" list :   (  "E0"   ,  "E1"   ,  "E2"   ,  "E3"   ,  "E4"   ,  "E5"   ,  "E6"   ,  "E7"   ,  "E8"   ,  "E9"    )  key : "Odd" list :   (  "O0"   ,  "O1"   ,  "O2"   ,  "O3"   ,  "O4"   ,  "O5"   ,  "O6"   ,  "O7"   ,  "O8"   ,  "O9"    )  key : "Right" list :   (  "R0"   ,  "R1"   ,  "R2"   ,  "R3"   ,  "R4"   ,  "R5"   ,  "R6"   ,  "R7"   ,  "R8"   ,  "R9"    ) 
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols() : matched  false 
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E0" )  String_Pair( "Odd" , "O0" )  String_Pair( "Right" , "R0" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E1" )  String_Pair( "Odd" , "O1" )  String_Pair( "Right" , "R1" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E2" )  String_Pair( "Odd" , "O2" )  String_Pair( "Right" , "R2" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E3" )  String_Pair( "Odd" , "O3" )  String_Pair( "Right" , "R3" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E4" )  String_Pair( "Odd" , "O4" )  String_Pair( "Right" , "R4" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E5" )  String_Pair( "Odd" , "O5" )  String_Pair( "Right" , "R5" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E6" )  String_Pair( "Odd" , "O6" )  String_Pair( "Right" , "R6" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E7" )  String_Pair( "Odd" , "O7" )  String_Pair( "Right" , "R7" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E8" )  String_Pair( "Odd" , "O8" )  String_Pair( "Right" , "R8" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet getExpandedNamedSymbol(string) : found emcoding
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :   String_Pair( "Even" , "E9" )  String_Pair( "Odd" , "O9" )  String_Pair( "Right" , "R9" )  
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols :  (SymbolDatum #0 = "0" String_Pair( "Even" , "E0" )  String_Pair( "Odd" , "O0" )  String_Pair( "Right" , "R0" )  () , SymbolDatum #1 = "1" String_Pair( "Even" , "E1" )  String_Pair( "Odd" , "O1" )  String_Pair( "Right" , "R1" )  () , SymbolDatum #2 = "2" String_Pair( "Even" , "E2" )  String_Pair( "Odd" , "O2" )  String_Pair( "Right" , "R2" )  () , SymbolDatum #3 = "3" String_Pair( "Even" , "E3" )  String_Pair( "Odd" , "O3" )  String_Pair( "Right" , "R3" )  () , SymbolDatum #4 = "4" String_Pair( "Even" , "E4" )  String_Pair( "Odd" , "O4" )  String_Pair( "Right" , "R4" )  () , SymbolDatum #5 = "5" String_Pair( "Even" , "E5" )  String_Pair( "Odd" , "O5" )  String_Pair( "Right" , "R5" )  () , SymbolDatum #6 = "6" String_Pair( "Even" , "E6" )  String_Pair( "Odd" , "O6" )  String_Pair( "Right" , "R6" )  () , SymbolDatum #7 = "7" String_Pair( "Even" , "E7" )  String_Pair( "Odd" , "O7" )  String_Pair( "Right" , "R7" )  () , SymbolDatum #8 = "8" String_Pair( "Even" , "E8" )  String_Pair( "Odd" , "O8" )  String_Pair( "Right" , "R8" )  () , SymbolDatum #9 = "9" String_Pair( "Even" , "E9" )  String_Pair( "Odd" , "O9" )  String_Pair( "Right" , "R9" )  () ) 
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet generateEncodableSymbols : end
+QDEBUG : Test_BarcodeSymbolSet::constructorCopy() BarcodeSymbolSet encoding constructor : end
+PASS   : Test_BarcodeSymbolSet::constructorCopy()
+PASS   : Test_BarcodeSymbolSet::cleanupTestCase()
+Totals: 4 passed, 0 failed, 0 skipped
+********* Finished testing of Test_BarcodeSymbolSet *********
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"BarcodeSetTests" end time: Apr 22 19:05 EDT
+"BarcodeSetTests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/4 Testing: SymbolDatumTests
+3/4 Test: SymbolDatumTests
+Command: "/home/ian/Projects/prison/build/lib/prison/cellblock/workshop/tests/SymbolDatumTests"
+Directory: /home/ian/Projects/prison/build/lib/prison/cellblock/workshop/tests
+"SymbolDatumTests" start time: Apr 22 19:05 EDT
+Output:
+----------------------------------------------------------
+********* Start testing of Test_SymbolDatum *********
+Config: Using QTest library 4.8.1, Qt 4.8.1
+PASS   : Test_SymbolDatum::initTestCase()
+PASS   : Test_SymbolDatum::constructorD()
+PASS   : Test_SymbolDatum::constructorCopy()
+PASS   : Test_SymbolDatum::constructorEncoded()
+PASS   : Test_SymbolDatum::constructorExpanded()
+PASS   : Test_SymbolDatum::cleanupTestCase()
+Totals: 6 passed, 0 failed, 0 skipped
+********* Finished testing of Test_SymbolDatum *********
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"SymbolDatumTests" end time: Apr 22 19:05 EDT
+"SymbolDatumTests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/4 Testing: SymbolTests
+4/4 Test: SymbolTests
+Command: "/home/ian/Projects/prison/build/lib/prison/cellblock/workshop/tests/SymbolTests"
+Directory: /home/ian/Projects/prison/build/lib/prison/cellblock/workshop/tests
+"SymbolTests" start time: Apr 22 19:05 EDT
+Output:
+----------------------------------------------------------
+********* Start testing of Test_Symbol *********
+Config: Using QTest library 4.8.1, Qt 4.8.1
+PASS   : Test_Symbol::initTestCase()
+PASS   : Test_Symbol::constructorD()
+PASS   : Test_Symbol::constructorCopy()
+PASS   : Test_Symbol::cleanupTestCase()
+Totals: 4 passed, 0 failed, 0 skipped
+********* Finished testing of Test_Symbol *********
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"SymbolTests" end time: Apr 22 19:05 EDT
+"SymbolTests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Apr 22 19:05 EDT

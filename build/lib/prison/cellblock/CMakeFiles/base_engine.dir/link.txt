@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC -g   -shared -Wl,-soname,libbase_engine.so -o libbase_engine.so CMakeFiles/base_engine.dir/abstractbarcodeengine.cpp.o 

@@ -1,0 +1,1 @@
+/usr/bin/c++   -g    CMakeFiles/BarcodeSetTests.dir/barcodeSymbolSet_test.cpp.o  -o BarcodeSetTests -rdynamic ../libsymbol_table_engine.so -lQtTest -Wl,-rpath,/home/ian/Projects/prison/build/lib/prison/cellblock/workshop 

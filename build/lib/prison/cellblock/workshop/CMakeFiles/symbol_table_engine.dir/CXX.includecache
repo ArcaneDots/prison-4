@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ian/Projects/prison/lib/prison/cellblock/workshop/symbollist.cpp
+algorithm
+-
+iterator
+-
+symbolList_linkedlist.h
+/home/ian/Projects/prison/lib/prison/cellblock/workshop/symbolList_linkedlist.h
+
