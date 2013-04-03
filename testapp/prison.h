@@ -38,8 +38,10 @@ class main_window : public QWidget {
     prison::BarcodeItem* m_qri;
     prison::BarcodeItem* m_39i;
     prison::BarcodeItem* m_93i;
+    
     prison::BarcodeItem* m_ean13i;
     prison::BarcodeItem* m_upcai;
+    // null
     prison::BarcodeItem* m_nulli;
     prison::BarcodeWidget* m_nullw;
 };

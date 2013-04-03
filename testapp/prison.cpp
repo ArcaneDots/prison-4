@@ -29,7 +29,7 @@ void main_window::data_changed() {
   m_39w->setData(result);
   m_93i->setData(result);
   m_93w->setData(result);
-
+  
   m_upcew->setData(result);
   m_upcai->setData(result);
   m_upcaw->setData(result);
@@ -43,8 +43,7 @@ void main_window::data_changed() {
   m_dmcolor->setData(result);
   m_qrcolor->setData(result);
   m_39color->setData(result);
-  m_93color->setData(result);
-  
+  m_93color->setData(result);  
 }
 
 main_window::main_window() {
@@ -95,7 +94,7 @@ main_window::main_window() {
     c93colorcode->setForegroundColor(Qt::red);
     c93colorcode->setBackgroundColor(Qt::darkBlue);
     m_93color->setBarcode(c93colorcode);
-  }
+  } 
   
   QGraphicsScene* scene = new QGraphicsScene(this);
 
@@ -116,9 +115,6 @@ main_window::main_window() {
   scene->addItem(m_qri);
   m_qri->setPos(200,200);
   
-//   scene->addItem(m_ean13i);
-//   m_ean13i->setPos(0,400);
-  
   scene->addItem(m_39i);
   m_39i->setPos(0,400);
   scene->addItem(m_93i);
@@ -134,11 +130,9 @@ main_window::main_window() {
   
   QGraphicsView* v = new QGraphicsView(this);
   v->setScene(scene);
-
   
   QHBoxLayout* scenelay = new QHBoxLayout();
-//   QSplitter* splitter = new QSplitter(Qt::Vertical);
-//   splitter->addWidget(v);
+  
   scenelay->addWidget(v);
   QHBoxLayout* splitterlay = new QHBoxLayout();
   QSplitter* d2Splitter = new QSplitter(Qt::Vertical);
@@ -147,6 +141,7 @@ main_window::main_window() {
   d2Splitter->addWidget(m_dmcolor);
   d2Splitter->addWidget(m_qrcolor);
   d2Splitter->addWidget(m_nullw);
+  
   QSplitter* mainSplitter = new QSplitter(Qt::Vertical);
   mainSplitter->addWidget(m_39w);
   mainSplitter->addWidget(m_93w);
@@ -157,9 +152,7 @@ main_window::main_window() {
   upcSplitter->addWidget(m_upcew);
   upcSplitter->addWidget(m_upcaw);
   upcSplitter->addWidget(m_ean8w);
-  upcSplitter->addWidget(m_ean13w);
-  
-  
+  upcSplitter->addWidget(m_ean13w);  
   
   mainlay->addLayout(inputLay);
   mainlay->addLayout(scenelay);
@@ -167,9 +160,7 @@ main_window::main_window() {
   splitterlay->addWidget(mainSplitter);
   splitterlay->addWidget(upcSplitter);
   mainlay->addLayout(splitterlay);
-//   mainlay->addWidget(splitter);
-//   //
-//   mainlay->addWidget(upcSplitter);
+
   setLayout(mainlay);
 
   m_lineedit->setText("AOEUIAOEUIAOEUI");

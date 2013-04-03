@@ -1,6 +1,6 @@
 /*
     <one line to give the library's name and an idea of what it does.>
-    Copyright (C) 2011  Ian gmail <ianhollander@gmail.com>
+    Copyright (C) 2011  Ian Hollander <ianhollander@gmail.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,11 @@
 
 namespace product
 {
+/**
+ * 5 Digit Add-on symbol - often used for ISBN numbers
+ *  
+ * Can be appended to UPC A/E and EAN-13
+ */ 
 class Ean5Engine : public Ean2Engine
 {
 
