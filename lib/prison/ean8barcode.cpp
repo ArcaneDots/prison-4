@@ -34,55 +34,33 @@ using namespace prison;
 /**
  * @cond PRIVATE
  */
-class Ean8Barcode::Private : public product::Ean8Engine 
-{
+class Ean8Barcode::Private {
  public:
-    Private();
-    virtual ~Private(); 
-    
-    QStringList formatedText;
-    QString oldData;
-    QImage oldImage;  
 };
 /**
  * @endcond
  */
 
-Ean8Barcode::Private::Private() :
-  formatedText(),
-  oldData(),
-  oldImage()
-{
-
-}
-Ean8Barcode::Private::~Private()
-{
+Ean8Barcode::Ean8Barcode() : d(0) {    
   // empty
 }
 
-
-Ean8Barcode::Ean8Barcode() : 
-  d(new Ean8Barcode::Private())
-{    
-  // empty
-}
-
-Ean8Barcode::~Ean8Barcode() 
-{
+Ean8Barcode::~Ean8Barcode() {
   delete d;
 }
 
-QImage Ean8Barcode::toImage(const QSizeF& size) 
-{ 
+QImage Ean8Barcode::toImage(const QSizeF& size) { 
   qDebug() << "Ean8Barcode::toImage() : data " << data();
+  
+  product::Ean8Engine * prod = new product::Ean8Engine();  
   if (!data().isEmpty()) {
-    d->setBarcodeString(data());
+    prod->setBarcodeString(data());
   }
-  QSizeF currentMinimumSize(minimumSize());
-  QImage image(d->getImage(size, currentMinimumSize, 
+  QSizeF * currentMinimumSize = new QSizeF(minimumSize());
+  QImage image(prod->image(size, *currentMinimumSize, 
 			   foregroundColor(), backgroundColor()));
-  setMinimumSize(currentMinimumSize);
+  delete prod;
+  
+  setMinimumSize(*currentMinimumSize);
   return image;
 }
-
-

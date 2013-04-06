@@ -1,9 +1,6 @@
 include_directories ("${PROJECT_SOURCE_DIR}/cellblock")
 add_subdirectory(cellblock)
 
-# include_directories ("${PROJECT_SOURCE_DIR}/test")
-# add_subdirectory(test)
-
 include_directories(${QRENCODE_INCLUDE_DIR} ${DMTX_INCLUDE_DIR})
 SET(    prison_SRC
         abstractbarcode.cpp
@@ -82,5 +79,3 @@ install( FILES
          ${CMAKE_CURRENT_BINARY_DIR}/PrisonConfig.cmake
 	 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/cmake/Prison
 )
-
-

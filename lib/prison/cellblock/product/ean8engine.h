@@ -1,6 +1,5 @@
 /*
-    <one line to give the library's name and an idea of what it does.>
-    Copyright (C) 2011  Ian gmail <ianhollander@gmail.com>
+    Copyright (C) 2011  Ian gmail <ianhollander at gmail.com>
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -16,7 +15,6 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
 
 #ifndef EAN8ENGINE_H
 #define EAN8ENGINE_H

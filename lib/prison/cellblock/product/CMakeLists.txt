@@ -9,6 +9,3 @@ SET (product_engines_SRC
      )
      
 add_library(product_engines SHARED ${product_engines_SRC})
-
-#add_subdirectory (test)
-

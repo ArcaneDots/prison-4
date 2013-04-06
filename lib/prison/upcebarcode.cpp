@@ -34,35 +34,14 @@ using namespace prison;
 /**
  * @cond PRIVATE
  */
-class UpcEBarcode::Private : public product::UpcEEngine 
-{
+class UpcEBarcode::Private {
  public:
-    Private();
-    virtual ~Private(); 
-    
-    QStringList formatedText;
-    QString oldData;
-    QImage oldImage;  
 };
 /**
  * @endcond
  */
 
-UpcEBarcode::Private::Private() :
-  formatedText(),
-  oldData(),
-  oldImage()
-{
-
-}
-UpcEBarcode::Private::~Private()
-{
-  // empty
-}
-
-
-UpcEBarcode::UpcEBarcode() : 
-  d(new UpcEBarcode::Private())
+UpcEBarcode::UpcEBarcode() : d(0)
 {    
   // empty
 }
@@ -75,14 +54,15 @@ UpcEBarcode::~UpcEBarcode()
 QImage UpcEBarcode::toImage(const QSizeF& size) 
 { 
   qDebug() << "UpcEBarcode::toImage() : data " << data();
+  product::UpcEEngine * prod = new product::UpcEEngine();  
   if (!data().isEmpty()) {
-    d->setBarcodeString(data());
+    prod->setBarcodeString(data());
   }
   QSizeF currentMinimumSize(minimumSize());
-  QImage image(d->getImage(size, currentMinimumSize, 
+  QImage image(prod->image(size, currentMinimumSize, 
 			   foregroundColor(), backgroundColor()));
+  delete prod;
+  
   setMinimumSize(currentMinimumSize);
   return image;
 }
-
-

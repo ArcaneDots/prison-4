@@ -1,20 +1,26 @@
 /*
-    <one line to give the library's name and an idea of what it does.>
     Copyright (C) 2011  Ian Hollander <ianhollander at gmail.com>
 
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
+    Permission is hereby granted, free of charge, to any person
+    obtaining a copy of this software and associated documentation
+    files (the "Software"), to deal in the Software without
+    restriction, including without limitation the rights to use,
+    copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following
+    conditions:
 
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
+    The above copyright notice and this permission notice shall be
+    included in all copies or substantial portions of the Software.
 
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+    OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+    HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+    OTHER DEALINGS IN THE SOFTWARE.
 */
 
 
@@ -28,7 +34,14 @@
 
 namespace product 
 {
-
+/**
+ * handles all operation common to all GS1 product bar code
+ * 
+ * Performs basic symbology and length validation based on values 
+ * passed to member variables during child object construction.
+ * Actual barcode construction is preformed by calls to virtual
+ * functions overloaded in child classes.
+ */
 class ProductEngine : public shared::AbstractBarcodeEngine
 {
 public:
@@ -76,7 +89,7 @@ public:
   /**
    * 
    */
-  upc_common::PRODUCT_CODE_VALUES getProductCode() const; 
+  upc_common::PRODUCT_CODE_VALUES productCode() const; 
   /**
    * Get QImage of barcode data
    *
@@ -86,8 +99,8 @@ public:
    * @param background color of "white" space
    * @return QImage
    **/
-  QImage getImage(const QSizeF &requestedSize, QSizeF &minimumSize, 
-		  QColor foregroundColor, QColor backgroundColor);
+  QImage image(const QSizeF &requestedSize, QSizeF &minimumSize, 
+		  const QColor &foregroundColor, const QColor &backgroundColor);
 protected:
   /**
    * Validate product codes and splits off the extended code (EAN-2/5)
@@ -279,4 +292,3 @@ protected:
 };
 };
 #endif // PRODUCTENGINE_H
-
