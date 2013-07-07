@@ -28,6 +28,10 @@ class Ean8Engine : public ProductEngine
 {
 public:
   /**
+   * default constructor
+   */
+  Ean8Engine();
+  /**
    * constructor
    *
    * @param defaultString default input used when user input is invalid

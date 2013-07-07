@@ -540,7 +540,7 @@ namespace ean13
   /**
    * default value
    */
-  static const QString DEFAULT_VALUE("1 2 3 4 5 6 7 8 9 0 1 2 8");
+  static const QString DEFAULT_VALUE("1 2 3 4 5 6 7 8 9 0 1 2 3");
   /**
    * EAN-13 without check digit 
    */

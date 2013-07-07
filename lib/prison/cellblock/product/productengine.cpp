@@ -104,15 +104,14 @@ void ProductEngine::setBarcodeString()
 QStringList ProductEngine::parseSymbolString(const QString& symbolString) const
 {
   QStringList parsedSymbols;
-  QRegExp parseDigits("\\d");
+  QRegExp parseDigits("(\\d)");
   int pos = 0;
   
   while ((pos = parseDigits.indexIn(symbolString, pos)) != -1) {
-    parsedSymbols << parseDigits.cap(1);
+    parsedSymbols << symbolString[pos];
     pos += parseDigits.matchedLength();
   }
   return parsedSymbols;
-  //  return shared::AbstractBarcodeEngine::parseSymbolString(symbolString);
 }
 
 

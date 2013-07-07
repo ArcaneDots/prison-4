@@ -27,6 +27,23 @@
 #include "ean13engine.h"
 
 using namespace product;
+
+Ean13Engine::Ean13Engine(): 
+	UpcAEngine("", 
+		    CodeEngine::AutoProduct,
+		    ean13::DEFAULT_VALUE,
+		    ean13::MIN,
+		    ean13::MAX_LEN,
+		    ean13::CHECK_DIGIT_OFFSET,
+		    ean13::BLOCK_SIZE,
+		    upc_common::PS__EAN_13)
+{
+  qDebug("Ean13Engine constructor");
+  initialize();
+  UpcAEngine::setBarcodeString();
+}
+
+
 Ean13Engine::Ean13Engine(const QString &userBarcode, 
 			 CodeEngine::ConstructCodes flags): 
 	UpcAEngine(userBarcode, 

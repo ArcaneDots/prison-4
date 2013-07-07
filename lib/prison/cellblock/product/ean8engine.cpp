@@ -29,6 +29,22 @@
 using namespace product;
 using namespace shared;
 
+Ean8Engine::Ean8Engine(): 	
+	ProductEngine("", 
+		CodeEngine::AutoProduct,
+		ean8::DEFAULT_VALUE,
+		ean8::MIN_8,
+		ean8::MAX_LEN,
+		ean8::CHECK_DIGIT_OFFSET,
+		ean8::BLOCK_SIZE,
+		ean8::ENCODE_BLOCK_SIZE,
+		upc_common::PS__EAN_8)
+{
+  qDebug("Ean8Engine constructor");
+  ProductEngine::initialize();
+  ProductEngine::setBarcodeString();
+}
+
 Ean8Engine::Ean8Engine(const QString &userBarcode, 
 		       CodeEngine::ConstructCodes flags): 	
 	ProductEngine(userBarcode, 

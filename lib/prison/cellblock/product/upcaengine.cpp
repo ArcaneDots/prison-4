@@ -77,9 +77,8 @@ UpcAEngine::~UpcAEngine()
 
 QString UpcAEngine::userInput() const
 {
-    return product::ProductEngine::userInput();
+   return product::ProductEngine::userInput();
 }
-
 
 void UpcAEngine::setBarcodeString()
 {

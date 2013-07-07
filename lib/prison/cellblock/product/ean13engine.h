@@ -34,6 +34,7 @@ namespace product
 class Ean13Engine :  public UpcAEngine 
 {
 public:
+  Ean13Engine();
   Ean13Engine(const QString &userBarcode, 
 	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   virtual ~Ean13Engine();   
