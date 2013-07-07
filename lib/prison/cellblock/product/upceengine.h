@@ -38,7 +38,7 @@ class UpcEEngine : public UpcAEngine
 {
 
 public:
-  
+  UpcEEngine();
   /**
    * constructor
    *
@@ -49,26 +49,12 @@ public:
    * @param blockSize formated block size
    * @param productCode constant indicating the current product code
    **/
-  UpcEEngine(const QString &defaultString = upcE::DEFAULT_VALUE,
-	      int minLength = upcE::MIN, 
-	      int maxLength = upcE::MAX_LEN,
-	      int checkDigitOffset = upcE::CHECK_DIGIT_OFFSET,
-	      int blockSize = upcE::BLOCK_SIZE,
-	      upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__UPC_E);
+  UpcEEngine(const QString &userBarcode, 
+	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   /**
    * destructor
    */
   virtual ~UpcEEngine();
-  /**
-   * Calculate UPC-E checksum digit for a particular barcode
-   *
-   * Calculate check sum based on expand UPC-A product code
-   *
-   * @param symbolArray array of symbol indexes
-   * @return valid check digit
-   */
-  virtual int calculateCheckDigit(
-    const LookupIndexArray &symbolArray) const;
   /**
    * Attempt to get UPC-E version of the inputed product code
    * 
@@ -101,7 +87,7 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */
-  virtual QStringList formatMainBlock(const QStringList &mainBlock) const;    
+  QStringList formatMainBlock(const QStringList &mainBlock) const;    
   /**
    * Encode complete number according to current barcode type
    *
@@ -110,7 +96,7 @@ protected:
    * @param symbolSrc full list of symbols
    * @param splitIndex index of the "end" of the first half
    */
-  virtual void encodeSymbols(const QStringList &symbolSrc); 
+  void encodeSymbols(const QStringList &symbolSrc); 
   /**
    * Encode complete number according to current barcode type
    * 
@@ -120,11 +106,20 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */ 
-  virtual QStringList encodeMainBlock(const QStringList &mainBlock) const;   
+  QStringList encodeMainBlock(const QStringList &mainBlock) const;   
+  /**
+   * Calculate UPC-E checksum digit for a particular barcode
+   *
+   * Calculate check sum based on expand UPC-A product code
+   *
+   * @param symbolArray array of symbol indexes
+   * @return valid check digit
+   */
+  int calculateCheckDigit(const LookupIndexArray &symbolArray) const;
   /**
    * Load all encoding patterns based on combo of system number (0-1) and check digit
    */
-  virtual void fillWidthEncodingList();       
+  void fillWidthEncodingList();       
   /**
    * system number "0" encoding list
    */

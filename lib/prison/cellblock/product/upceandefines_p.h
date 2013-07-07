@@ -124,6 +124,14 @@ namespace upc_common
     NS__RESERVED_4 			= 9
   }; 
   /**
+   * Enumerate constants for all known product number system values
+   */
+  enum GS1_PREFIX {
+    GS1__ISSN		 		= 977,
+    GS1__ISBN				= 978,
+    GS1__UNKNOWN	 		= 999
+  }; 
+  /**
    * Enumerated constants for all known product code types
    */
   enum PRODUCT_CODE_VALUES {
@@ -137,11 +145,17 @@ namespace upc_common
      */
     PS__EAN_8,
     /**
-     * EAN-5
+     * EAN-5 - Product code 5 digit extension
+     * 
+     * Used for additional product information
+     * ISBN - prefix 978,979
+     * ISSN  Serial Number publications- prefix 977
      */
     PS__EAN_5,
     /**
-     * EAN-2
+     * EAN-2 - Product code 2 digit extension
+     * 
+     * ISSN  Serial Number publications- prefix 977
      */
     PS__EAN_2,
     /**
@@ -413,7 +427,7 @@ namespace upcA
   /**
    * default value
    */
-  static const QString DEFAULT_VALUE("0 1 2 3 4 5 6 7 8 9 0 1");
+  const QString DEFAULT_VALUE("0 1 2 3 4 5 6 7 8 9 0 1");
   /**
    * UPC-A without check digit
    */

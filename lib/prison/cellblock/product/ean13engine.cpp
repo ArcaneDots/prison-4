@@ -27,21 +27,20 @@
 #include "ean13engine.h"
 
 using namespace product;
-
-Ean13Engine::Ean13Engine(const QString& defaultString, 
-	 int minLength, 
-	 int maxLength, 
-	 int checkDigitOffset, 
-	 int blockSize,
-	 upc_common::PRODUCT_CODE_VALUES productCode): 
-	 UpcAEngine(defaultString,
-		 minLength,
-		 maxLength,
-		 checkDigitOffset,
-		 blockSize,
-		 productCode)
+Ean13Engine::Ean13Engine(const QString &userBarcode, 
+			 CodeEngine::ConstructCodes flags): 
+	UpcAEngine(userBarcode, 
+		  flags,
+		  ean13::DEFAULT_VALUE,
+		  ean13::MIN,
+		  ean13::MAX_LEN,
+		  ean13::CHECK_DIGIT_OFFSET,
+		  ean13::BLOCK_SIZE,
+		  upc_common::PS__EAN_13)
 {
   qDebug("Ean13Engine constructor");
+  initialize();
+  UpcAEngine::setBarcodeString();
 }
 
 Ean13Engine::~Ean13Engine()
@@ -59,8 +58,8 @@ void Ean13Engine::initialize()
 QStringList Ean13Engine::toUpcE() const
 {
   qDebug("Ean13Engine toUpcE");
-  if (m_userSymbols.at(1) == "0" || m_userSymbols.at(1) == "1") {
-    return compressUpc(m_userSymbols.mid(1));
+  if (m_userParsedSymbols.at(1) == "0" || m_userParsedSymbols.at(1) == "1") {
+    return compressUpc(m_userParsedSymbols.mid(1));
   }
   return QStringList();
 }
@@ -68,8 +67,8 @@ QStringList Ean13Engine::toUpcE() const
 QStringList Ean13Engine::toUpcA() const
 {  
   qDebug("Ean13Engine toUpcA");
-  if (m_userSymbols.at(0) == "0") {
-    return m_userSymbols.mid(1);
+  if (m_userParsedSymbols.at(0) == "0") {
+    return m_userParsedSymbols.mid(1);
   }
   return QStringList();
 }
@@ -77,7 +76,7 @@ QStringList Ean13Engine::toUpcA() const
 QStringList Ean13Engine::toEan13() const
 {
   qDebug("Ean13Engine toEan13");
-  return m_userSymbols;
+  return m_userParsedSymbols;
 }
 
 QString Ean13Engine::getFirstBlockEncodePattern(int indexedPattern) const

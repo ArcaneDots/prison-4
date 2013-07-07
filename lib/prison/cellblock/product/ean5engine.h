@@ -31,29 +31,19 @@
 
 namespace product
 {
+
 /**
  * 5 Digit Add-on symbol - often used for ISBN numbers
  *  
  * Can be appended to UPC A/E and EAN-13
  */ 
-class Ean5Engine : public Ean2Engine
+class Ean5Engine : public UpcAEngine
 {
-
 public:
-    Ean5Engine(const QString& defaultString = ean5::DEFAULT_VALUE,
-	       int blockSize = ean5::BLOCK_SIZE);
+  Ean5Engine(const QString& userString = ean5::DEFAULT_VALUE,
+	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
     virtual ~Ean5Engine();
-    /**
-   * Calculate EAN checksum digit used for parity encoding 
-   * 
-   * right to left, starting with  right-most value as odd, odd * 3, even * 1
-   * 
-   * @note Will not check whether supplied string has an invalid length. 
-   * 
-   * @param symbolArray array of symbol indexes
-   * @return valid check digit
-   */
-  virtual int calculateCheckDigit(const shared::LookupIndexArray &symbolArray) const;
 };
+
 };
 #endif // EAN5ENGINE_H

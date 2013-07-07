@@ -27,17 +27,14 @@
 
 using namespace product;
 
-Ean2Engine::Ean2Engine(const QString& defaultString,
+Ean2Engine::Ean2Engine(const QString& userString,
+		       CodeEngine::ConstructCodes flags) /*,
 		       int blockSize,
-		       upc_common::PRODUCT_CODE_VALUES productCode) : 
-		       UpcAEngine(defaultString,
-					blockSize,
-					blockSize,
-					NOT_FOUND,
-					blockSize,
-					productCode)
+		       upc_common::PRODUCT_CODE_VALUES productCode)*/ : 
+		       UpcAEngine(upcA::DEFAULT_VALUE + userString,
+			 flags)
 {
-  qDebug("UpcAEngine constructor()"); 
+  qDebug("Ean2Engine constructor()"); 
 }
 
 Ean2Engine::~Ean2Engine()
@@ -45,36 +42,7 @@ Ean2Engine::~Ean2Engine()
   // empty
 }
 
-QStringList Ean2Engine::processSymbolList(const QStringList &userSymbols)
-{
-  qDebug("Ean2Engine processSymbolList()"); 
-  Q_ASSERT(upc_common::PS__EAN_2 == m_productCode);
-  // don't bother processing two digits
-  return userSymbols;
-}
 
-
-int Ean2Engine::calculateCheckDigit(const shared::LookupIndexArray& symbolArray) const
-{
-  qDebug("Ean2Engine calculateCheckDigit()"); 
-  return UpcAEngine::calculateEan2CheckDigit(symbolArray);
-}
-
-void Ean2Engine::formatSymbols(const QStringList &symbolSrc, int splitIndex)
-{
-  qDebug("Ean2Engine formatSymbols()"); 
-  Q_ASSERT(upc_common::PS__EAN_2 == m_productCode);
-  UpcAEngine::formatExtendedBlock(symbolSrc);
-  //m_formatedSymbols << m_userSymbols.join("");
-}
-
-void Ean2Engine::encodeSymbols(const QStringList &symbolSrc, int splitIndex)
-{
-  qDebug("Ean2Engine encodeSymbols()"); 
-  Q_ASSERT(upc_common::PS__EAN_2 == m_productCode);
-  UpcAEngine::encodeExtendedBlock(symbolSrc);
-  //UpcAEngine::encodeExtendedDigits(convertSymbolsToIndexes(m_userSymbols));
-}
 
 
 

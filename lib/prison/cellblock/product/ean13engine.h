@@ -34,24 +34,9 @@ namespace product
 class Ean13Engine :  public UpcAEngine 
 {
 public:
-  Ean13Engine(const QString& defaultString = ean13::DEFAULT_VALUE, 
-	      int minLength = ean13::MIN, 
-	      int maxLength = ean13::MAX_LEN, 
-	      int checkDigitOffset = ean13::CHECK_DIGIT_OFFSET, 
-	      int blockSize = ean13::BLOCK_SIZE,
-	      upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__EAN_13);
+  Ean13Engine(const QString &userBarcode, 
+	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   virtual ~Ean13Engine();   
-  /**
-   * Class specicfic initialization
-   */
-  virtual void initialize();
-  /**
-   * Attempt to get UPC-E version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
-   */
   virtual QStringList toUpcE() const;
   /**
    * Attempt to get UPC-A version of the inputed product code
@@ -71,15 +56,26 @@ public:
   virtual QStringList toEan13() const;
 protected:
   /**
+   * Class specicfic initialization
+   */
+  void initialize();
+  /**
+   * Attempt to get UPC-E version of the inputed product code
+   * 
+   * @note not tested
+   * 
+   * @returns product code or empty list in case conversion is not possible
+   */
+  /**
    * Get productCode specific encoding pattern for the first block of symbols
    * 
    * @param indexedPattern index of assiocated pattern
    */
-  virtual QString getFirstBlockEncodePattern(int indexedPattern = 0) const;
+  QString getFirstBlockEncodePattern(int indexedPattern = 0) const;
     /**
    * Load all encoding patterns based on combo of system number (0-1) and check digit
    */
-  virtual void fillWidthEncodingList(); 
+  void fillWidthEncodingList(); 
   /**
    * encoding patterns for EAN-13 first block
    */

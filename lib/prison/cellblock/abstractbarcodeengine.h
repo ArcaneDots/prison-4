@@ -187,7 +187,9 @@ public:
    * @param requiredCheckDigits number of required check digits/symbols
    * @param maxCheckDigits maximum number of check digits/symbols allowed
    **/
-  AbstractBarcodeEngine(const QString &defaultString,
+  AbstractBarcodeEngine(const QString &userBarcode, 
+			CodeEngine::ConstructCodes flags,
+			const QString &defaultString,
 			int minLength, 
 			int maxLength,
 			bool multiCharSymbols,
@@ -199,10 +201,11 @@ public:
    * destructor
    */
   virtual ~AbstractBarcodeEngine(); 
+protected:
   /**
    * Class specicfic initialization
    */
-  virtual void initialize();
+  void initialize();
   /**
    * Set current barcode string
    * 
@@ -217,9 +220,25 @@ public:
    * @sa formatSymbols() to build human-readable output
    * @sa encodeSymbols() to build machine readable output "barcode"
    **/
-  virtual void setBarcodeString(const QString &userBarcode, 
-		CodeEngine::ConstructCodes flags = CodeEngine::AutoLinear); 
+  virtual void setBarcodeString();
+public:
   // -- inline get/set members --
+  /** 
+   * Default value
+   */
+  virtual QString codeDefault() const;
+  /**
+   * User input string
+   */
+  virtual QString userInput() const;
+  /**
+   * list of parsed symbols
+   */
+  virtual QStringList parsedSymbolList();
+  /**
+   * final list of symbols
+   */
+  virtual QStringList finalSymbolList();
   /**
    * Get a string of symbols encoded according to the barcode's specification
    *  
@@ -228,12 +247,12 @@ public:
    * 
    * @return symbols separated into blocks defined by the barcode's encoding
    */ 
-  QString getEncodedSymbols(shared::BarPositionsMap &barLocations, 
+  QString encodedSymbols(shared::BarPositionsMap &barLocations, 
 				       int barThicknessMultiple = 1);
   /**
    * Get a list of symbol blocks formatted according to the barcode's specification
    */
-  inline QStringList getFormatedSymbols() const
+  inline QStringList formatedSymbols() const
   {
     return m_formatedSymbols;
   }
@@ -242,7 +261,7 @@ public:
    * 
    * The barcode will display a default value in case the user's is not  
    */
-  inline CodeEngine::ErrorCodes getStatusFlags() const 
+  inline CodeEngine::ErrorCodes statusFlags() const
   {
     return m_isValid;
   }   
@@ -379,12 +398,12 @@ protected:
    * @param symbol 1 or more character long "symbol"
    * @returns index of symbol or NOT_FOUND in case symbol does not exist
    */
-  int getSymbolIndex(const QString &symbol) const;  
+  int lookupSymbolIndex(const QString &symbol) const;  
   /**
    * Get the symbol at a particular look-up table index
    * @return symbol string
    */
-  const QString getSymbolAtIndex(int symbolIndex) const;
+  const QString lookupSymbolAtIndex(int symbolIndex) const;
   /**
    * Encode an individual symbol 
    * 
@@ -393,7 +412,7 @@ protected:
    * @param symbol symbol to be encoded
    * @return actual encoding
    */
-  virtual QString getSymbolEncoding(const QString &symbol) const;
+  virtual QString lookupSymbolEncoding(const QString &symbol) const;
   /**
    * Add a regular expression to match a multi-character symbol(s)
    *
@@ -423,8 +442,8 @@ protected:
        */
       T operator() (int symbol) {
 	Q_ASSERT(symbol != NOT_FOUND);
-	return  m_barcodeEngine->getSymbolEncoding(
-	  m_barcodeEngine->getSymbolAtIndex(symbol));
+	return  m_barcodeEngine->lookupSymbolEncoding(
+	  m_barcodeEngine->lookupSymbolAtIndex(symbol));
       }	
       /**
        * Get encoded version of symbol
@@ -433,8 +452,8 @@ protected:
        * @returns string-like symbol encoding information
        */
       T operator() (V symbol) {
-	Q_ASSERT(m_barcodeEngine->getSymbolIndex(symbol) != NOT_FOUND);
-	return  m_barcodeEngine->getSymbolEncoding(symbol);
+	Q_ASSERT(m_barcodeEngine->lookupSymbolIndex(symbol) != NOT_FOUND);
+	return  m_barcodeEngine->lookupSymbolEncoding(symbol);
       }	
     private:
       AbstractBarcodeEngine * m_barcodeEngine;
@@ -442,22 +461,24 @@ protected:
   /**
    * Change the symbol and symbol encoding look-up tables 
    * 
-   * @sa getSymbolIndex, getSymbolAtIndex, getSymbolEncoding
+   * @sa lookupSymbolIndex
+   * @sa lookupSymbolAtIndex
+   * @sa lookupSymbolEncoding
    */
-  void setSymbolAndEncodingLookupTable(const QStringList &symbolSet, 
+  void fillSymbolAndEncodingLookupTable(const QStringList &symbolSet, 
 			       const QStringList &encodingSet);    
   /**
    * Set the active symbol look-up table 
    * 
    * @sa getSymbolIndex, getSymbolAtIndex
    */
-  void setSymbolLookupTable(const QStringList &symbolSet);    
+  void fillSymbolLookupTable(const QStringList &symbolSet);    
   /**
    * Get the active symbol look-up table 
    * 
    * @sa setSymbolLookupTable
    */
-  QStringList getSymbolLookupTable() const;    
+  QStringList fillSymbolLookupTable() const;    
   /** 
    * Set the active symbol encoding look-up table 
    * 
@@ -469,7 +490,7 @@ protected:
    * 
    * @sa setSymbolEncodingLookupTable
    */
-  QStringList getSymbolEncodingLookupTable() const;
+  QStringList symbolEncodingLookupTable() const;
   /**
    * Fill m_symbolList list with all symbol ordered by index
    *
@@ -515,9 +536,13 @@ protected:
    */
   QString m_userInputString;      
   /**
-   * symbol list based on parsed and processed user input
+   * symbol list created from parsed user input
    */
-  QStringList m_userSymbols;
+  QStringList m_userParsedSymbols;
+  /**
+   * symbol list based on final validated user input
+   */
+  QStringList m_finalSymbolList;
   /**
    * modulus value used to calculate the check digit
    */
@@ -566,3 +591,4 @@ private:
 };
 };
 #endif // ABSTRACTBARCODEENGINE_H
+

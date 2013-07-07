@@ -1,21 +1,27 @@
 /*
-    <one line to give the library's name and an idea of what it does.>
-    Copyright (C) 2011  Ian gmail <ianhollander at gmail.com>
-
-    This library is free software; you can redistribute it and/or
-    modify it under the terms of the GNU Lesser General Public
-    License as published by the Free Software Foundation; either
-    version 2.1 of the License, or (at your option) any later version.
-
-    This library is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public
-    License along with this library; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-*/
+ *  Copyright (C) 2011  Ian Hollander <ianhollander at gmail dot com>
+ * 
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without
+ *  restriction, including without limitation the rights to use,
+ *  copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the
+ *  Software is furnished to do so, subject to the following
+ *  conditions:
+ * 
+ *  The above copyright notice and this permission notice shall be
+ *  included in all copies or substantial portions of the Software.
+ * 
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *  OTHER DEALINGS IN THE SOFTWARE.
+ */
 
 #include <numeric>
 #include "abstractbarcodeengine.h"
@@ -84,7 +90,9 @@ shared::AbstractBarcodeEngine::Private::~Private()
   // empty
 }
 
-AbstractBarcodeEngine::AbstractBarcodeEngine(const QString &defaultString,
+AbstractBarcodeEngine::AbstractBarcodeEngine(const QString &userBarcode, 
+			  CodeEngine::ConstructCodes flags,
+			  const QString &defaultString,
 			  int minLength, 
 			  int maxLength,
 			  bool multiCharSymbols,
@@ -92,6 +100,8 @@ AbstractBarcodeEngine::AbstractBarcodeEngine(const QString &defaultString,
 			  bool internalCheckDigit,
 			  int requiredCheckDigits,
 			  int maxCheckDigits) : 
+	m_userInputString(userBarcode),
+	m_constructionFlags(flags),
 	m_defaultString(defaultString),
 	m_minLength(minLength), 
 	m_maxLength(maxLength),
@@ -103,12 +113,10 @@ AbstractBarcodeEngine::AbstractBarcodeEngine(const QString &defaultString,
 	m_formatedSymbols(),
 	m_encodedSymbols(),
 	m_barPositions(),
-	m_isValid(CodeEngine::UnknownError),
-	m_constructionFlags(),
+	m_isValid(CodeEngine::OK),
 	d(new AbstractBarcodeEngine::Private)
 {
   qDebug("AbstractBarcodeEngine constructor");
-  initialize();
 }
 
 AbstractBarcodeEngine::~AbstractBarcodeEngine()
@@ -116,6 +124,27 @@ AbstractBarcodeEngine::~AbstractBarcodeEngine()
   qDebug("AbstractBarcodeEngine destructor");
   delete d;
 }
+
+QString AbstractBarcodeEngine::codeDefault() const
+{
+  return m_defaultString;
+}
+
+QString AbstractBarcodeEngine::userInput() const
+{
+  return m_userInputString;
+}
+
+QStringList AbstractBarcodeEngine::parsedSymbolList()
+{
+  return m_userParsedSymbols;
+}
+
+QStringList AbstractBarcodeEngine::finalSymbolList()
+{
+  return m_finalSymbolList;
+}
+
 
 void AbstractBarcodeEngine::initialize()
 {
@@ -125,64 +154,57 @@ void AbstractBarcodeEngine::initialize()
 }
 
 
-void AbstractBarcodeEngine::setBarcodeString(const QString& userBarcode, 
-					    CodeEngine::ConstructCodes flags)
+void AbstractBarcodeEngine::setBarcodeString()
 {
   qDebug("AbstractBarcodeEngine setBarcodeString() : start");
   
   // verify that the symbol related shared pointers actually initialized 
-  //initialize();  
   Q_ASSERT(d->m_symbolLookup != 0);
   Q_ASSERT(d->m_encodingLookup != 0);   
-  // ignore the identical input  
-  if (userBarcode == m_userInputString) {
-    return;
-  }  
-  // reset failure code and output variables
-  m_constructionFlags = flags;
-  m_isValid = CodeEngine::OK; 
-  m_formatedSymbols.clear();
-  m_encodedSymbols.clear();  
-  // save user input for later comparsion
-  m_userInputString = userBarcode;
-  QStringList userSymbols;  
-  // parse string into list of text symbols and validate
-  userSymbols = parseSymbolString(userBarcode);    
-  // basic validation
+  
+  // debug messages : basic validation
   qDebug() << "expected minLength = " << m_minLength;
   qDebug() << "expected maxLength = " << m_maxLength;
   qDebug() << "expected internal check digit = " << m_internalCheckDigit;
   
-  if (!userSymbols.isEmpty()) {
-    if ((userSymbols.size() < m_minLength) ) {
+  //QStringList userSymbols;  
+  
+  // parse string into list of text symbols and validate
+  m_userParsedSymbols = parseSymbolString(m_userInputString);    
+  
+  if (!m_userParsedSymbols.isEmpty()) {
+    if ((m_userParsedSymbols.size() < m_minLength) ) {
       m_isValid |= CodeEngine::LengthOutOfRange;
     } 
     // may not have a maximun length
-    if (m_maxLength != NOT_FOUND && userSymbols.size() > m_maxLength) {      
+    if (m_maxLength != NOT_FOUND && m_userParsedSymbols.size() > m_maxLength) {      
       m_isValid |= CodeEngine::LengthOutOfRange;
     }
   } else {
     m_isValid |= CodeEngine::MissingInput;
   }
   // subclass specific symbol validation/processing  
+  // user's input fails in processSymbolList() 
   if (m_isValid.testFlag(CodeEngine::OK)) {
     qDebug("AbstractBarcodeEngine setBarcodeString() : processing user symbols");
-    userSymbols = this->processSymbolList(userSymbols);
+        m_finalSymbolList = this->processSymbolList(m_userParsedSymbols);
   } 
-  // switch to default value in case user's input fails in processSymbolList() 
+  // case Missing | Bad user input: use default value 
   if (!m_isValid.testFlag(CodeEngine::OK)) {
     qDebug("AbstractBarcodeEngine setBarcodeString() : revert to default");
-    userSymbols = m_defaultString.split(" ");
-    userSymbols = this->processSymbolList(userSymbols);
+        m_userParsedSymbols = m_defaultString.split(" ");
+        m_finalSymbolList = this->processSymbolList(m_userParsedSymbols);
   }  
+  qDebug() << "m_userParsedSymbols = " << m_userParsedSymbols;
+  qDebug() << "m_finalSymbolList = " << m_finalSymbolList;
   // save and output final set of symbols
-  m_userSymbols = userSymbols;
-  Q_ASSERT(userSymbols.size() >= m_minLength);
+  //m_userSymbols = m_userSymbols;
+  Q_ASSERT(m_finalSymbolList.size() >= m_minLength);
   if (m_maxLength != NOT_FOUND) {
-    Q_ASSERT(userSymbols.size() <= m_maxLength);
+    Q_ASSERT(m_finalSymbolList.size() <= m_maxLength);
   }
-  this->formatSymbols(userSymbols);  
-  this->encodeSymbols(userSymbols);  
+  this->formatSymbols(m_finalSymbolList);  
+  this->encodeSymbols(m_finalSymbolList);  
   qDebug("AbstractBarcodeEngine setBarcodeString() : end");
 }
 
@@ -226,7 +248,7 @@ QStringList AbstractBarcodeEngine::parseSymbolString(const QString& symbolString
     else {
       userSymbolsList << symbolString.at(userIndex++);
     }
-    if (getSymbolIndex(userSymbolsList.back()) == NOT_FOUND) {
+    if (lookupSymbolIndex(userSymbolsList.back()) == NOT_FOUND) {
       qDebug("AbstractBarcodeEngine parseSymbolString() : unknown symbol");
       qDebug() << "removing : " << userSymbolsList.back();
       userSymbolsList.pop_back();
@@ -271,7 +293,6 @@ QStringList AbstractBarcodeEngine::processSymbolList(const QStringList& userSymb
   qDebug("AbstractBarcodeEngine processSymbolList() : end");
   return userSymbols;
 }
-
 
 int AbstractBarcodeEngine::calculateCheckDigit(const LookupIndexArray &symbolArray) const
 {
@@ -360,33 +381,33 @@ shared::LookupIndexArray AbstractBarcodeEngine::convertSymbolsToIndexes(
   shared::LookupIndexArray symbolArray;
   QStringList::const_iterator itrSymbol = symbolList.begin();
   while (itrSymbol != symbolList.end()) {
-    symbolArray.push_back(getSymbolIndex(*itrSymbol++));
+    symbolArray.push_back(lookupSymbolIndex(*itrSymbol++));
   }
   Q_ASSERT(symbolList.size() == symbolArray.size());
   qDebug("AbstractBarcodeEngine convertSymbolsToIndexes() : end");
   return symbolArray;
 }
 
-int AbstractBarcodeEngine::getSymbolIndex(const QString &symbol) const
+int AbstractBarcodeEngine::lookupSymbolIndex(const QString &symbol) const
 {
   Q_ASSERT(d->m_symbolLookup != 0 && !symbol.isEmpty());
   return d->m_symbolLookup->indexOf(symbol);
 }
 
-const QString AbstractBarcodeEngine::getSymbolAtIndex(int symbolIndex) const
+const QString AbstractBarcodeEngine::lookupSymbolAtIndex(int symbolIndex) const
 {  
   Q_ASSERT(d->m_symbolLookup != 0 && symbolIndex != NOT_FOUND);
   return d->m_symbolLookup->value(symbolIndex, QString());
 }
 
-QString AbstractBarcodeEngine::getSymbolEncoding(const QString& symbol) const
+QString AbstractBarcodeEngine::lookupSymbolEncoding(const QString& symbol) const
 {  
   Q_ASSERT(d->m_encodingLookup != 0 && !symbol.isEmpty());
-  int symbolIndex = getSymbolIndex(symbol);
-  return convertWidthEncodingToBinary(d->m_encodingLookup->at(symbolIndex));
+  int currSymbolIndex = lookupSymbolIndex(symbol);
+  return convertWidthEncodingToBinary(d->m_encodingLookup->at(currSymbolIndex));
 }
 
-QString AbstractBarcodeEngine::getEncodedSymbols(shared::BarPositionsMap &barLocations, 
+QString AbstractBarcodeEngine::encodedSymbols(shared::BarPositionsMap &barLocations, 
 						     int barThicknessMultiple)
 {
   qDebug("AbstractBarcodeEngine getEncodedSymbols() : start");
@@ -457,7 +478,7 @@ void AbstractBarcodeEngine::encodeSymbols(const QStringList& symbolSrc)
   Q_ASSERT(!symbolSrc.isEmpty());
   QStringList::const_iterator itrSymbol = symbolSrc.constBegin();
   while(itrSymbol !=  symbolSrc.end()) {
-    m_encodedSymbols.append(this->getSymbolEncoding(*itrSymbol++));
+    m_encodedSymbols.append(this->lookupSymbolEncoding(*itrSymbol++));
   }
   Q_ASSERT(!m_encodedSymbols.isEmpty());
   qDebug("AbstractBarcodeEngine encodeSymbols() : end");
@@ -472,25 +493,25 @@ void AbstractBarcodeEngine::fillSymbolList()
       d->m_localSymbolLookup << QString(baseSymbols::SYMBOL_LOOKUP[index]);
     }
     qDebug("AbstractBarcodeEngine fillSymbolList() : symbols added"); 
-    setSymbolLookupTable(d->m_localSymbolLookup); 
+    fillSymbolLookupTable(d->m_localSymbolLookup); 
   }
 }
 
-void AbstractBarcodeEngine::setSymbolAndEncodingLookupTable(
+void AbstractBarcodeEngine::fillSymbolAndEncodingLookupTable(
 				const QStringList& symbolSet, 
 				const QStringList& encodingSet)
 {
-  setSymbolLookupTable(symbolSet);
+  fillSymbolLookupTable(symbolSet);
   setSymbolEncodingLookupTable(encodingSet);
 }
 
-void AbstractBarcodeEngine::setSymbolLookupTable(const QStringList& symbolSet)
+void AbstractBarcodeEngine::fillSymbolLookupTable(const QStringList& symbolSet)
 {
   Q_ASSERT(&symbolSet != 0);
   d->m_symbolLookup = const_cast<QStringList *>(&symbolSet);
 }
 
-QStringList AbstractBarcodeEngine::getSymbolLookupTable() const
+QStringList AbstractBarcodeEngine::fillSymbolLookupTable() const
 {
   return *d->m_symbolLookup;
 }
@@ -502,7 +523,7 @@ void AbstractBarcodeEngine::setSymbolEncodingLookupTable(
   d->m_encodingLookup = const_cast<QStringList *>(&symbolEncodingSet);
 }
 
-QStringList AbstractBarcodeEngine::getSymbolEncodingLookupTable() const
+QStringList AbstractBarcodeEngine::symbolEncodingLookupTable() const
 {
   return *d->m_encodingLookup;
 }

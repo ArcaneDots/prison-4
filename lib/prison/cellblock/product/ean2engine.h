@@ -38,44 +38,10 @@ class Ean2Engine : public UpcAEngine
 {
 
 public:
-  Ean2Engine(const QString& defaultString = ean2::DEFAULT_VALUE,
-	      int blockSize = ean2::BLOCK_SIZE,
-	     upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__EAN_2);
+  Ean2Engine(const QString& userString = ean2::DEFAULT_VALUE,
+	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   virtual ~Ean2Engine();
-  /**
-   * 
-   */
-  virtual QStringList processSymbolList(const QStringList &userSymbols);
-  /**
-   * Calculate EAN checksum digit used for parity encoding 
-   * 
-   * right to left, starting with  right-most value as odd, odd * 3, even * 1
-   * 
-   * @note Will not check whether supplied string has an invalid length. 
-   * 
-   * @param symbolArray array of symbol indexes
-   * @return valid check digit
-   */
-  virtual int calculateCheckDigit(const shared::LookupIndexArray &symbolArray) const;
-   /**
-   * Seperate digits into logical blocks based on encoded layout
-   * 
-   * UPC-E  format  [0][1-6][(7)][8-9|13]
-   * UPC-A  format: [0][1-5][6-(10)][12-13|15]
-   * EAN-8  format:    [0-4][5-(8)][9-11|13]
-   * EAN-13 format: [0][1-6][7-(12)][13-14|17] 
-   */
-  virtual void formatSymbols(const QStringList& symbolSrc, int splitIndex);    
-  /**
-   * Encode complete number according to current barcode type
-   * 
-   * UPC-E  format  [-][1-6][-][8-9|13]
-   * UPC-A  format: [0][1-5][6-(10)][12-13|15]
-   * EAN-8  format:    [0-4][5-(8)][9-11|13]
-   * EAN-13 format: [-][1-6][7 - 12][13-14|17] 
-   */ 
-  virtual void encodeSymbols(const QStringList& symbolSrc, int splitIndex);
-    
 };
+
 };
 #endif // EAN2ENGINE_H

@@ -52,10 +52,8 @@ Ean8Barcode::~Ean8Barcode() {
 QImage Ean8Barcode::toImage(const QSizeF& size) { 
   qDebug() << "Ean8Barcode::toImage() : data " << data();
   
-  product::Ean8Engine * prod = new product::Ean8Engine();  
-  if (!data().isEmpty()) {
-    prod->setBarcodeString(data());
-  }
+  product::Ean8Engine * prod = new product::Ean8Engine(data());  
+ 
   QSizeF * currentMinimumSize = new QSizeF(minimumSize());
   QImage image(prod->image(size, *currentMinimumSize, 
 			   foregroundColor(), backgroundColor()));

@@ -36,12 +36,27 @@ using namespace prison;
  */
 class UpcEBarcode::Private {
  public:
+   Private(product::UpcEEngine * UPCE);
+   ~Private();
+   
+   product::UpcEEngine * prod;
 };
 /**
  * @endcond
  */
+UpcEBarcode::Private::Private(product::UpcEEngine* UPCE) :
+  prod(UPCE)
+{
 
-UpcEBarcode::UpcEBarcode() : d(0)
+}
+
+UpcEBarcode::Private::~Private()
+{
+  delete prod;
+}
+
+UpcEBarcode::UpcEBarcode() : 
+  d(new Private(new product::UpcEEngine()))
 {    
   // empty
 }
@@ -54,15 +69,19 @@ UpcEBarcode::~UpcEBarcode()
 QImage UpcEBarcode::toImage(const QSizeF& size) 
 { 
   qDebug() << "UpcEBarcode::toImage() : data " << data();
-  product::UpcEEngine * prod = new product::UpcEEngine();  
-  if (!data().isEmpty()) {
-    prod->setBarcodeString(data());
-  }
-  QSizeF currentMinimumSize(minimumSize());
-  QImage image(prod->image(size, currentMinimumSize, 
-			   foregroundColor(), backgroundColor()));
-  delete prod;
   
+  if (d != 0  && d->prod->userInput() != data()) {
+    qDebug() << "UpcEBarcode::toImage() : userInput " << d->prod->userInput();
+    delete d;
+  }
+  if (d == 0) {
+    d = new Private(new product::UpcEEngine(data())); 
+    //d->prod = new product::UpcEEngine(data());  
+  }
+  
+  QSizeF currentMinimumSize(minimumSize());
+  QImage image(d->prod->image(size, currentMinimumSize, 
+			   foregroundColor(), backgroundColor()));
   setMinimumSize(currentMinimumSize);
   return image;
 }

@@ -40,7 +40,11 @@ namespace product
  * Performs basic symbology and length validation based on values 
  * passed to member variables during child object construction.
  * Actual barcode construction is preformed by calls to virtual
- * functions overloaded in child classes.
+ * functions overloaded in child classes. Except for extended codes
+ * (EAN-2,EAN-5) because all product code support them,
+ *
+ * @note The seperate EAN-2 and EAN-5 classes exist only for the sake of  
+ * @note completeness and for testing purposes. 
  */
 class ProductEngine : public shared::AbstractBarcodeEngine
 {
@@ -55,7 +59,9 @@ public:
    * @param blockSize formated block size
    * @param productCode constant indicating the current product code
    **/
-  ProductEngine(const QString &defaultString = "",
+  ProductEngine(const QString &userBarcode, 
+	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct,
+	      const QString &defaultString = "",
 	      int minLength = NOT_FOUND, 
 	      int maxLength = NOT_FOUND,
 	      int checkDigitOffset = NOT_FOUND,
@@ -66,26 +72,8 @@ public:
    * destructor
    */
   virtual ~ProductEngine();
-  /**
-   * Class specicfic initialization
-   */
-  virtual void initialize();
-  /**
-   * Set current barcode string
-   *
-   * @param userBarcode user string containing barcode symbols 
-   * @param flag contruction hints; Defaults to "Auto".
-   **/
-  virtual void setBarcodeString(const QString &userBarcode, 
-		CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
-  /**
-   * Set current barcode string
-   * 
-   * @note derived function not tested
-   *
-   * @param ptrProductEngine pointer to product code engine
-   **/
-  virtual void setBarcodeString(ProductEngine *ptrProductEngine) = 0;
+  
+  virtual QString userInput() const;
   /**
    * 
    */
@@ -102,6 +90,26 @@ public:
   QImage image(const QSizeF &requestedSize, QSizeF &minimumSize, 
 		  const QColor &foregroundColor, const QColor &backgroundColor);
 protected:
+  /**
+   * Class specicfic initialization
+   */
+  virtual void initialize();
+  /**
+   * Set current barcode string
+   *
+   * @param userBarcode user string containing barcode symbols 
+   * @param flag contruction hints; Defaults to "Auto".
+   **/
+  virtual void setBarcodeString();
+  /**
+   * Parse user input string into list of valid symbols (strings)
+   *
+   * UPCs only use digits
+   * 
+   * @param symbolString user input string
+   * @returns similarly ordered list of single and multi-character symbols
+   */
+  virtual QStringList parseSymbolString(const QString &symbolString) const;  
   /**
    * Validate product codes and splits off the extended code (EAN-2/5)
    * 

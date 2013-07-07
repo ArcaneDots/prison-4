@@ -1,27 +1,27 @@
 /*
-    Copyright (C) 2011  Ian gmail <ianhollander at gmail.com>
-
-   Permission is hereby granted, free of charge, to any person
-    obtaining a copy of this software and associated documentation
-    files (the "Software"), to deal in the Software without
-    restriction, including without limitation the rights to use,
-    copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the
-    Software is furnished to do so, subject to the following
-    conditions:
-
-    The above copyright notice and this permission notice shall be
-    included in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-    OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-    HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-    WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-    OTHER DEALINGS IN THE SOFTWARE.
-*/
+ *  Copyright (C) 2011  Ian Hollander <ianhollander at gmail dot com>
+ *
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without
+ *  restriction, including without limitation the rights to use,
+ *  copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the
+ *  Software is furnished to do so, subject to the following
+ *  conditions:
+ *
+ *  The above copyright notice and this permission notice shall be
+ *  included in all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *  OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *  OTHER DEALINGS IN THE SOFTWARE.
+ */
 
 #include <QtCore/QtDebug>
 #include <QtGui/QFont>
@@ -32,18 +32,22 @@
 
 using namespace product;
 
-ProductEngine::ProductEngine(const QString& defaultString, 
-		       int minLength, 
-		       int maxLength, 
-		       int checkDigitOffset, 
-		       int blockSize,
-		       int encodedBlockSize,
-		       upc_common::PRODUCT_CODE_VALUES productCode): 		       
-	AbstractBarcodeEngine(defaultString, 
+ProductEngine::ProductEngine(const QString &userBarcode, 			     
+		  CodeEngine::ConstructCodes flags, 
+		  const QString& defaultString, 
+		  int minLength, 
+		  int maxLength, 
+		  int checkDigitOffset, 
+		  int blockSize,
+		  int encodedBlockSize,
+		  upc_common::PRODUCT_CODE_VALUES productCode): 		       
+	AbstractBarcodeEngine(userBarcode,
+			flags,
+			defaultString, 
 			minLength, 
 			maxLength, 
 		        false,
-		        upc_common::CHECKSUM_MODULUS_VALUE,
+		        upc_common::CHECKSUM_MODULUS_VALUE, // all product codes
 		        true,
 			NOT_FOUND,
  			NOT_FOUND), 
@@ -75,6 +79,15 @@ ProductEngine::~ProductEngine()
 {
   qDebug("ProductEngine destructor");
 }
+upc_common::PRODUCT_CODE_VALUES ProductEngine::productCode() const
+{
+  return m_productCode;
+}
+
+QString ProductEngine::userInput() const
+{
+    return shared::AbstractBarcodeEngine::userInput();
+}
 
 void ProductEngine::initialize()
 {
@@ -83,66 +96,33 @@ void ProductEngine::initialize()
   this->fillWidthEncodingList();
 }
 
-
-void ProductEngine::setBarcodeString(const QString& userBarcode, 
-				  CodeEngine::ConstructCodes flags)
+void ProductEngine::setBarcodeString()
 {
-  qDebug("ProductEngine setBarcodeString() : start");
-  
-  // ignore missing or identical to previous input  
-  if (userBarcode.isEmpty() || (userBarcode == m_userInputString && 
-    flags == m_constructionFlags)) {
-    return;
-  }
-  
-  initialize();
-  
-  // basic validation
-  qDebug() << "expected minLength = " << m_minLength;
-  qDebug() << "expected maxLength = " << m_maxLength;
-  qDebug() << "expected index of the check digit = " << m_checkDigitOffset;
-    
-  // reset failure code and output variables  
-  m_constructionFlags = flags;
-  qDebug() << "construction flags = " << m_constructionFlags;
-  m_isValid = CodeEngine::OK; 
-  m_formatedSymbols.clear();
-  m_encodedSymbols.clear();
-  
-  // save user input for later comparsion
-  m_userInputString = userBarcode;
-  QString srcString(userBarcode);
-  QStringList userSymbols; 
-  
-  // -- assume input is valid --
-  // parse string into list of text symbols and validate
-  QStringList parsedSymbols(parseSymbolString(srcString)); 
-  if (!parsedSymbols.isEmpty()) {
-    qDebug("ProductEngine setBarcodeString() : processing user symbols");
-    userSymbols = this->processSymbolList(parsedSymbols);
-  }
-  if (userSymbols.isEmpty() || !m_isValid.testFlag(CodeEngine::OK)) {
-    userSymbols = this->processSymbolList(m_defaultString.split(" "));
-  }    
-  // save and output final set of symbols
-  Q_ASSERT(userSymbols.size() >= m_minLength && userSymbols.size() <= m_maxLength);
-  m_userSymbols = userSymbols;
-  this->formatSymbols(userSymbols);  
-  this->encodeSymbols(userSymbols);
-  qDebug("ProductEngine setBarcodeString() : end");    
+  shared::AbstractBarcodeEngine::setBarcodeString();
 }
 
-upc_common::PRODUCT_CODE_VALUES ProductEngine::productCode() const
+QStringList ProductEngine::parseSymbolString(const QString& symbolString) const
 {
-  return m_productCode;
+  QStringList parsedSymbols;
+  QRegExp parseDigits("\\d");
+  int pos = 0;
+  
+  while ((pos = parseDigits.indexIn(symbolString, pos)) != -1) {
+    parsedSymbols << parseDigits.cap(1);
+    pos += parseDigits.matchedLength();
+  }
+  return parsedSymbols;
+  //  return shared::AbstractBarcodeEngine::parseSymbolString(symbolString);
 }
+
 
 // overloaded for EAN-2, EAN-5 : no check digit
 QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
 {
   qDebug("ProductEngine processSymbolList() : start");  
   // do not process UPC-E (has overloaded version) EAN-2 or EAN-5 only numbers
-  Q_ASSERT (upc_common::PS__EAN_2 != m_productCode && 
+
+  Q_ASSERT (upc_common::PS__EAN_2 != m_productCode &&
 	    upc_common::PS__EAN_5 != m_productCode);
   
   const int symbolLength = userSymbols.size();
@@ -158,47 +138,43 @@ QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
     return QStringList();
   }
   
-  // UPC-E barcodes must belong to either number systems;
-  // RegularUpcCodes_1 ("0") or Reserved_1 ("1") 
-  if (m_productCode == upc_common::PS__UPC_E) {   
-    const int currentNumberSystem = 
-      getSymbolIndex(userSymbols.at(upc_common::NUMBER_SYSTEM_INDEX));
-    if ((currentNumberSystem != upc_common::NS__REGULAR_UPC_CODES_1) && 
+  // product code specific processing
+  if (m_productCode == upc_common::PS__UPC_E) {
+    // UPC-E barcodes must belong to either number systems;
+    // RegularUpcCodes_1 ("0") or Reserved_1 ("1")
+    const int currentNumberSystem =
+      lookupSymbolIndex(userSymbols.at(upc_common::NUMBER_SYSTEM_INDEX));
+    if ((currentNumberSystem != upc_common::NS__REGULAR_UPC_CODES_1) &&
 	(currentNumberSystem != upc_common::NS__RESERVED_1)) {
       m_isValid |= CodeEngine::StandardsViolationError;
       return QStringList();
-    }  
-    Q_ASSERT((currentNumberSystem == upc_common::NS__REGULAR_UPC_CODES_1) || 
-	(currentNumberSystem == upc_common::NS__RESERVED_1));
-  }  
+    }
+    Q_ASSERT((currentNumberSystem == upc_common::NS__REGULAR_UPC_CODES_1) ||
+	  (currentNumberSystem == upc_common::NS__RESERVED_1));
+  }
   
   //get main block w/o check digit to calculate the check digit
-  QStringList mainBlock_wo_Check(userSymbols.mid(0, m_checkDigitOffset));  
+  QStringList mainBlock_wo_Check(userSymbols.mid(0, m_checkDigitOffset));
   QStringList extendedBlock(userSymbols.mid(m_checkDigitOffset));
-  int foundCheckDigit = NOT_FOUND;
   qDebug() << "mainBlock_wo_Check: " << mainBlock_wo_Check; 
   qDebug() << "m_minLength: " << m_minLength;
   qDebug() << "m_checkDigitOffset  " << m_checkDigitOffset;
   Q_ASSERT(mainBlock_wo_Check.size() == m_minLength);
   
+  int foundCheckDigit = NOT_FOUND;
   switch (extendedBlock.size()) {
-    case 0:
+    case 0: // no check digit
+    case 2: // EAN-2 
+    case 5: // EAN-5  
       qDebug("ProductEngine processSymbolList() : no check digit found");
       break;
-    case 1:
-      foundCheckDigit = getSymbolIndex(extendedBlock.front());
-      extendedBlock.clear();
-      break;
-    case 3:
-    case 6:
-      foundCheckDigit = getSymbolIndex(extendedBlock.front());
+    case 1: // check digit found
+    case 3: // EAN-2 
+    case 6: // EAN-5 
+      foundCheckDigit = lookupSymbolIndex(extendedBlock.front());
       qDebug() << "ProductEngine processSymbolList() : found check digit " 
 	<< foundCheckDigit;
       extendedBlock.pop_front();
-      break;
-    case 2:
-    case 5:   
-      qDebug() << "ProductEngine processSymbolList() : no check digit found";
       break;
     case 4:
     default:   
@@ -223,7 +199,7 @@ QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
   if (foundCheckDigit == NOT_FOUND) {
     if (m_constructionFlags.testFlag(CodeEngine::AddCheckDigits)) {
       qDebug("ProductEngine processSymbolList() : Inserting missing checkDigit");	  
-      fullMainBlock << getSymbolAtIndex(calcuatedCheckDigit);  
+      fullMainBlock << lookupSymbolAtIndex(calcuatedCheckDigit);  
     } else {
       qDebug("ProductEngine processSymbolList() : missing check digit");
       m_isValid |= CodeEngine::MissingRequiredCheckDigits;
@@ -231,11 +207,11 @@ QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
     } 
   } else if (foundCheckDigit == calcuatedCheckDigit) {      
       qDebug("ProductEngine processSymbolList() : append valid included check digit");
-      fullMainBlock << getSymbolAtIndex(foundCheckDigit);
+      fullMainBlock << lookupSymbolAtIndex(foundCheckDigit);
   } else {
     if (m_constructionFlags.testFlag(CodeEngine::UpdateCheckDigit)) {
       qDebug("ProductEngine processSymbolList() : replacing bad check digit");
-      fullMainBlock << getSymbolAtIndex(calcuatedCheckDigit);
+      fullMainBlock << lookupSymbolAtIndex(calcuatedCheckDigit);
     } else {
       qDebug("ProductEngine processSymbolList() : bad check digit");
       m_isValid |= CodeEngine::InvalidCheckDigits;	
@@ -376,7 +352,8 @@ void ProductEngine::encodeSymbols(const QStringList& symbolSrc)
 { 
   qDebug("ProductEngine encodeSymbols() : start");    
   Q_ASSERT(upc_common::PS__UPC_E != m_productCode);
-  Q_ASSERT(symbolSrc.size() >= m_minLength && symbolSrc.size() <= m_maxLength);  
+  Q_ASSERT(symbolSrc.size() >= m_minLength && symbolSrc.size() <= m_maxLength);
+  
   QStringList mainBlock(encodeMainBlock(
     symbolSrc.mid(0, m_mainBlockSize)));
   QString encodedBlock1(mainBlock.at(0));
@@ -384,7 +361,10 @@ void ProductEngine::encodeSymbols(const QStringList& symbolSrc)
 	   << encodedBlock1;
   QString encodedBlock2(mainBlock.at(1));
   qDebug() << "ProductEngine encodeSymbols() : found second block : " 
-	   << encodedBlock2;
+	   << encodedBlock2;  
+  QStringList encodedExtBlocks(
+    encodeExtendedBlock(symbolSrc.mid(m_mainBlockSize)));
+
   
   // -- Encode main block (EAN-13/UPC-A/UPC-E) --
   m_encodedSymbols = upc_common::QUIET_ZONE;
@@ -405,8 +385,6 @@ void ProductEngine::encodeSymbols(const QStringList& symbolSrc)
   m_barPositions[shared::MAIN_END] = m_encodedSymbols.size();
   
   // -- block: extended (EAN-2/EAN-5)--
-  QStringList encodedExtBlocks(
-    encodeExtendedBlock(symbolSrc.mid(m_mainBlockSize)));
   if (!encodedExtBlocks.isEmpty()) {
     qDebug("ProductEngine encodeSymbols() : encode extended block");  
     m_encodedSymbols += upc_common::QUIET_ZONE;
@@ -444,7 +422,7 @@ QStringList ProductEngine::encodeMainBlock(const QStringList& mainBlock) const
   // --- Encode first block of digits:--- 
   // formated block size equals encoded block size (EAN-13)
   if (m_productCode == upc_common::PS__EAN_13) {
-    firstBlockPattern = getFirstBlockEncodePattern(getSymbolIndex(*itrSymbols++)); 
+    firstBlockPattern = getFirstBlockEncodePattern(lookupSymbolIndex(*itrSymbols++)); 
   }  
   qDebug() << "encodingBlockSize=" << m_encodeBlockSize;
   qDebug() << "mainBlock size=" << mainBlock.size();
@@ -535,22 +513,22 @@ OutIt ProductEngine::encodeSymbolParity(InIt __first1, InIt __last1,
   QString encodedPattern; //(upc_common::encodeLength, '0');
   int index = 0;
   while(__first1 != __last1 && index < parityPattern.size()) {
-    int symbolIndex = getSymbolIndex(const_cast<const QString&>(*__first1++));
-    if (symbolIndex != NOT_FOUND) {
+    int curSymbolIndex = lookupSymbolIndex(const_cast<const QString&>(*__first1++));
+    if (curSymbolIndex != NOT_FOUND) {
 	// encode each digit based on matching parity type
 	qDebug() << "current index" << index;
-	qDebug() << "symbol index" << symbolIndex;
+	qDebug() << "symbol index" << curSymbolIndex;
 	if (parityPattern.at(index) == 'O') {
-	  qDebug() << "encode LeftOdd: " << m_leftOddEncodingList.at(symbolIndex);
-	    *__result++ = m_leftOddEncodingList.at(symbolIndex);
+	  qDebug() << "encode LeftOdd: " << m_leftOddEncodingList.at(curSymbolIndex);
+	    *__result++ = m_leftOddEncodingList.at(curSymbolIndex);
 	}
 	else if (parityPattern.at(index) == 'E') {
-	  qDebug() << "encode LeftEven: " << m_leftEvenEncodingList.at(symbolIndex);
-	  *__result++ = m_leftEvenEncodingList.at(symbolIndex);
+	  qDebug() << "encode LeftEven: " << m_leftEvenEncodingList.at(curSymbolIndex);
+	  *__result++ = m_leftEvenEncodingList.at(curSymbolIndex);
 	}
 	else if (parityPattern.at(index) == 'R') {
-	  qDebug() << "encode Right: " << m_rightEncodingList.at(symbolIndex);
-	  *__result++ = m_rightEncodingList.at(symbolIndex);
+	  qDebug() << "encode Right: " << m_rightEncodingList.at(curSymbolIndex);
+	  *__result++ = m_rightEncodingList.at(curSymbolIndex);
 	}
 	// output all zeros when no pattern is available
 	else {
@@ -635,7 +613,7 @@ QImage ProductEngine::image(const QSizeF &requestedSize, QSizeF &minimumSize,
     }
     
     // ean-2, ean-5; extended code 
-    if (!m_userSymbols.mid(m_mainBlockSize).isEmpty()) {   
+    if (!m_userParsedSymbols.mid(m_mainBlockSize).isEmpty()) {   
       // text on top of bars
       textBlocks.append(QRect(
 	m_barPositions[shared::EXTENDED_BLOCK_START], 

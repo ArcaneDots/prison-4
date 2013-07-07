@@ -39,6 +39,7 @@ class UpcAEngine : public ProductEngine
 {
 
 public:
+  UpcAEngine();
   /**
    * constructor
    *
@@ -49,35 +50,23 @@ public:
    * @param blockSize formated block size
    * @param productCode constant indicating the current product code
    **/
-  UpcAEngine(const QString &defaultString = upcA::DEFAULT_VALUE,
+  UpcAEngine(const QString &userBarcode, 
+	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct,
+	     const QString &defaultString = upcA::DEFAULT_VALUE,
 	     int minLength = upcA::MIN,
 	     int maxLength = upcA::MAX_LEN,
 	     int checkDigitOffset = upcA::CHECK_DIGIT_OFFSET,
 	     int blockSize = upcA::BLOCK_SIZE,
 	     upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__UPC_A);
  
+
   /**
    * destructor
    */
   virtual ~UpcAEngine();
-  /**
-   * Set current barcode string
-   * 
-   * Calls productengine version to 
-   *
-   * @param userBarcode user string containing barcode symbols 
-   * @param flag contruction hints; Defaults to "Auto".
-   **/
-  void setBarcodeString(const QString &userBarcode, 
-		CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
-  /**
-   * Set current barcode string
-   * 
-   * @note not tested
-   *
-   * @param ptrProductEngine pointer to product code engine
-   **/
-  void setBarcodeString(ProductEngine *ptrProductEngine);
+    
+  virtual QString userInput() const;  
+  
   /**
    * Attempt to get UPC-E version of the inputed product code
    * 
@@ -104,6 +93,15 @@ public:
   virtual QStringList toEan13();
   
 protected:
+  /**
+   * Set current barcode string
+   * 
+   * Calls productengine version to 
+   *
+   * @param userBarcode user string containing barcode symbols 
+   * @param flag contruction hints; Defaults to "Auto".
+   */
+  virtual void setBarcodeString();
   /**
    * Compress UPC-A barcode information into UPC-E format
    *

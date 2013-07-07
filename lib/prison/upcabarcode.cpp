@@ -52,10 +52,8 @@ UpcABarcode::~UpcABarcode() {
 QImage UpcABarcode::toImage(const QSizeF& size) { 
   qDebug() << "UpcABarcode::toImage() : data " << data();
   
-  product::UpcAEngine * prod = new product::UpcAEngine();
-  if (!data().isEmpty()) {
-    prod->setBarcodeString(data());
-  }
+  product::UpcAEngine * prod = new product::UpcAEngine(data());
+  
   QSizeF currentMinimumSize(minimumSize());
   QImage image(prod->image(size, currentMinimumSize, 
 			   foregroundColor(), backgroundColor()));

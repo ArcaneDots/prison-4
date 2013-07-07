@@ -71,13 +71,8 @@ namespace shared
      * @return copy of matching string 
      */
     QString getMatchingString() const;
-    /**
-     * operator==
-     * 
-     * @param rh right-hand IndexedRegExp object argument
-     * @returns true in case rh and current IndexedRegExp objects are "equal"
-     */
-    bool operator== (const IndexedRegExp& rh) const; 
+    inline QString regPattern() const { return m_RegExpPattern; };
+    inline QString sourceString() const { return m_sourceString; };
     /**
      * operator()
      * 
@@ -116,17 +111,15 @@ namespace shared
    * @param rh right-hand IndexedRegExp object
    * @return is the left-hand IndexedRegExp object less than the on the right
    */
-  static bool operator<(const IndexedRegExp& lh, const IndexedRegExp& rh) 
-  {
-    bool result = false;
-    // sort normally
-    if (rh.isValid() && lh.isValid()) {    
-	result = (lh.getMatchingIndex() < rh.getMatchingIndex());
-    // move valid objects to the left
-    } else if (lh.isValid()) {
-	result = true;
-    }  
-    return result;
-  };
-}
+  bool operator<(const IndexedRegExp &lh, const IndexedRegExp &rh);
+  
+  
+  /**
+   * operator==
+   * 
+   * @param rh right-hand IndexedRegExp object argument
+   * @returns true in case rh and current IndexedRegExp objects are "equal"
+   */
+  bool operator== (const IndexedRegExp &lh, const IndexedRegExp &rh); 
+};
 #endif // INDEXEDREGEXP_H

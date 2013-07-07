@@ -8,6 +8,8 @@ find_package(Dmtx REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/lib ${QT_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR} )
 
+enable_testing()
+
 add_subdirectory(lib)
 add_subdirectory(testapp)
 

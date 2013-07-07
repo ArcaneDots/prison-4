@@ -29,7 +29,7 @@ class main_window : public QWidget {
     prison::BarcodeWidget* m_39color;
     prison::BarcodeWidget* m_93color;
     // product codes
-    prison::BarcodeWidget* m_upcew;
+    //prison::BarcodeWidget* m_upcew;
     prison::BarcodeWidget* m_upcaw;
     prison::BarcodeWidget* m_ean8w;
     prison::BarcodeWidget* m_ean13w;

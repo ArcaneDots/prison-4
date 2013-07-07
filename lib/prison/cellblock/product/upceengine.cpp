@@ -27,21 +27,34 @@
 #include "upceengine.h"
 
 using namespace product;
-
-UpcEEngine::UpcEEngine(const QString& defaultString,
-			     int minLength, 
-			     int maxLength, 
-			     int checkDigitOffset, 
-			     int blockSize, 
-			     upc_common::PRODUCT_CODE_VALUES productCode): 
-			     UpcAEngine(defaultString, 
-					minLength, 
-					maxLength, 
-				        checkDigitOffset, 
-					blockSize, 
-					productCode)
+UpcEEngine::UpcEEngine() :
+	UpcAEngine(upcE::DEFAULT_VALUE,
+		    CodeEngine::AutoProduct,
+		    upcE::DEFAULT_VALUE,
+		    upcE::MIN,
+		    upcE::MAX_LEN,
+		    upcE::CHECK_DIGIT_OFFSET,
+		    upcE::BLOCK_SIZE,
+		    upc_common::PS__UPC_E)
+		       {
+			 qDebug("UpcEEngine constructor");
+			 UpcAEngine::initialize();
+			 UpcAEngine::setBarcodeString();
+		       }
+UpcEEngine::UpcEEngine(const QString& userBarcode,  
+		CodeEngine::ConstructCodes flags) :
+		UpcAEngine(userBarcode,
+			  flags,
+			  upcE::DEFAULT_VALUE,
+			  upcE::MIN,
+			  upcE::MAX_LEN,
+			  upcE::CHECK_DIGIT_OFFSET,
+			  upcE::BLOCK_SIZE,
+			  upc_common::PS__UPC_E)
 {
   qDebug("UpcEEngine constructor");
+  UpcAEngine::initialize();
+  UpcAEngine::setBarcodeString();
 }
 
 UpcEEngine::~UpcEEngine()
@@ -49,25 +62,6 @@ UpcEEngine::~UpcEEngine()
   qDebug("UpcEEngine destructor");
 }
 
-int UpcEEngine::calculateCheckDigit(const LookupIndexArray &symbolArray) const
-{
-  qDebug("UpcEEngine calculateCheckDigit : start");
-  Q_ASSERT(m_productCode == upc_common::PS__UPC_E);
-  int checkValue = NOT_FOUND;
-  QStringList upceSymbolList;
-  
-  // expand UPC-E => UPC-A
-  LookupIndexArray::const_iterator itrSymbolIndex = symbolArray.begin();
-  while (itrSymbolIndex != symbolArray.end()) {
-    upceSymbolList.append(getSymbolAtIndex(*itrSymbolIndex++));    
-  }
-  Q_ASSERT(upceSymbolList.size() == m_checkDigitOffset);
-  const QStringList expandedUpcA(expandUpc(upceSymbolList));
-  qDebug() << "UpcEEngine calculateCheckDigit() : expandedUpcA : " 
-    << expandedUpcA;
-  return ProductEngine::calculateCheckDigit(
-    convertSymbolsToIndexes(expandedUpcA));
-}
 
 QStringList UpcEEngine::toEan13() const
 {
@@ -80,13 +74,13 @@ QStringList UpcEEngine::toEan13() const
 QStringList UpcEEngine::toUpcA() const
 {
   qDebug("UpcEEngine toUpcA");
-  return expandUpc(m_userSymbols);
+  return expandUpc(m_userParsedSymbols);
 }
 
 QStringList UpcEEngine::toUpcE() const
 {
   qDebug("UpcEEngine toUpcE");
-  return m_userSymbols;
+  return m_userParsedSymbols;
 }
 
 QStringList UpcEEngine::formatMainBlock(const QStringList& mainBlock) const
@@ -145,9 +139,9 @@ QStringList UpcEEngine::encodeMainBlock(const QStringList &mainBlock) const
 {  
   qDebug("UpcEEngine encodeMainDigits() : start");
   const int barcodeType = 
-    getSymbolIndex(mainBlock.at(upc_common::NUMBER_SYSTEM_INDEX)); 
+    lookupSymbolIndex(mainBlock.at(upc_common::NUMBER_SYSTEM_INDEX)); 
   const int checkDigit = 
-    getSymbolIndex(mainBlock.at(upcE::CHECK_DIGIT_OFFSET));
+    lookupSymbolIndex(mainBlock.at(upcE::CHECK_DIGIT_OFFSET));
     
   QString blockPattern;  
   if (barcodeType == upc_common::NS__REGULAR_UPC_CODES_1) {
@@ -167,6 +161,25 @@ QStringList UpcEEngine::encodeMainBlock(const QStringList &mainBlock) const
   return QStringList(workingBlock.join(""));
 }
 
+int UpcEEngine::calculateCheckDigit(const LookupIndexArray &symbolArray) const
+{
+  qDebug("UpcEEngine calculateCheckDigit : start");
+  Q_ASSERT(m_productCode == upc_common::PS__UPC_E);
+  int checkValue = NOT_FOUND;
+  QStringList upceSymbolList;
+  
+  // expand UPC-E => UPC-A
+  LookupIndexArray::const_iterator itrSymbolIndex = symbolArray.begin();
+  while (itrSymbolIndex != symbolArray.end()) {
+    upceSymbolList.append(lookupSymbolAtIndex(*itrSymbolIndex++));    
+  }
+  Q_ASSERT(upceSymbolList.size() == m_checkDigitOffset);
+  const QStringList expandedUpcA(expandUpc(upceSymbolList));
+  qDebug() << "UpcEEngine calculateCheckDigit() : expandedUpcA : " 
+    << expandedUpcA;
+  return ProductEngine::calculateCheckDigit(
+    convertSymbolsToIndexes(expandedUpcA));
+}
 void UpcEEngine::fillWidthEncodingList()
 {
   for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {

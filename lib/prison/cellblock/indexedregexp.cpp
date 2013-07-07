@@ -62,10 +62,7 @@ QString IndexedRegExp::getMatchingString() const {
   return m_CapturedTexts.at(m_capCounter);
 }
 
-bool IndexedRegExp::operator== (const IndexedRegExp& lh) const {
-  return ((lh.m_RegExpPattern == m_RegExpPattern) && 
-  (lh.m_sourceString == m_sourceString));
-} 
+
 
 int IndexedRegExp::operator() () const{
   return getMatchingIndex();
@@ -80,3 +77,23 @@ void IndexedRegExp::nextMatch() const{
 bool IndexedRegExp::isValid() const {
   return (getMatchingIndex() > NOT_FOUND);
 };
+
+bool operator== (const IndexedRegExp &lh, const IndexedRegExp &rh)
+{
+  return ((lh.regPattern() == rh.regPattern()) && 
+  (lh.sourceString() == rh.sourceString()));
+} 
+
+bool shared::operator<(const IndexedRegExp& lh, const IndexedRegExp& rh) 
+{
+  bool result = false;
+  // sort normally
+  if (rh.isValid() && lh.isValid()) {    
+    result = (lh.getMatchingIndex() < rh.getMatchingIndex());
+    // move valid objects to the left
+  } else if (lh.isValid()) {
+    result = true;
+  }  
+  return result;
+};
+

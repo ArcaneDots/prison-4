@@ -13,7 +13,7 @@
 #include "prison/QRCodeBarcode"
 #include "prison/Code39Barcode"
 #include "prison/Code93Barcode"
-#include "prison/UpcEBarcode"
+//#include "prison/UpcEBarcode"
 #include "prison/UpcABarcode"
 #include "prison/Ean8Barcode"
 #include "prison/Ean13Barcode"
@@ -30,7 +30,7 @@ void main_window::data_changed() {
   m_93i->setData(result);
   m_93w->setData(result);
   
-  m_upcew->setData(result);
+  //m_upcew->setData(result);
   m_upcai->setData(result);
   m_upcaw->setData(result);
   m_ean8w->setData(result);
@@ -62,7 +62,7 @@ main_window::main_window() {
   m_39w = new prison::BarcodeWidget(new prison::Code39Barcode(),this);
   m_93w = new prison::BarcodeWidget(new prison::Code93Barcode(),this);
   
-  m_upcew = new prison::BarcodeWidget(new prison::UpcEBarcode(),this);
+  //m_upcew = new prison::BarcodeWidget(new prison::UpcEBarcode(),this);
   m_upcaw = new prison::BarcodeWidget(new prison::UpcABarcode(),this);
   m_ean8w = new prison::BarcodeWidget(new prison::Ean8Barcode(),this);
   m_ean13w = new prison::BarcodeWidget(new prison::Ean13Barcode(),this);
@@ -149,7 +149,7 @@ main_window::main_window() {
   mainSplitter->addWidget(m_93color);
 
   QSplitter* upcSplitter = new QSplitter(Qt::Vertical);
-  upcSplitter->addWidget(m_upcew);
+  //upcSplitter->addWidget(m_upcew);
   upcSplitter->addWidget(m_upcaw);
   upcSplitter->addWidget(m_ean8w);
   upcSplitter->addWidget(m_ean13w);  
