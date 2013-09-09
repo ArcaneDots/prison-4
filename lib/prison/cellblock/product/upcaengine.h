@@ -27,11 +27,13 @@
 #ifndef UPCAENGINE_H
 #define UPCAENGINE_H
 
-#include <QtCore/QtDebug>
+
 #include "productengine.h"
 
 namespace product
 {
+  class UpcEEngine;
+  class Ean13Engine;
 /**
  * UPC-A barcode generator
  */
@@ -39,95 +41,113 @@ class UpcAEngine : public ProductEngine
 {
 
 public:
+  /**
+   * @brief default constructor
+   */
   UpcAEngine();
   /**
-   * constructor
+   * String constructor
    *
-   * @param defaultString default input used when user input is invalid
-   * @param minLength minimum length of user input 
-   * @param maxLength maximum length of user input
-   * @param checkDigitOffset offset of the internal check digit.
-   * @param blockSize formated block size
    * @param productCode constant indicating the current product code
    **/
   UpcAEngine(const QString &userBarcode, 
 	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct,
-	     const QString &defaultString = upcA::DEFAULT_VALUE,
-	     int minLength = upcA::MIN,
-	     int maxLength = upcA::MAX_LEN,
-	     int checkDigitOffset = upcA::CHECK_DIGIT_OFFSET,
-	     int blockSize = upcA::BLOCK_SIZE,
-	     upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__UPC_A);
- 
-
+	     upc_common::PRODUCT_CODE_VALUES productCode
+		= upc_common::PS__UPC_A); 
+  /**
+   * Pass-thru constructor
+   *
+   * @param productCode constant indicating the current product code
+   **/
+  UpcAEngine(const shared::SymbolList &userBarcode, 
+	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct,
+	     upc_common::PRODUCT_CODE_VALUES productCode
+	     = upc_common::PS__UPC_A);
+  
+//   /**
+//    * @brief Construct UPC-A from a UPC-E object
+//    * 
+//    * @param existingUpcE ...
+//    */
+//   UpcAEngine(const UpcEEngine &existingUpcE);
+//   /**
+//    * @brief Construct UPC-A from a EAN-13 object
+//    * 
+//    * @param existingEan13 ...
+//    */
+//   UpcAEngine(const Ean13Engine &existingEan13);
   /**
    * destructor
    */
-  virtual ~UpcAEngine();
-    
-  virtual QString userInput() const;  
+  virtual ~UpcAEngine();  
   
+  inline shared::SymbolList compressed() const {
+    return compressUpc(m_userParsedSymbols);
+  }  
   /**
-   * Attempt to get UPC-E version of the inputed product code
+   * Number System 
    * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible 
+   * @note may be blank since EAN-8 dosn't use one
    */
-  virtual QStringList toUpcE();
+  const shared::Symbol local_numberSystem() const;
   /**
-   * Attempt to get UPC-A version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
+   * First block
    */
-  virtual QStringList toUpcA();
+  const shared::SymbolList local_block1() const;
   /**
-   * Attempt to get EAN-13 version of the inputed product code
+   * Second block
    * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
+   * @note  may be blank since UPC-E doesn't have one
    */
-  virtual QStringList toEan13();
+  const shared::SymbolList local_block2() const;  
+  /**
+   * Encoded barcode sections
+   * 
+   * [block1][block2(optinal)][extendedBlock(optional)]
+   */
+  const QStringList encoded() const;
+  /**
+   * Get a list of symbol blocks formatted according to the barcode's specification
+   */
+  const QStringList formatedSymbols() const;
   
+  void swap(const UpcAEngine &other);
 protected:
   /**
-   * Set current barcode string
+   * UpcAEngine Class specicfic initialization
    * 
-   * Calls productengine version to 
-   *
-   * @param userBarcode user string containing barcode symbols 
-   * @param flag contruction hints; Defaults to "Auto".
+   * Validate the check digit value and 
+   * populate the value of each section
+   * 
+   * @sa populateSections
+   * @sa validateCheckDigit
    */
-  virtual void setBarcodeString();
+  void localInitialize();  
   /**
-   * Compress UPC-A barcode information into UPC-E format
-   *
-   *  		UPC-A				->  	UPC-E 			    
-   * 1. manf dd[0-2]00, prod code 00ddd		->    	mmppp[0-2] 	
-   * 2. manf dd[3-9]00,	prod code 000dd		->    	mmmpp3 		
-   * 3. manf dddd0, prod code 0000d 		->    	mmmmp4 			 
-   * 4. manf ddddd, prod code 0000[5-9] 	->	mmmmm[5-9] 	 
-   * 
-   * @param compressedUpc list of symbols, not including check digit
-   * @param compressionMethod method used to compress the UPC-A code
+   * Populate the values associated with each section of the barcode
    */
-  QStringList compressUpc(const QStringList &symbolList) const;
+  void populateSections();  
   /**
-   * Expand the UPC-E barcode information into UPC-A format 
-   *
-   * 	UPC-E 		->  		     UPC-A
-   * 1. mmppp[0-2] 	-> 	manf dd[0-2]00, prod code 00ddd
-   * 2. mmmpp3 		-> 	manf dd[3-9]00, prod code 000dd
-   * 3. mmmmp4 		-> 	manf dddd0, prod code 0000d 	 
-   * 4. mmmmm[5-9] 	-> 	manf ddddd, prod code 0000[5-9] 
+   * Encode complete number according to current barcode type
+   *  
+   * @note UPC-A  format  [0][1-5][6-10][11]
    * 
-   * @param compressedUpc list of symbols, not including check digit
-   * @param compressionMethod method used to compress the UPC-A code
-   */
-  QStringList expandUpc(const QStringList &compressedUpc) const;
+   * @param mainBlock first portion of the list of symbols 
+   */ 
+  virtual QStringList encodeMainBlock(const shared::SymbolList& mainBlock) const;
+  /**
+    * Compress UPC-A barcode information into UPC-E format
+    *
+    *  		UPC-A				->  	UPC-E 			    
+    * 1. manf dd[0-2]00, prod code 00ddd		->    	mmppp[0-2] 	
+    * 2. manf dd[3-9]00,	prod code 000dd		->    	mmmpp3 		
+    * 3. manf dddd0, prod code 0000d 		->    	mmmmp4 			 
+    * 4. manf ddddd, prod code 0000[5-9] 	->	mmmmm[5-9] 	 
+    * 
+    * @param compressedUpc list of symbols, not including check digit
+    * @param compressionMethod method used to compress the UPC-A code
+    */
+  shared::SymbolList compressUpc(const shared::SymbolList& inputSymbolList) const;
 };
 };
 #endif // UPCAENGINE_H

@@ -31,42 +31,99 @@
 
 namespace product
 {
-class Ean13Engine :  public UpcAEngine 
+class UpcEEngine;
+
+class Ean13Engine :  public ProductEngine 
 {
 public:
+  /**
+   * Default Constructor
+   */
   Ean13Engine();
+  /**
+   * String Constructor
+   *
+   * @param productCode constant indicating the current product code
+   */
   Ean13Engine(const QString &userBarcode, 
 	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
-  virtual ~Ean13Engine();   
-  virtual QStringList toUpcE() const;
   /**
-   * Attempt to get UPC-A version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
-   */
-  virtual QStringList toUpcA() const;
+   * Symbol Constructor
+   *
+   * @param productCode constant indicating the current product code
+   **/
+  Ean13Engine(const QList<shared::Symbol>& userBarcode, CodeEngine::ConstructCodes flags = 
+CodeEngine::AutoProduct);
   /**
-   * Attempt to get EAN-13 version of the inputed product code
+   * @brief UpcAEngine copy constructor
    * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
+   * @param existingUpcA ...
    */
-  virtual QStringList toEan13() const;
-protected:
+  Ean13Engine(const UpcAEngine& existingUpcA);
   /**
-   * Class specicfic initialization
+   * @brief UpcEEngine copy constructor
+   * 
+   * @param existingUpcE ...
    */
-  void initialize();
+  Ean13Engine(const UpcEEngine &existingUpcE);
+  //Ean13Engine(const Ean13Engine &existingEan13);
   /**
-   * Attempt to get UPC-E version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
+   * Destructor
    */
+  virtual ~Ean13Engine();
+  /**
+   * Number System 
+   * 
+   * @note may be blank since EAN-8 dosn't use one
+   */
+  const QString numberSystem() const;
+  /**
+   * First block
+   */
+  const QStringList block1() const;
+  /**
+   * Second block
+   * 
+   * @note  may be blank since UPC-E doesn't have one
+   */
+  const QStringList block2() const;  
+  /**
+   * Encoded barcode sections
+   * 
+   * [block1][block2(optinal)][extendedBlock(optional)]
+   */
+  const QStringList encoded() const;
+  /**
+   * Get a list of symbol blocks formatted according to the barcode's specification
+   */
+  const QStringList formatedSymbols() const;
+protected:  
+  /**
+   * Ean13Engine Class specicfic initialization
+   * 
+   * Validate the check digit value and 
+   * populate the value of each section
+   * 
+   * @sa populateSections
+   * @sa validateCheckDigit
+   */
+  void localInitialize();  
+  /**
+   * Populate the values associated with each section of the barcode
+   * 
+   * @sa fillSystemEncodingList
+   */
+  void populateSections();  
+  /**
+   * Encode complete number according to current barcode type
+   * 
+   * Overload UPC-A version because UPC-E only has 1 block of digits
+   *  
+   * @note UPC-E  format  [-][1-6][-][8-9|13]
+   * 
+   * @param mainBlock first portion of the list of symbols 
+   */ 
+  QStringList encodeMainBlock(const shared::SymbolList& mainBlock) const; 
   /**
    * Get productCode specific encoding pattern for the first block of symbols
    * 
@@ -76,7 +133,7 @@ protected:
     /**
    * Load all encoding patterns based on combo of system number (0-1) and check digit
    */
-  void fillWidthEncodingList(); 
+  void fillSystemEncodingList(); 
   /**
    * encoding patterns for EAN-13 first block
    */

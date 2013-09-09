@@ -1,7 +1,6 @@
  
-#ifndef TEST_UPCA
-#define TEST_UPCA
-
+#ifndef TEST_UPCE
+#define TEST_UPCE
 
 #include <QtCore/QObject>
 #include <QtTest/QTest>
@@ -9,7 +8,7 @@
  #include "../upcaengine.h"
  
  
- class TestUpcA: public QObject
+ class TestUpcE: public QObject
  {
    Q_OBJECT
  
@@ -18,4 +17,4 @@
    void defaultConstructor();
  };
  
- #endif // TEST_UPCA
+ #endif // TEST_UPCE

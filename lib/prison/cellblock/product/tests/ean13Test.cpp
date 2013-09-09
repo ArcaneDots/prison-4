@@ -24,15 +24,15 @@ void TestEan13::defaultConstructor()
    
    QCOMPARE(Ean13->userInput(), QString(""));
    QCOMPARE(Ean13->productCode(), upc_common::PS__EAN_13);
-   QCOMPARE(Ean13->codeDefault(), ean13::DEFAULT_VALUE);
+   QCOMPARE(Ean13->codeDefault().join(" "), ean13::DEFAULT_VALUE);
    QCOMPARE(Ean13->parsedSymbolList(), parsedSymbols); 
    QCOMPARE(Ean13->finalSymbolList(), finalSymbols); 
    QCOMPARE(Ean13->formatedSymbols(), formatedSymbols);
-   QCOMPARE(Ean13->encodedSymbols(barLocations), encodedBlocks);
+   QCOMPARE(Ean13->getEncodedSymbols(barLocations), encodedBlocks);
    
    delete Ean13;
  }
 
  QTEST_MAIN(TestEan13);
- #include "ean13Test.moc"
- //DECLARE_TEST(TestUpcA)
+ #include "ean13Test.moc" 
+ 

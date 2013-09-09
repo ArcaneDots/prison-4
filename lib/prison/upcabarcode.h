@@ -28,7 +28,6 @@
 #define PRISON_UPCABARCODE_H
 
 #include <prison/abstractbarcode.h>
-#include <prison/prison_export.h>
 
 namespace prison {
 

@@ -31,11 +31,11 @@ void main_window::data_changed() {
   m_93w->setData(result);
   
   //m_upcew->setData(result);
-  m_upcai->setData(result);
-  m_upcaw->setData(result);
-  m_ean8w->setData(result);
-  m_ean13i->setData(result);
-  m_ean13w->setData(result);
+//   m_upcai->setData(result);
+//  m_upcaw->setData(result);
+//   m_ean8w->setData(result);
+//   m_ean13i->setData(result);
+   m_ean13w->setData(result);
   
   m_nulli->setData(result);
   m_nullw->setData(result);
@@ -63,9 +63,9 @@ main_window::main_window() {
   m_93w = new prison::BarcodeWidget(new prison::Code93Barcode(),this);
   
   //m_upcew = new prison::BarcodeWidget(new prison::UpcEBarcode(),this);
-  m_upcaw = new prison::BarcodeWidget(new prison::UpcABarcode(),this);
-  m_ean8w = new prison::BarcodeWidget(new prison::Ean8Barcode(),this);
-  m_ean13w = new prison::BarcodeWidget(new prison::Ean13Barcode(),this);
+  //m_upcaw = new prison::BarcodeWidget(new prison::UpcABarcode(),this);
+//   m_ean8w = new prison::BarcodeWidget(new prison::Ean8Barcode(),this);
+//   m_ean13w = new prison::BarcodeWidget(new prison::Ean13Barcode(),this);
   
   m_dmcolor = new prison::BarcodeWidget(this);
   {
@@ -104,8 +104,8 @@ main_window::main_window() {
   m_39i = new prison::BarcodeItem(new prison::Code39Barcode());
   m_93i = new prison::BarcodeItem(new prison::Code93Barcode());
   
-  m_upcai = new prison::BarcodeItem(new prison::UpcABarcode());
-  m_ean13i = new prison::BarcodeItem(new prison::Ean13Barcode());
+  //m_upcai = new prison::BarcodeItem(new prison::UpcABarcode());
+//   m_ean13i = new prison::BarcodeItem(new prison::Ean13Barcode());
   
   m_nulli = new prison::BarcodeItem();
   m_nullw = new prison::BarcodeWidget();
@@ -150,9 +150,9 @@ main_window::main_window() {
 
   QSplitter* upcSplitter = new QSplitter(Qt::Vertical);
   //upcSplitter->addWidget(m_upcew);
-  upcSplitter->addWidget(m_upcaw);
-  upcSplitter->addWidget(m_ean8w);
-  upcSplitter->addWidget(m_ean13w);  
+//  upcSplitter->addWidget(m_upcaw);
+//   upcSplitter->addWidget(m_ean8w);
+   upcSplitter->addWidget(m_ean13w);  
   
   mainlay->addLayout(inputLay);
   mainlay->addLayout(scenelay);

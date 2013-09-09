@@ -30,17 +30,17 @@ class main_window : public QWidget {
     prison::BarcodeWidget* m_93color;
     // product codes
     //prison::BarcodeWidget* m_upcew;
-    prison::BarcodeWidget* m_upcaw;
-    prison::BarcodeWidget* m_ean8w;
-    prison::BarcodeWidget* m_ean13w;
+//    prison::BarcodeWidget* m_upcaw;
+//     prison::BarcodeWidget* m_ean8w;
+     prison::BarcodeWidget* m_ean13w;
     
     prison::BarcodeItem* m_dmi;
     prison::BarcodeItem* m_qri;
     prison::BarcodeItem* m_39i;
     prison::BarcodeItem* m_93i;
     
-    prison::BarcodeItem* m_ean13i;
-    prison::BarcodeItem* m_upcai;
+//     prison::BarcodeItem* m_ean13i;
+//    prison::BarcodeItem* m_upcai;
     // null
     prison::BarcodeItem* m_nulli;
     prison::BarcodeWidget* m_nullw;

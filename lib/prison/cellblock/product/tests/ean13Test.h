@@ -1,6 +1,6 @@
  
-#ifndef TEST_UPCA
-#define TEST_UPCA
+#ifndef TEST_EAN13
+#define TEST_EAN13
 
 #include <QtCore/QObject>
 #include <QtTest/QTest>
@@ -17,4 +17,4 @@
    void defaultConstructor();
  };
  
- #endif // TEST_UPCA
+ #endif // TEST_EAN13

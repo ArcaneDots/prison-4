@@ -76,6 +76,19 @@ namespace shared
     /** end of barcode */
     BAR_END
   };
+  
+  
+  enum BAR_LOCATIONS {
+    /** start of primary */
+    MAIN_BLOCK = 0,
+    MAIN_SYSTEM = 1,
+    MAIN_BLOCK_1 = 2,
+    MAIN_BLOCK_2 = 3,
+    MAIN_CHECK_DIGIT = 4,
+    /** end of primary */
+    EXTENDED_BLOCK = 5,
+    /** end of barcode */
+  };
   // Typedefs
   /**
    * Collection of symbol index values
@@ -94,91 +107,40 @@ namespace shared
    */
   typedef QMap<int, int> BarPositionsMap;
   
-  /**
-   * Calculate checksum 
-   * 
-   * @note used by EAN-8/13 and 2 of 5
-   * @note "even" includes '0' 
-   * 
-   * @param oddMultipler 
-   * @param evenMultipler
-   */
-    template <class T> class EvenOddChecksum :
-       public std::binary_function<T, T, T> 
-    {
-    public:
-      EvenOddChecksum (T oddMultipler,
-		       T evenMultipler) :
-		       m_oddMultipler(oddMultipler),
-		       m_evenMultipler(evenMultipler),
-		       m_parity(1) // start "odd"
-      {	  
-	qDebug("evenOddChecksum constructor() : start");
-	Q_ASSERT_X(m_oddMultipler >= 1,
-		   "invalid argument",
-		   "Odd multipler is less then 1");
-	Q_ASSERT_X(m_evenMultipler >= 1,
-		   "invalid argument",
-		   "Even multipler is less then 1");
-	qDebug("evenOddChecksum constructor() : end");
-      }
-    T operator()(T checksum, T symbolIndex = NOT_FOUND) {
-      qDebug("evenOddChecksum operator() : start");
-      if (symbolIndex == NOT_FOUND) {
-	qDebug("evenOddChecksum operator(missing index) : end");
-	return checksum;
-      }     
-      qDebug() << "parity=" << m_parity << " symbolIndex=" << symbolIndex; 
-      // 1 -> size of array
-      // even
-      if (m_parity % 2 == 0) {
-	checksum += symbolIndex * m_evenMultipler;
-	qDebug() << "Even parity; checksum =" << checksum;
-      }
-      // odd
-      else {
-	checksum += symbolIndex * m_oddMultipler;
-	qDebug() << "Odd parity; checksum =" << checksum;
-      }	
-      m_parity++;      
-      qDebug("evenOddChecksum operator() : end");
-      return checksum;
-    }
-    private:
-      T m_oddMultipler;
-      T m_evenMultipler;
-      int m_parity;
-    };
-
+  typedef QMap<BAR_LOCATIONS, QStringList> SymbolPositionsMap;
+  
+ 
   /**
    * linear increament multipler
    * 
    * @tparam T type of numbers 
    */
-  template <class T> class LinearMultiple :
-       public std::binary_function<T,T, T> 
-    {
-    public:
-      /**
-       * @param maxWeight maximum weighting value: 1->x
-       */
-      LinearMultiple (T maxWeight) :
-		      m_maxWeight(maxWeight),
-		      m_multipler(1)
-      {
-	// empty
-      }
-      T operator() (const T &checksum, const T &symbolIndex) const 
-      {
-	if (m_multipler >= m_maxWeight) { 
-	  m_multipler = 1; 
-	}
-	return checksum + (symbolIndex * m_multipler++);	   
-      }
-    private:
-      T m_maxWeight;
-      mutable T m_multipler;
-  };        
+//   template <class T> class LinearMultiple :
+//        public std::binary_function<T,T, T> 
+//     {
+//     public:
+//       /**
+//        * @param maxWeight maximum weighting value: 1->x
+//        */
+//       LinearMultiple (T maxWeight) :
+// 		      m_maxWeight(maxWeight),
+// 		      m_multipler(1)
+//       {
+// 	// empty
+//       }
+//       T operator() (const T &checksum, const T &symbolIndex) const 
+//       {
+// 	if (m_multipler >= m_maxWeight) { 
+// 	  m_multipler = 1; 
+// 	}
+// 	return checksum + (symbolIndex * m_multipler++);	   
+//       }
+//     private:
+//       T m_maxWeight;
+//       mutable T m_multipler;
+//   };        
+
+  
 };
 
 namespace baseSymbols {

@@ -34,11 +34,6 @@ public:
   /**
    * constructor
    *
-   * @param defaultString default input used when user input is invalid
-   * @param minLength minimum length of user input 
-   * @param maxLength maximum length of user input
-   * @param checkDigitOffset offset of the internal check digit.
-   * @param blockSize formated block size
    * @param productCode constant indicating the current product code
    **/
   Ean8Engine(const QString &userBarcode, 
@@ -47,12 +42,71 @@ public:
    * destructor
    */
   virtual ~Ean8Engine();  
+  
   /**
-   * Get symbol list
+   * Number System 
    * 
-   * @returns list of valid symbols
+   * @note may be blank since EAN-8 dosn't use one
    */
-  QStringList getSymbolList() const;
+  const QString numberSystem() const;
+  /**
+   * First block
+   */
+  const QStringList block1() const;
+  /**
+   * Second block
+   * 
+   * @note  may be blank since UPC-E doesn't have one
+   */
+  const QStringList block2() const;  
+  /**
+   * Encoded barcode sections
+   * 
+   * [block1][block2(optinal)][extendedBlock(optional)]
+   */
+  const QStringList encoded() const;
+  /**
+   * Get a list of symbol blocks formatted according to the barcode's specification
+   */
+  const QStringList formatedSymbols() const;
+protected:
+  /**
+   * UpcAEngine Class specicfic initialization
+   * 
+   * Validate the check digit value and 
+   * populate the value of each section
+   * 
+   * @sa populateSections
+   * @sa validateCheckDigit
+   */
+  void localInitialize();
+  /**
+   * Populate the values associated with each section of the barcode
+   */
+  void populateSections();  
+  /**
+   * Encode complete number according to current barcode type
+   *
+   * UPC-E  format  [-][1-6][-][8-9|13]
+   * 
+   * @param symbolSrc full list of symbols
+   * @param splitIndex index of the "end" of the first half
+   */
+  void encodeSymbols(const shared::SymbolList& symbolSrc);   
+  /**
+   * Encode complete number according to current barcode type
+   * 
+   * Overload UPC-A version because UPC-E only has 1 block of digits
+   *  
+   * @note UPC-E  format  [-][1-6][-][8-9|13]
+   * 
+   * @param mainBlock first portion of the list of symbols 
+   */ 
+  QStringList encodeMainBlock(const shared::SymbolList& mainBlock) const;   
+  
+protected:
+  
+  
 };
 };
 #endif // EAN8ENGINE_H

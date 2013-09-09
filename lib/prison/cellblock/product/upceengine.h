@@ -32,54 +32,115 @@
 using namespace shared;
 
 namespace product 
-{
+{  
+  const int NAME_SYSTEM0(upc_common::NS__REGULAR_UPC_CODES_1);
+  const int NAME_SYSTEM1(upc_common::NS__RESERVED_1);
 
-class UpcEEngine : public UpcAEngine
+class UpcEEngine : public ProductEngine
 {
-
+  friend class UpcAEngine;
 public:
+  /**
+   * default constructor
+   */
   UpcEEngine();
   /**
    * constructor
    *
-   * @param defaultString default input used when user input is invalid
-   * @param minLength minimum length of user input 
-   * @param maxLength maximum length of user input
-   * @param checkDigitOffset offset of the internal check digit.
-   * @param blockSize formated block size
-   * @param productCode constant indicating the current product code
+   * @param userBarcode 
+   * @param flags
    **/
   UpcEEngine(const QString &userBarcode, 
-	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
+	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct); 
+  /**
+   * constructor
+   *
+   * @param userBarcode 
+   * @param flags
+   **/
+  UpcEEngine(const QList<Symbol> &userBarcode, 
+	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);   
+  /**
+   * @brief Product copy constructor
+   * 
+   * @param existingUpcA
+   */
+  UpcEEngine(const UpcAEngine &existingUpcA);
+//   /**
+//    * @brief Product copy constructor
+//    * 
+//    * @param existingUpcA
+//    */
+//   UpcEEngine(const Ean13Engine &existingEan13);
   /**
    * destructor
    */
   virtual ~UpcEEngine();
   /**
-   * Attempt to get UPC-E version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
+   * Assigmnet operator = Upc-E 
    */
-  virtual QStringList toUpcE() const;
+  UpcEEngine &operator=(const UpcEEngine &rhs);
   /**
-   * Attempt to get UPC-A version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
+   * Assigmnet operator = Upc-A 
    */
-  virtual QStringList toUpcA() const;
+  UpcEEngine &operator=(const UpcAEngine &rhs);  
   /**
-   * Attempt to get EAN-13 version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
+   * Assigmnet operator = EAN-13 
    */
-  virtual QStringList toEan13() const;
+  UpcEEngine &operator=(const Ean13Engine &rhs);
+  /**
+   * Expanded UPC 
+   * 
+   * UPC-E -> UPC-A
+   */
+  inline SymbolList expanded() const {
+    return expandUpc(m_userParsedSymbols) ;
+  }
+  /**
+   * Encoded barcode sections
+   * 
+   * [block1][block2(empty)][extendedBlock(optional)]
+   */
+  const QStringList encoded() const;
+
+  const QStringList formatedSymbols() const;
+
+//   /**
+//    * Attempt to get UPC-E version of the inputed product code
+//    * 
+//    * @note not tested
+//    * 
+//    * @returns product code or empty list in case conversion is not possible
+//    */
+//   virtual const QString &toUpcE() const;
+ 
 protected:
+  /**
+   * UPC-E specicfic initialization
+   * 
+   * Validate underlining UPC-A value and associated check digit
+   * 
+   * @sa fillSystemEncodingList
+   * @sa populateSections
+   */
+  void localInitialize();
+  /**
+   * Populate the values associated with each section of the barcode
+   */
+  void populateSections();  
+  /**
+   * Calculate correct checkdigit - UPC-E version
+   */
+  Symbol CalculateCheckDigit();
+  /**
+   * Validate product codes and splits off the extended code (EAN-2/5)
+   * 
+   * Verifies the check digit value and the valid sizes with the range 
+   * 
+   * @param symbolSrc list containing all symbol
+   * @returns valid symbol list
+   */
+  shared::SymbolList processSymbolList(const shared::SymbolList& inputSymbols);
   /**
    * Seperate digits into logical blocks based on encoded layout
    *
@@ -87,16 +148,16 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */
-  QStringList formatMainBlock(const QStringList &mainBlock) const;    
-  /**
-   * Encode complete number according to current barcode type
-   *
-   * UPC-E  format  [-][1-6][-][8-9|13]
-   * 
-   * @param symbolSrc full list of symbols
-   * @param splitIndex index of the "end" of the first half
-   */
-  void encodeSymbols(const QStringList &symbolSrc); 
+  QStringList formatMainBlock(const SymbolList& mainBlock) const; 
+//   /**
+//    * Encode complete number according to current barcode type
+//    *
+//    * UPC-E  format  [-][1-6][-][8-9|13]
+//    * 
+//    * @param symbolSrc full list of symbols
+//    * @param splitIndex index of the "end" of the first half
+//    */
+//   void encodeSymbols(const product::SymbolList& symbolSrc);   
   /**
    * Encode complete number according to current barcode type
    * 
@@ -106,20 +167,54 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */ 
-  QStringList encodeMainBlock(const QStringList &mainBlock) const;   
+  QStringList encodeMainBlock(const shared::SymbolList& mainBlock) const;   
   /**
-   * Calculate UPC-E checksum digit for a particular barcode
+   * Calculate UPC-E checksum digit
    *
-   * Calculate check sum based on expand UPC-A product code
+   * Retrive check sum digit from expanded UPC-A product code
    *
    * @param symbolArray array of symbol indexes
    * @return valid check digit
    */
-  int calculateCheckDigit(const LookupIndexArray &symbolArray) const;
+  int calculateCheckDigit() const;
   /**
    * Load all encoding patterns based on combo of system number (0-1) and check digit
    */
-  void fillWidthEncodingList();       
+  void fillSystemEncodingList();      
+  /**
+   * Attempt to get UPC-A version of the inputed product code
+   * 
+   * @note not tested
+   * 
+   * @returns product code or empty list in case conversion is not possible
+   */
+  const UpcAEngine &toUpcA() const;
+  /**
+   * Attempt to get EAN-13 version of the inputed product code
+   * 
+   * @note not tested
+   * 
+   * @returns product code or empty list in case conversion is not possible
+   */
+   const QString toEan13() const;
+   /**
+   * Expand the UPC-E barcode information into UPC-A format 
+   *
+   * 	UPC-E 		->  		     UPC-A
+   * 1. mmppp[0-2] 	-> 	manf dd[0-2]00, prod code 00ddd
+   * 2. mmmpp3 		-> 	manf dd[3-9]00, prod code 000dd
+   * 3. mmmmp4 		-> 	manf dddd0, prod code 0000d 	 
+   * 4. mmmmm[5-9] 	-> 	manf ddddd, prod code 0000[5-9] 
+   * 
+   * @param compressedUpc list of symbols, not including check digit
+   * @param compressionMethod method used to compress the UPC-A code
+   */
+   shared::SymbolList expandUpc(const shared::SymbolList& compressedList) const;
+private:
+  UpcAEngine m_UpcA;
+  bool m_fromUpcA;
+  //QStringList m_parsedInput;
+  //SymbolList m_upcE_finalSymbols;
   /**
    * system number "0" encoding list
    */

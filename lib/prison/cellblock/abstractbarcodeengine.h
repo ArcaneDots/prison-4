@@ -37,8 +37,12 @@
 #include <QtCore/QMap>
 #include <QtCore/QString>
 #include <QtCore/QStringList>
+#include <QImage>
+#include <QColor>
+
 #include "shareddefines.h"
 #include "indexedregexp.h"
+#include "symbol.h"
 
 /**
  * @section barcode_engine Barcode Engine
@@ -50,8 +54,9 @@
  */
 
 
-namespace CodeEngine
+class CodeEngine
 { 
+public:
    /**
     * Error flags
     * 
@@ -75,7 +80,7 @@ namespace CodeEngine
        /**
 	* User value contains unrecognized symbol(s) 
 	*/
-       UnknownSymbols = 8,
+       UnknownSymbols = 0x4,
        /**
 	* Symbols are either out-of-range/not allow for their current positions
 	*/ 
@@ -162,6 +167,9 @@ namespace CodeEngine
    Q_DECLARE_FLAGS(ConstructCodes, ConstructCode);
 };
 
+Q_DECLARE_OPERATORS_FOR_FLAGS(CodeEngine::ErrorCodes);
+Q_DECLARE_OPERATORS_FOR_FLAGS(CodeEngine::ConstructCodes);
+
 namespace shared
 {
 /**
@@ -173,150 +181,82 @@ class AbstractBarcodeEngine
 {
 public:     
   /**
-   * constructor
-   *
-   * @note Add multi-charactor symbols by append their regexp pattern(s) to the 
-   * @note m_regexpCollection object i.e code128
-   *
-   * @param defaultString default input used when user input is invalid
-   * @param minLength minimum length of user input 
-   * @param maxLength maximum length of user input
-   * @param multiCharSymbols can symbol be longer than one charactor
-   * @param checksumModulus integer value use to calculate the check sum
-   * @param internalCheckDigit does a check digit appear inside the barcode string
-   * @param requiredCheckDigits number of required check digits/symbols
-   * @param maxCheckDigits maximum number of check digits/symbols allowed
-   **/
-  AbstractBarcodeEngine(const QString &userBarcode, 
-			CodeEngine::ConstructCodes flags,
-			const QString &defaultString,
-			int minLength, 
-			int maxLength,
-			bool multiCharSymbols,
-			int checksumModulus,
-			bool internalCheckDigit,
-			int requiredCheckDigits,
-			int maxCheckDigits);
+   * 
+   */
+  AbstractBarcodeEngine(int checksumModulus);
   /**
    * destructor
    */
   virtual ~AbstractBarcodeEngine(); 
-protected:
-  /**
-   * Class specicfic initialization
-   */
-  void initialize();
-  /**
-   * Set current barcode string
-   * 
-   * @param userBarcode user string containing barcode symbols 
-   * @param flag construction hints; Defaults to "Auto".
-   * 
-   * @sa Calls related functions;
-   * @sa fillSymbolList() to initialize a set of symbols
-   * @sa fillWidthEncodingList() to initialize a set encoding for each symbols 
-   * @sa parseSymbolString() to parse symbols from input string
-   * @sa processSymbolList() process and validate the list of symbols found
-   * @sa formatSymbols() to build human-readable output
-   * @sa encodeSymbols() to build machine readable output "barcode"
-   **/
-  virtual void setBarcodeString();
-public:
+  
   // -- inline get/set members --
-  /** 
-   * Default value
-   */
-  virtual QString codeDefault() const;
+//   /** 
+//    * Default value
+//    */
+//   virtual QStringList codeDefault() const = 0;
   /**
-   * User input string
+   * Get user's input string
    */
-  virtual QString userInput() const;
+  virtual QString userInput() const = 0;
   /**
-   * list of parsed symbols
+   * initial list of parsed symbols
    */
-  virtual QStringList parsedSymbolList();
+  virtual QStringList parsedSymbolList() const = 0;
   /**
    * final list of symbols
    */
-  virtual QStringList finalSymbolList();
+  virtual QStringList finalSymbolList() const = 0;  
   /**
-   * Get a string of symbols encoded according to the barcode's specification
-   *  
-   * @param barLocations [in|out](preferably empty)set of barcode positions
-   * @param barThicknessMultiple
+   * Get QImage of barcode data
    * 
-   * @return symbols separated into blocks defined by the barcode's encoding
-   */ 
-  QString encodedSymbols(shared::BarPositionsMap &barLocations, 
-				       int barThicknessMultiple = 1);
-  /**
-   * Get a list of symbol blocks formatted according to the barcode's specification
-   */
-  inline QStringList formatedSymbols() const
-  {
-    return m_formatedSymbols;
-  }
-  /**
-   * Is the user input valid for the current barcode
-   * 
-   * The barcode will display a default value in case the user's is not  
-   */
-  inline CodeEngine::ErrorCodes statusFlags() const
-  {
-    return m_isValid;
-  }   
-    
-protected:            
-  /**
-   * Parse user input string into list of valid symbols (strings)
-   *    
-   * @note never affects the flags in m_isValid member
-   * @note Uses regexp pattern(s) stored in m_regexpCollection object to the
-   * @note to parse multi-character symbols i.e code128
-   * 
-   * @param symbolString user input string
-   * @returns similarly ordered list of single and multi-character symbols
-   */
-  virtual QStringList parseSymbolString(const QString &symbolString) const;  
-  /**
-   * Performs in-depth input validation
-   * 
-   * Determine whether the user appended the minimum number of check digit(s). 
-   * Override if the input requires additional or different validation.
+   * @note virtual
    *
-   * @note base class version assumes that current barcode should have a 
-   * @note minimum number of appended check symbols defined by constructor  
-   * @note parameters;
-   * @note requiredCheckDigits and maxCheckDigits
-   * 
-   * @returns number of check digits found 
-   */
-  virtual QStringList processSymbolList(const QStringList &userSymbols);
+   * @param requestedSize size of wigdet viewable area
+   * @param minimumSize size reqired to correctly display the barcode information
+   * @param foregroundColor text and bar color
+   * @param background color of "white" space
+   * @return QImage
+   **/
+  virtual QImage image(const QSizeF &requestedSize, QSizeF &minimumSize, 
+		  const QColor &foregroundColor, const QColor &backgroundColor) = 0;
   /**
    * Calculate check sum digit for a array of symbol look-up indexes
    * 
    * Uses the most common method of calculating a check digit; 
    * = Sum(index values) % modulus value
-   * @note used by Code 39, MSI (2 Mod 10)
+   * @note default version returns 0; 
+   * @note please override with correct checksum function
    * 
    * @param symbolArray array of symbol's look-up index
    * @return number of valid check digit
    */
-  virtual int calculateCheckDigit(const shared::LookupIndexArray& symbolArray) const;       
-  /**
-   * Get the value when added to the check sum makes it a multiple of the modulus
-   * 
-   * @param checksum total of all the individual symbol's index and positional value 
-   * @return = modulus value - (checksum & modulus value)
-   */
-  int NextMultipleCheckDigit(int checksum) const;
-  /**
-   * Get the remainder of the check sum divided by the modulus value
-   * 
-   * @param checksum total of all the individual symbol's index and positional value
-   * @return = (checksum % modulus value
-   */
-  int SimpleRemainderCheckDigit(int checksum) const;
+  int calculateCheckDigit(const QList< shared::Symbol >& symbolArray) const;  
+  
+  
+protected:          
+  
+private:
+
+//   /**
+//    * Add a regular expression to match a multi-character symbol(s)
+//    *
+//    * @note 
+//    */
+//   void AddMultiSymbolRegexpString(const QString &symbolPattern);
+
+
+
+private:
+  
+  class Private;
+  Private *d;     
+};
+
+};
+
+// helper functions
+
+
   /**
    * Calculate "Odd/Even" check sum pattern for a array of symbol look-up indexes
    * 
@@ -331,10 +271,11 @@ protected:
    * @param reverse move right -> left, the right-most index treated as "odd" 
    * @return value of valid check digit
    */
-  int CommonChecksumOddEven(const shared::LookupIndexArray& symbolArray, 
-			   int oddMultipler,
-			   int evenMultipler,
-			   bool reverse = false) const;
+  int CommonChecksumOddEven(int checksumModulus,
+			  const shared::SymbolList& symbols, 
+			  int oddMultipler,
+			  int evenMultipler,
+			  bool reverse = false);
   /**
    * Calculate "Linear" check sum digit for a array of symbol look-up indexes
    * 
@@ -345,250 +286,104 @@ protected:
    * @param reverse
    * @return number of valid check digit
    */
-  int CommonChecksumLinear(const shared::LookupIndexArray& symbolArray,
-			   bool reverse = false) const;
+  int CommonChecksumLinear(int checksumModulus,
+			  const shared::SymbolList& symbols,
+			  bool reverse = false);
   /**
-   * Convert list of symbols to an array of their indexes  
+   * Get the value when added to the check sum makes it a multiple of the "Modulus" value
    * 
-   * @note assumes symbol <-1 to 1-> index value, 
-   * @note subclass to handle symbol sets that have special expanded encodings 
-   * 
-   * @param symbolList ordered list of symbols
-   * @returns a matching of list of symbol indexes
+   * @param checksum total of all the individual symbol's index and positional value 
+   * @return modulus value - (checksum & modulus value)
    */
-   virtual shared::LookupIndexArray convertSymbolsToIndexes(
-     const QStringList &symbolList) const;
-  /**
-   * Convert symbol's width encoding to the equivalent binary encoding
-   * 
-   * @note assumes linear encodings i.e. space = 0, bar = 1,
-   * @note subclass to handle encoding with more than two states
-   * 
-   * @param widthEncodedSymbol simplified version of a symbol encoding
-   * @return actual symbol encoding
-   */
-   const QString convertWidthEncodingToBinary(
-     const QString &widthEncodedSymbol) const;        
-  /**
-   * Separate set of symbols into logical blocks based on encoded layout
-   *
-   * @note assume no special formatting 
-   * @sa see upcA::formatSymbols() for guidance on complex formatting 
-   * 
-   * @param symbolSrc list of all valid symbols
-   * @param splitIndex index of second list
-   */
-  virtual void formatSymbols(const QStringList &symbolSrc);     
-  /**
-   * Encode set of symbols according to current barcode type
-   *  
-   * @note assume no special formatting 
-   * @sa see upcA::encodeSymbolsSymbols() for guidance on complex encoding 
-   * 
-   * @param symbolSrc list of all valid symbols
-   * @param splitIndex index of second list
-   */ 
-  virtual void encodeSymbols(const QStringList &symbolSrc);
-  
-  // -- symbol look-ups --
+  int NextMultipleCheckDigit(int modulusValue, int checksum);
   
   /**
-   * Get a symbol's look-up table index
-   * 
-   * @param symbol 1 or more character long "symbol"
-   * @returns index of symbol or NOT_FOUND in case symbol does not exist
-   */
-  int lookupSymbolIndex(const QString &symbol) const;  
-  /**
-   * Get the symbol at a particular look-up table index
-   * @return symbol string
-   */
-  const QString lookupSymbolAtIndex(int symbolIndex) const;
-  /**
-   * Encode an individual symbol 
-   * 
-   * @note overload in case the symbol encoding deviates from most linear barcodes 
-   * 
-   * @param symbol symbol to be encoded
-   * @return actual encoding
-   */
-  virtual QString lookupSymbolEncoding(const QString &symbol) const;
-  /**
-   * Add a regular expression to match a multi-character symbol(s)
-   *
-   * @note 
-   */
-  void AddMultiSymbolRegexpString(const QString &symbolPattern);
-  /**
-   * Convert a symbol or symbol index to the binary barcode encoding
-   * 
-   * @tparam V symbol
-   * @tparam T string-like barcode information 
-   */
-  template <class V, class T> class ConvertSymbolToEncoding :
-       public std::unary_function<V, T> 
-    {
-    public:
-      ConvertSymbolToEncoding (AbstractBarcodeEngine * barcodeEngine) :
-      m_barcodeEngine(barcodeEngine)
-      {
-	Q_ASSERT(barcodeEngine != 0);
-      }
-      /**
-       * Get encoded version of symbol
-       * 
-       * @param symbol index
-       * @returns string-like symbol encoding information
-       */
-      T operator() (int symbol) {
-	Q_ASSERT(symbol != NOT_FOUND);
-	return  m_barcodeEngine->lookupSymbolEncoding(
-	  m_barcodeEngine->lookupSymbolAtIndex(symbol));
-      }	
-      /**
-       * Get encoded version of symbol
-       * 
-       * @param symbol text
-       * @returns string-like symbol encoding information
-       */
-      T operator() (V symbol) {
-	Q_ASSERT(m_barcodeEngine->lookupSymbolIndex(symbol) != NOT_FOUND);
-	return  m_barcodeEngine->lookupSymbolEncoding(symbol);
-      }	
-    private:
-      AbstractBarcodeEngine * m_barcodeEngine;
-    };  
-  /**
-   * Change the symbol and symbol encoding look-up tables 
-   * 
-   * @sa lookupSymbolIndex
-   * @sa lookupSymbolAtIndex
-   * @sa lookupSymbolEncoding
-   */
-  void fillSymbolAndEncodingLookupTable(const QStringList &symbolSet, 
-			       const QStringList &encodingSet);    
-  /**
-   * Set the active symbol look-up table 
-   * 
-   * @sa getSymbolIndex, getSymbolAtIndex
-   */
-  void fillSymbolLookupTable(const QStringList &symbolSet);    
-  /**
-   * Get the active symbol look-up table 
-   * 
-   * @sa setSymbolLookupTable
-   */
-  QStringList fillSymbolLookupTable() const;    
-  /** 
-   * Set the active symbol encoding look-up table 
-   * 
-   * @sa getSymbolEncoding
-   */
-  void setSymbolEncodingLookupTable(const QStringList& symbolEncodingSet);
-  /** 
-   * Get the active symbol encoding look-up table 
-   * 
-   * @sa setSymbolEncodingLookupTable
-   */
-  QStringList symbolEncodingLookupTable() const;
-  /**
-   * Fill m_symbolList list with all symbol ordered by index
-   *
-   * Default symbol list = {0-9}
-   * @note must be defined by subclass
-   */
-  virtual void fillSymbolList();
-  /**
-   * Fill m_widthEncodingList list with all symbol's width encoding ordered by index
-   *
-   * There is no default encoding because each individual/family barcode use 
-   * a different symbol encoding.
-   * @note must be defined by subclass
-   */
-  virtual void fillWidthEncodingList() = 0;   
-  /** 
-   * barcode's minimum number of symbols 
-   * @note NOT_FOUND == no minimum
-   */ 
-  int m_minLength;
-  /** 
-   * barcode's maximum number of symbols
-   * @note NOT_FOUND == no maximum
-   */ 
-  int m_maxLength;
-  /**
-   * maximum number of check digits allow by the barcode
-   */
-  int m_maxCheckDigits;
-  /**
-   * minimum number of check digits required by the barcode
-   * 
-   * @note 0 == none required 
-   * @note X < m_checkDigits; "X" number required
-   */
-  int m_requiredCheckDigits;    
-  /**
-   * default string used if user input is invalid
-   */
-  QString m_defaultString;    
-  /**
-   * copy of original user input
-   */
-  QString m_userInputString;      
-  /**
-   * symbol list created from parsed user input
-   */
-  QStringList m_userParsedSymbols;
-  /**
-   * symbol list based on final validated user input
-   */
-  QStringList m_finalSymbolList;
-  /**
-   * modulus value used to calculate the check digit
-   */
-  int m_checksumModulus;
-  /**
-   * barcode supports multi-character symbols 
-   */
-  bool m_multiCharSymbols;
-  /**
-   * check digit is located inside the barcode
-   * 
-   * @note "true" for product codes, 
-   * @note "false" for most other linear barcodes
-   */
-  bool m_internalCheckDigit;
-  /**
-   * text/human readable version of encoded information
-   */
-  QStringList m_formatedSymbols;
-  /** 
-   * machine readable/encoded barcode information
-   */
-  QString m_encodedSymbols;
-  /**
-   * Actual pixel-based index locations of encoded sections used to layout text
-   */
-  shared::BarPositionsMap m_barPositions;
-  /**
-   * is user input string valid
-   * 
-   * @note current behavior: used default string when user input is invalid
-   */
-  mutable CodeEngine::ErrorCodes m_isValid;
-  /**
-   * Input processing flags
-   * 
-   * @note not currently implemented
-   */
-  CodeEngine::ConstructCodes m_constructionFlags;
+  * Calculate checksum 
+  * 
+  * @note used by EAN-8/13 and 2 of 5
+  * @note "even" includes '0' 
+  * 
+  * @param oddMultipler 
+  * @param evenMultipler
+  */
+  class EvenOddChecksum : public std::binary_function<int, shared::Symbol, int>
+  {
+  public:
+    EvenOddChecksum (int oddMultipler,
+		    int evenMultipler) :
+		    m_oddMultipler(oddMultipler),
+		    m_evenMultipler(evenMultipler),
+		    m_parity(1) // start "odd"
+    {	  
+      qDebug("evenOddChecksum constructor() : start");
+      Q_ASSERT_X(m_oddMultipler >= 1,
+		"invalid argument",
+  "Odd multipler is less then 1");
+      Q_ASSERT_X(m_evenMultipler >= 1,
+		"invalid argument",
+  "Even multipler is less then 1");
+      qDebug("evenOddChecksum constructor() : end");
+    }
     
-private:
-  
-  class Private;
-  Private *d;   
+    int operator()(int total, const shared::Symbol & s) const {
+      qDebug("evenOddChecksum operator() : start");
+      // ignore symbols with no value
+      if (s == NOT_FOUND) {
+	qDebug("evenOddChecksum operator(missing index) : end");
+	return 0;
+      }     
+      qDebug() << "parity=" << m_parity << " symbolIndex=" << s; 
+      int checksum = 0;
+      // 1 -> size of array
+      // even
+      if (m_parity % 2 == 0) {
+	checksum = s * m_evenMultipler;
+	qDebug() << "Even parity; checksum =" << checksum;
+      }
+      // odd
+      else {
+	checksum = s * m_oddMultipler;
+	qDebug() << "Odd parity; checksum =" << checksum;
+      }	
+      m_parity++;      
+      qDebug("evenOddChecksum operator() : end");
+      return (total + checksum);
+    }
+  private:
+    int m_oddMultipler;
+    int m_evenMultipler;
+    mutable int m_parity;
+  };
 
-};
-};
+  /**
+  * linear increament multipler
+  * 
+  * @param T type of numbers 
+  */
+  class LinearMultiple : public std::binary_function<int, shared::Symbol, int>
+  {
+  public:
+    /**
+    * @param maxWeight maximum weighting value: 1->x
+    */
+    LinearMultiple (int maxWeight) :
+      m_maxWeight(maxWeight),
+      m_multipler(1)
+    {
+      // empty
+    }
+  int operator() (int total, const shared::Symbol & s) const 
+    {
+      if (s == NOT_FOUND) { return 0; }
+      if (m_multipler >= m_maxWeight) { 
+	m_multipler = 1; 
+      }
+      return (total + (s * m_multipler++));	   
+    }
+  private:
+    int m_maxWeight;
+    mutable int m_multipler;
+  };      
+			       
 #endif // ABSTRACTBARCODEENGINE_H
 
