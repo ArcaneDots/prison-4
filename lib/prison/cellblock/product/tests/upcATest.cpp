@@ -33,4 +33,3 @@ using namespace product;
 
  QTEST_MAIN(TestUpcA);
  #include "upcATest.moc"
- //DECLARE_TEST(TestUpcA)

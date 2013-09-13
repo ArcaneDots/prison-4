@@ -13,7 +13,6 @@ SET(    prison_SRC
         ean13barcode.cpp
         ean8barcode.cpp
         upcabarcode.cpp
-        upcebarcode.cpp
         )
 
 add_library(prison SHARED ${prison_SRC} ) 

@@ -66,32 +66,7 @@ public:
   virtual ~UpcAEngine();
     
   virtual QString userInput() const;  
-  
-  /**
-   * Attempt to get UPC-E version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible 
-   */
-  virtual QStringList toUpcE();
-  /**
-   * Attempt to get UPC-A version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
-   */
-  virtual QStringList toUpcA();
-  /**
-   * Attempt to get EAN-13 version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
-   */
-  virtual QStringList toEan13();
-  
+    
 protected:
   /**
    * Set current barcode string

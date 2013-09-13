@@ -1,6 +1,3 @@
- 
-//#include "upcATest.h"
-
 #include <QtTest/QTest>
 
 #include "ean13Test.h"
@@ -35,4 +32,3 @@ void TestEan13::defaultConstructor()
 
  QTEST_MAIN(TestEan13);
  #include "ean13Test.moc"
- //DECLARE_TEST(TestUpcA)

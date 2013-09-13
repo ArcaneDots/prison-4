@@ -72,30 +72,6 @@ void Ean13Engine::initialize()
   fillWidthEncodingList();
 }
 
-QStringList Ean13Engine::toUpcE() const
-{
-  qDebug("Ean13Engine toUpcE");
-  if (m_userParsedSymbols.at(1) == "0" || m_userParsedSymbols.at(1) == "1") {
-    return compressUpc(m_userParsedSymbols.mid(1));
-  }
-  return QStringList();
-}
-
-QStringList Ean13Engine::toUpcA() const
-{  
-  qDebug("Ean13Engine toUpcA");
-  if (m_userParsedSymbols.at(0) == "0") {
-    return m_userParsedSymbols.mid(1);
-  }
-  return QStringList();
-}
-
-QStringList Ean13Engine::toEan13() const
-{
-  qDebug("Ean13Engine toEan13");
-  return m_userParsedSymbols;
-}
-
 QString Ean13Engine::getFirstBlockEncodePattern(int indexedPattern) const
 {
   qDebug("Ean13Engine encodeMainBlock() : EAN-13 pattern "); 

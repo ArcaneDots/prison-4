@@ -38,23 +38,6 @@ public:
   Ean13Engine(const QString &userBarcode, 
 	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   virtual ~Ean13Engine();   
-  virtual QStringList toUpcE() const;
-  /**
-   * Attempt to get UPC-A version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
-   */
-  virtual QStringList toUpcA() const;
-  /**
-   * Attempt to get EAN-13 version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
-   */
-  virtual QStringList toEan13() const;
 protected:
   /**
    * Class specicfic initialization

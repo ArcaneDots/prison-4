@@ -1,5 +1,3 @@
- 
-//#include "upcATest.h"
 
 #include <QtTest/QTest>
 
@@ -7,7 +5,7 @@
 #include <iostream>
 using namespace product;
 
- void TestUpcA::defaultConstructor()
+ void TestEan8::defaultConstructor()
  {
    Ean8Engine * Ean8 = new Ean8Engine();
    
@@ -31,7 +29,7 @@ using namespace product;
    delete Ean8;
  }
 
- QTEST_MAIN(TestUpcA);
+ QTEST_MAIN(TestEan8);
  #include "ean8Test.moc"
  
  

@@ -1,6 +1,6 @@
  
-#ifndef TEST_UPCA
-#define TEST_UPCA
+#ifndef TEST_EAN8
+#define TEST_EAN8
 
 #include <QtCore/QObject>
 #include <QtTest/QTest>
@@ -8,7 +8,7 @@
  #include "../ean8engine.h"
  
  
- class TestUpcA: public QObject
+ class TestEan8: public QObject
  {
    Q_OBJECT
  
@@ -17,4 +17,4 @@
    void defaultConstructor();
  };
  
- #endif // TEST_UPCA
+ #endif // TEST_EAN8

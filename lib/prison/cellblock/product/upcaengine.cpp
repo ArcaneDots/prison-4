@@ -85,26 +85,6 @@ void UpcAEngine::setBarcodeString()
   ProductEngine::setBarcodeString();
 }
 
-QStringList UpcAEngine::toEan13()
-{
-  qDebug("UpcAEngine toEan13");
-  QStringList localEan13;
-  localEan13 << "0" << m_userParsedSymbols;
-  return localEan13;
-}
-
-QStringList UpcAEngine::toUpcA()
-{
-  qDebug("UpcAEngine toUpcA");
-  return m_userParsedSymbols;
-}
-
-QStringList UpcAEngine::toUpcE()
-{
-  qDebug("UpcAEngine toUpcE");
-  return compressUpc(m_userParsedSymbols);
-}
-
 QStringList UpcAEngine::compressUpc(const QStringList& symbolList) const
 {
   qDebug("UpcAEngine toUpcE() : start");
@@ -176,29 +156,29 @@ QStringList UpcAEngine::expandUpc(const QStringList& symbolList) const
   
   QString compressionSymbol = symbolList.at(upcE::COMPRESS_METHOD_INDEX);
   int compressionMethod = lookupSymbolIndex(compressionSymbol);
-  qDebug() << "UpcEEngine expandUpc() : Compression Symbol: " << compressionSymbol;
-  qDebug() << "UpcEEngine expandUpc() : Compression method: " << compressionMethod;
+  qDebug() << "UpcAEngine expandUpc() : Compression Symbol: " << compressionSymbol;
+  qDebug() << "UpcAEngine expandUpc() : Compression method: " << compressionMethod;
 
   expandedUpcA << symbolList.at(upc_common::NUMBER_SYSTEM_INDEX);
   QStringList compressedUpc(symbolList.mid(1, 6));
-  qDebug() << "UpcEEngine expandUpc() : compressedUpc: " << compressedUpc;
+  qDebug() << "UpcAEngine expandUpc() : compressedUpc: " << compressedUpc;
   QStringList manf;
   QStringList product;
   switch (compressionMethod) {
     case 0:
     case 1:
     case 2:
-      qDebug("UpcEEngine expandUpc(): 1. mmppp[0-2] -> manf dd[0-2]00, prod code 00ddd");
+      qDebug("UpcAEngine expandUpc(): 1. mmppp[0-2] -> manf dd[0-2]00, prod code 00ddd");
       manf << compressedUpc.mid(0, 2) << compressionSymbol << "0" << "0";
       product << "0" << "0"<< compressedUpc.mid(2,3);
       break;
     case 3:
-      qDebug("UpcEEngine expandUpc(): 2. mmmpp3 -> manf ddd30, prod code 000dd"); 
+      qDebug("UpcAEngine expandUpc(): 2. mmmpp3 -> manf ddd30, prod code 000dd"); 
       manf << compressedUpc.mid(0, 3) << compressionSymbol << "0";
       product << "0" << "0" << "0" << compressedUpc.mid(3, 2);
       break;
     case 4:
-      qDebug("UpcEEngine expandUpc(): 3. mmmmp4 -> manf dddd0, prod code 0000d");
+      qDebug("UpcAEngine expandUpc(): 3. mmmmp4 -> manf dddd0, prod code 0000d");
       manf << compressedUpc.mid(0, 4) << "0";
       product << "0" << "0" << "0" << "0"<< compressedUpc.mid(4,1);
       break;
@@ -207,22 +187,22 @@ QStringList UpcAEngine::expandUpc(const QStringList& symbolList) const
     case 7:
     case 8:
     case 9:
-      qDebug("UpcEEngine expandUpc(): 4. mmmmm[5-9] -> manf ddddd, prod code 0000[5-9]"); 
+      qDebug("UpcAEngine expandUpc(): 4. mmmmm[5-9] -> manf ddddd, prod code 0000[5-9]"); 
       manf << compressedUpc.mid(0, 5);
       product << "0" << "0" << "0" << "0"<< compressionSymbol;
       break;
     default:
       // should never reach this case; UPC-E -> UPC-A should alway be sucessful 
-      qDebug("UpcEEngine expandUpc() : unknown compression method");
+      qDebug("UpcAEngine expandUpc() : unknown compression method");
       break;
   }
     
   expandedUpcA << manf; 
   expandedUpcA << product; 
-  qDebug() << "UpcEEngine expandUpc(): manf: " <<  manf;
-  qDebug() << "UpcEEngine expandUpc(): product: " <<  product;  
-  qDebug() << "UpcEEngine expandUpc(): expended E -> A: " <<  expandedUpcA;
+  qDebug() << "UpcAEngine expandUpc(): manf: " <<  manf;
+  qDebug() << "UpcAEngine expandUpc(): product: " <<  product;  
+  qDebug() << "UpcAEngine expandUpc(): expended E -> A: " <<  expandedUpcA;
   Q_ASSERT(expandedUpcA.size() >= upcA::MIN && expandedUpcA.size() <= upcA::MAX);
-  qDebug("UpcEEngine expandUpc() : end");
+  qDebug("UpcAEngine expandUpc() : end");
   return expandedUpcA;
 }

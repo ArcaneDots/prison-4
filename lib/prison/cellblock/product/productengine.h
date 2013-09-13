@@ -27,7 +27,7 @@
 #ifndef PRODUCTENGINE_H
 #define PRODUCTENGINE_H
 
-#include <QImage>
+#include <QtGui/QImage>
 
 #include "../abstractbarcodeengine.h"
 #include "upceandefines_p.h"
