@@ -31,39 +31,60 @@
 
 namespace product
 {
-class Ean13Engine :  public UpcAEngine 
+  
+/**
+ * EAN-13 barcode generator
+ */
+class Ean13Engine :  public ProductEngine 
 {
 public:
+  /**
+   * @brief default constructor
+   */
   Ean13Engine();
+  /**
+   * String Constructor
+   *
+   * @param productCode constant indicating the current product code
+   */
   Ean13Engine(const QString &userBarcode, 
 	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
-  virtual ~Ean13Engine();   
+  /**
+   * Symbol Constructor
+   *
+   * @param productCode constant indicating the current product code
+   **/
+  Ean13Engine(const QList<shared::Symbol>& userBarcode,
+	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
+  /**
+   * destructor
+   */
+  virtual ~Ean13Engine();     
+  /**
+   * Encoded barcode sections
+   * 
+   * [block1][block2][extendedBlock(optional)]
+   */
+  const QList<QStringList> encoded() const;
+  /**
+   * Get a list of symbol blocks formatted according to the barcode's specification
+   */
+  const QStringList formatedSymbols() const;
 protected:
   /**
-   * Class specicfic initialization
-   */
-  void initialize();
+   * Encode complete number according to current barcode type
+   *
+   * @note EAN-13  format  [0][1-6][7-12][]
+   *
+   * @param mainBlock first portion of the list of symbols
+   */ 
+  QList<QStringList> encodeMainBlock(const shared::SymbolList& mainBlock) const; 
+private:
   /**
-   * Attempt to get UPC-E version of the inputed product code
-   * 
-   * @note not tested
-   * 
-   * @returns product code or empty list in case conversion is not possible
+   * Private barcode information
    */
-  /**
-   * Get productCode specific encoding pattern for the first block of symbols
-   * 
-   * @param indexedPattern index of assiocated pattern
-   */
-  QString getFirstBlockEncodePattern(int indexedPattern = 0) const;
-    /**
-   * Load all encoding patterns based on combo of system number (0-1) and check digit
-   */
-  void fillWidthEncodingList(); 
-  /**
-   * encoding patterns for EAN-13 first block
-   */
-  QStringList m_parity13WidthEncoding;
+  class Private;
+  Private * d;
 };
 };
 #endif // EAN13ENGINE_H

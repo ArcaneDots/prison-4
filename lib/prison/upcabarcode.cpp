@@ -34,31 +34,78 @@ using namespace prison;
 /**
  * @cond PRIVATE
  */
-class UpcABarcode::Private {
- public:
-};
+// class UpcABarcode::Private : public product::UpcAEngine {
+//  public:   
+//    Private();
+//    Private(const QString &data);
+//    ~Private();
+// };
 /**
  * @endcond
  */
 
-UpcABarcode::UpcABarcode() : d(0) {    
-  // empty
+// UpcABarcode::Private::Private() :  
+//   UpcAEngine()
+// {
+// }
+// 
+// UpcABarcode::Private::Private(const QString& data) :
+//   UpcAEngine(data)
+// {
+// }
+// 
+// UpcABarcode::Private::~Private()
+// {
+// }
+
+// ------------------------------------------------------
+
+UpcABarcode::UpcABarcode()  : AbstractBarcode(), d(0)
+{    
+  qDebug("UpcABarcode::UpcABarcode()");
+  //d = new Private();
 }
 
-UpcABarcode::~UpcABarcode() {
-  delete d;
+UpcABarcode::~UpcABarcode()
+{   
+  qDebug("UpcABarcode::~UpcABarcode()");
+  //delete d;
+  //if (d != 0) { delete d; }
 }
 
-QImage UpcABarcode::toImage(const QSizeF& size) { 
+QImage UpcABarcode::toImage(const QSizeF& size) 
+{ 
+  qDebug("UpcABarcode::toImage() start"); 
+//    qDebug() << "UpcABarcode::toImage() : data " << data();
+//   qDebug() << "UpcABarcode::toImage() : upcA data " << d->userInput();
+//   
+//    product::UpcAEngine l_upca(data());
+//   QSizeF currentMinimumSize(minimumSize());
+//   QImage image(l_upca.image(size, currentMinimumSize, 
+// 			foregroundColor(), backgroundColor()));
+//   setMinimumSize(currentMinimumSize);
+//   return image;
+// }
   qDebug() << "UpcABarcode::toImage() : data " << data();
+  //qDebug() << "UpcABarcode::toImage() : upcA data " << d->userInput();
+//  d = new Private();
+    //qDebug() << "UpcABarcode : old data " << d->userInput();
+   // qDebug("UpcABarcode::toImage() : delete");
+//     delete d;
+//     d = new Private(data());
   
-  product::UpcAEngine * prod = new product::UpcAEngine(data());
-  
+//   if (d->userInput() != data()) {
+//     qDebug() << "UpcABarcode : old data " << d->userInput();
+//     delete d;
+//     d = new Private(data());
+//   }
+  product::UpcAEngine * d = new product::UpcAEngine(data()); 
   QSizeF currentMinimumSize(minimumSize());
-  QImage image(prod->image(size, currentMinimumSize, 
-			   foregroundColor(), backgroundColor()));
-  delete prod;
-  
+  QImage image(d->image(size, currentMinimumSize, 
+		foregroundColor(), backgroundColor()));
   setMinimumSize(currentMinimumSize);
   return image;
+  delete d;
+//  return QImage();
+  qDebug("UpcABarcode::toImage() end"); 
 }

@@ -24,35 +24,56 @@
 namespace product 
 {
 
+/**
+ * EAN-8 barcode generator
+ */
 class Ean8Engine : public ProductEngine 
 {
+  
 public:
   /**
-   * default constructor
+   * @brief default constructor
    */
   Ean8Engine();
   /**
-   * constructor
+   * String constructor
    *
-   * @param defaultString default input used when user input is invalid
-   * @param minLength minimum length of user input 
-   * @param maxLength maximum length of user input
-   * @param checkDigitOffset offset of the internal check digit.
-   * @param blockSize formated block size
    * @param productCode constant indicating the current product code
    **/
-  Ean8Engine(const QString &userBarcode, 
+  Ean8Engine(const QString &userBarcode,
+	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
+  /**
+   * Pass-thru constructor
+   *
+   * @param productCode constant indicating the current product code
+   **/
+  Ean8Engine(const shared::SymbolList &userBarcode,
 	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   /**
    * destructor
    */
   virtual ~Ean8Engine();  
   /**
-   * Get symbol list
-   * 
-   * @returns list of valid symbols
+   * Encoded barcode sections
+   *
+   * [block1][block2][extendedBlock(if defined)]
    */
-  QStringList getSymbolList() const;
+    const QList<QStringList> encoded() const;
+  /**
+   * Get a list of symbol blocks formatted according to the barcode's specification
+   */
+  const QStringList formatedSymbols() const;
+protected:
+  /**
+   * Encode complete number according to current barcode type
+   *
+   * @note EAN-8  format  [ ][0-4][5-8][ ]
+   *
+   * @param mainBlock first portion of the list of symbols
+   */ 
+  QList<QStringList> encodeMainBlock(const shared::SymbolList& mainBlock) const;   
+  
+  
 };
 };
 #endif // EAN8ENGINE_H

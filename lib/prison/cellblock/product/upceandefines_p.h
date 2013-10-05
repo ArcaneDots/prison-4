@@ -65,9 +65,9 @@ namespace upc_common
   /**
    * Symbol encoded length are all 8 bits long
    */
-  const int ENCODE_LENGTH = 8; // 8 bit
+  const int ENCODE_LENGTH = 7; // 7 bit
   /**
-   * number of procduct code digits included in an encoded block
+   * number of product code digits included in an encoded block
    */
   const int ENCODE_BLOCK_SIZE = 6;
   
@@ -139,11 +139,11 @@ namespace upc_common
     /**
      * EAN-13
      */
-    PS__EAN_13,
+    PS__EAN_13 = 1,
     /**
      * EAN-8
      */
-    PS__EAN_8,
+    PS__EAN_8 = 2,
     /**
      * EAN-5 - Product code 5 digit extension
      * 
@@ -151,17 +151,17 @@ namespace upc_common
      * ISBN - prefix 978,979
      * ISSN  Serial Number publications- prefix 977
      */
-    PS__EAN_5,
+    PS__EAN_5 = 3,
     /**
      * EAN-2 - Product code 2 digit extension
      * 
      * ISSN  Serial Number publications- prefix 977
      */
-    PS__EAN_2,
+    PS__EAN_2 = 4,
     /**
      * UPC-A
      */
-    PS__UPC_A,
+    PS__UPC_A = 5,
     /**
      * Upc-A w/o check digit
      * 
@@ -170,24 +170,24 @@ namespace upc_common
      * 
      * @note not defined
      */
-    PS__UPC_B, 
+    PS__UPC_B = 6, 
     /**
      * Upc-A w/check digit
      *
      * @note not defined
      */
-    PS__UPC_C, 
+    PS__UPC_C = 7, 
     /**
      * @note not defined
      */
-    PS__UPC_D,
+    PS__UPC_D = 8,
     /**
      * Zero compressed UPC-A 
      * 
      * UPC-A number must contain at least four(4) contiguous zero(0)s
      * ex 112300004564 -> 11245634 : case #2
      */
-    PS__UPC_E,
+    PS__UPC_E = 9,
     /**
      * Additional five(5) digits commonly used to include a book price
      * 
@@ -196,7 +196,7 @@ namespace upc_common
      * 
      * @note not defined
      */ // not defined
-    PS__UPC_5
+    PS__UPC_5 = 10
   };
   
   /**
@@ -204,17 +204,17 @@ namespace upc_common
    *
    * @note 'O' in encoding patterns
    */
-  const char LEFT_ODD_ENCODE_TABLE [][ENCODE_LENGTH] = { 
-    "0001101",
-    "0011001",
-    "0010011", 
-    "0111101", 
-    "0100011", 
-    "0110001", 
-    "0101111", 
-    "0111011", 
-    "0110111", 
-    "0001011"
+  const char LEFT_ODD_ENCODE_TABLE [][8] = { 
+    "0001101", // 0
+    "0011001", // 1
+    "0010011", // 2
+    "0111101", // 3
+    "0100011", // 4
+    "0110001", // 5
+    "0101111", // 6
+    "0111011", // 7
+    "0110111", // 8
+    "0001011"  // 9
   };
 
   /**
@@ -222,17 +222,17 @@ namespace upc_common
    *
    * @note 'E' in encoding patterns
    */
-  const char LEFT_EVEN_ENCODE_TABLE [][ENCODE_LENGTH] = {
-    "0100111", 
-    "0110011", 
-    "0011011", 
-    "0100001", 
-    "0011101", 
-    "0111001", 
-    "0000101", 
-    "0010001", 
-    "0001001", 
-    "0010111"
+  const char LEFT_EVEN_ENCODE_TABLE [][8] = {
+    "0100111", // 0
+    "0110011", // 1
+    "0011011", // 2
+    "0100001", // 3
+    "0011101", // 4
+    "0111001", // 5
+    "0000101", // 6
+    "0010001", // 7
+    "0001001", // 8
+    "0010111"  // 9
   };
 
   /**
@@ -240,17 +240,17 @@ namespace upc_common
    *
    * @note 'R' in encoding patterns
    */
-  const char RIGHT_HAND_ENCODE_TABLE[][ENCODE_LENGTH] = {
-    "1110010", 
-    "1100110", 
-    "1101100", 
-    "1000010", 
-    "1011100", 
-    "1001110", 
-    "1010000", 
-    "1000100", 
-    "1001000", 
-    "1110100"
+  const char RIGHT_HAND_ENCODE_TABLE[][8] = {
+    "1110010", // 0
+    "1100110", // 1
+    "1101100", // 2 
+    "1000010", // 3 
+    "1011100", // 4 
+    "1001110", // 5 
+    "1010000", // 6 
+    "1000100", // 7 
+    "1001000", // 8 
+    "1110100"  // 9
   };
 };
 
@@ -379,6 +379,10 @@ namespace upcE
    */
   const int BLOCK_SIZE = 6;
   /**
+   * number of product code digits included in an encoded block
+   */
+  const int ENCODE_BLOCK_SIZE = 6;
+  /**
    * Index of value indicating which compression method was used
    */ 
   const int COMPRESS_METHOD_INDEX = 6; 
@@ -464,6 +468,10 @@ namespace upcA
    * human-readable block size
    */
   const int BLOCK_SIZE = 5;
+  /**
+   * number of product code digits included in an encoded block
+   */
+  const int ENCODE_BLOCK_SIZE = 6;
 }
 
 /**
@@ -484,11 +492,11 @@ namespace ean8
   /**
    * EAN-8 without check digit
    */
-  const int MIN_8 = 7; //  
+  const int MIN = 7; //  
   /**
    * EAN-8 with check digit 
    */
-  const int MAX_8 = 8; // 
+  const int MAX = 8; // 
   /**
    * EAN-2 without check digit 
    */
@@ -540,7 +548,8 @@ namespace ean13
   /**
    * default value
    */
-  static const QString DEFAULT_VALUE("1 2 3 4 5 6 7 8 9 0 1 2 3");
+  //static const QString DEFAULT_VALUE("1 2 3 4 5 6 7 8 9 0 1 2 3");
+  static const QString DEFAULT_VALUE("0 1 2 3 4 5 6 7 8 9 0 1 2");
   /**
    * EAN-13 without check digit 
    */
@@ -577,6 +586,10 @@ namespace ean13
    * two sets of six characters blocks
    */
   const int BLOCK_SIZE = 6;   
+  /**
+   * number of product code digits included in an encoded block
+   */
+  const int ENCODE_BLOCK_SIZE = 6;
   /** 
    * "parity" pattern used to encode first block (digits 1-7)
    * 

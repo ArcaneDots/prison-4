@@ -26,65 +26,155 @@
 #include <algorithm>
 #include "ean13engine.h"
 
-using namespace product;
-
-Ean13Engine::Ean13Engine(): 
-	UpcAEngine("", 
-		    CodeEngine::AutoProduct,
-		    ean13::DEFAULT_VALUE,
-		    ean13::MIN,
-		    ean13::MAX_LEN,
-		    ean13::CHECK_DIGIT_OFFSET,
-		    ean13::BLOCK_SIZE,
-		    upc_common::PS__EAN_13)
+namespace product {
+/**
+ * @cond PRIVATE
+ */
+class Ean13Engine::Private
 {
-  qDebug("Ean13Engine constructor");
-  initialize();
-  UpcAEngine::setBarcodeString();
+public:
+  Private();
+  virtual ~Private();
+  /**
+   * Get productCode specific encoding pattern for the first block of symbols
+   *
+   * @param indexedPattern index of assiocated pattern
+   */
+  QString getFirstBlockEncodePattern(int indexedPattern = 0) const;
+private:
+  /**
+   * Load all encoding patterns based on combo of system number (0-1) and check digit
+   */
+  void fillSystemEncodingList(); 
+  /**
+   * encoding patterns for EAN-13 first block
+   */
+  QStringList m_parity13WidthEncoding;
+};
+};
+/**
+ * @endcond
+ */
+
+using namespace product;
+using namespace shared;
+// ----------------- Ean13Engine::Private -----------------------
+Ean13Engine::Private::Private() : 
+  m_parity13WidthEncoding()
+{
+  fillSystemEncodingList();
 }
 
+Ean13Engine::Private::~Private()
+{
+  // empty
+}
 
+void Ean13Engine::Private::fillSystemEncodingList()
+{
+  qDebug("ProductEngine::Private fillWidthEncodingList() : start");
+  for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {
+    m_parity13WidthEncoding.append(ean13::PARITY_13[i]);
+  }
+  qDebug("ProductEngine::Private fillWidthEncodingList() : end");
+}
+
+QString Ean13Engine::Private::getFirstBlockEncodePattern(int indexedPattern) const
+{
+  qDebug("Ean13Engine getFirstBlockEncodePattern() : EAN-13 pattern ");
+  if(indexedPattern >= 0 &&
+    indexedPattern <= m_parity13WidthEncoding.size()) {
+    return m_parity13WidthEncoding.at(indexedPattern);
+  } else {
+    qDebug("Ean13Engine getFirstBlockEncodePattern() : bad index ");
+    return QString("");
+  }
+}
+// ----------------------- Ean13Engine -----------------------
+Ean13Engine::Ean13Engine(): 
+  ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__EAN_13)
+{
+  qDebug("Ean13Engine default constructor");
+}
+
+// user constructor
 Ean13Engine::Ean13Engine(const QString &userBarcode, 
 			 CodeEngine::ConstructCodes flags): 
-	UpcAEngine(userBarcode, 
-		  flags,
-		  ean13::DEFAULT_VALUE,
-		  ean13::MIN,
-		  ean13::MAX_LEN,
-		  ean13::CHECK_DIGIT_OFFSET,
-		  ean13::BLOCK_SIZE,
-		  upc_common::PS__EAN_13)
+  ProductEngine(userBarcode, flags, upc_common::PS__EAN_13), d(new Private())
 {
-  qDebug("Ean13Engine constructor");
-  initialize();
-  UpcAEngine::setBarcodeString();
+  qDebug("Ean13Engine user constructor");
+}
+
+Ean13Engine::Ean13Engine(const QList<shared::Symbol> & userSymbols, 
+			 CodeEngine::ConstructCodes flags) : 
+  ProductEngine(toStrings(userSymbols), flags, upc_common::PS__EAN_13), d(new Private())
+{
+  qDebug("Ean13Engine symbol constructor");
 }
 
 Ean13Engine::~Ean13Engine()
 {
   qDebug("Ean13Engine destructor");
-} 
+  delete d;
+}
 
-void Ean13Engine::initialize()
+const QStringList Ean13Engine::formatedSymbols() const
 {
-  qDebug("Ean13Engine initialize");
-  product::ProductEngine::initialize();
-  fillWidthEncodingList();
+  QStringList formatedString;
+  formatedString << local_numberSystem();
+  formatedString << toStrings(fmt_block1());
+  formatedString << toStrings(fmt_block2());
+  formatedString << QString("");
+  formatedString << extendedBlock().join("");
+  return formatedString;
 }
 
-QString Ean13Engine::getFirstBlockEncodePattern(int indexedPattern) const
+const QList<QStringList> Ean13Engine::encoded() const
 {
-  qDebug("Ean13Engine encodeMainBlock() : EAN-13 pattern "); 
-  Q_ASSERT(indexedPattern >= 0 && 
-    indexedPattern <= m_parity13WidthEncoding.size()); 
-  return m_parity13WidthEncoding.at(indexedPattern);
+  QList<QStringList> encodedBlocks(encodeMainBlock(local_mainBlock()));
+  encodedBlocks << encodeExtendedBlock(local_extendedBlock());
+  return encodedBlocks;
 }
 
-void Ean13Engine::fillWidthEncodingList()
-{  
-  qDebug("Ean13Engine fillWidthEncodingList() : start");
-  for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {
-    m_parity13WidthEncoding.append(ean13::PARITY_13[i]);
-  }  
-  qDebug("Ean13Engine fillWidthEncodingList() : end");
+QList< QStringList > Ean13Engine::encodeMainBlock(const shared::SymbolList& mainBlock) const
+{
+  qDebug("Ean13Engine encodeSymbols() : start");    
+  int blockSize = ean13::BLOCK_SIZE;
+  QList<shared::Symbol> l_mainBlock(local_mainBlock());
+
+  QList<QStringList> encodeMainBlock;
+  if (l_mainBlock.isEmpty()) {
+    QStringList e_block;
+    for (int count = 0; count < encBlockSize(); count++) {
+      e_block.append(shared::Symbol::ERROR_ENCODING);
+    }
+    encodeMainBlock.append(e_block);
+    encodeMainBlock.append(e_block);
+  } else {
+    shared::SymbolList l_block1 = l_mainBlock.mid(1, encBlockSize());
+    shared::SymbolList l_block2 = l_mainBlock.mid(1 + encBlockSize(), encBlockSize());
+
+    // block1
+    int numberSystemIndex = local_numberSystem();
+    qDebug() << "Ean13Engine encodeSymbols() : system digit = " << numberSystemIndex;
+    QString pattern1 = QString(encBlockSize(), 'O');
+    if (numberSystemIndex != Symbol::NOT_FOUND) {
+      pattern1 = d->getFirstBlockEncodePattern(numberSystemIndex);
+    }
+    qDebug() << "Ean13Engine encodeSymbols() : pattern = " << pattern1;
+    qDebug() << "Ean13Engine encodeSymbols() : symbols = " << l_block1;
+    // block2
+    QString patternRs = QString(encBlockSize(), 'R');
+    qDebug("Ean13Engine encodeSymbols() : encode");
+    encodeMainBlock.append( encodeSymbolParity(l_block1, pattern1) );
+    encodeMainBlock.append( encodeSymbolParity(l_block2, patternRs) );
+    qDebug() << "Ean13Engine::encodeMainBlock() : l_block1" << encodeMainBlock.at(0);
+    qDebug() << "Ean13Engine::encodeMainBlock() : l_block2" << encodeMainBlock.at(1);
+  }
+  qDebug("UpcAEngine encodeMainBlock() : end");
+  return encodeMainBlock; 
 }
+
+
+
+

@@ -53,14 +53,12 @@ install( FILES
          DataMatrixBarcode
          qrcodebarcode.h
          QRCodeBarcode
-         Ean13Barcode
-         ean13barcode.h
-         Ean8Barcode
-         ean8barcode.h
+#          Ean13Barcode
+#          ean13barcode.h
+#          Ean8Barcode
+#          ean8barcode.h
          UpcABarcode
          upcabarcode.h
-         UpcEBarcode
-         upcebarcode.h
          prison_export.h
          DESTINATION ${CMAKE_INSTALL_PREFIX}/include/prison COMPONENT devel
          )

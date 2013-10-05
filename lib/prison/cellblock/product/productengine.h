@@ -28,9 +28,11 @@
 #define PRODUCTENGINE_H
 
 #include <QtGui/QImage>
+#include <QtCore/QtDebug>
 
 #include "../abstractbarcodeengine.h"
 #include "upceandefines_p.h"
+
 
 namespace product 
 {
@@ -39,45 +41,145 @@ namespace product
  * 
  * Performs basic symbology and length validation based on values 
  * passed to member variables during child object construction.
- * Actual barcode construction is preformed by calls to virtual
- * functions overloaded in child classes. Except for extended codes
- * (EAN-2,EAN-5) because all product code support them,
+ * With the exception of extended codes (EAN-2,EAN-5) all product 
+ * code advanced validation and construction is preformed by 
+ * during virtualfunctions defines in the child classes.
  *
- * @note The seperate EAN-2 and EAN-5 classes exist only for the sake of  
- * @note completeness and for testing purposes. 
+ * @note EAN-2 : UPC-A, UPC-E, EAN-13
+ * @note EAN-5 : UPC-A, UPC-E, EAN-13
  */
 class ProductEngine : public shared::AbstractBarcodeEngine
-{
+{    
 public:
   /**
-   * constructor
-   *
-   * @param defaultString default input used when user input is invalid
-   * @param minLength minimum length of user input 
-   * @param maxLength maximum length of user input
-   * @param checkDigitOffset offset of the internal check digit.
-   * @param blockSize formated block size
+   * @brief QString input constructor
+   * 
+   * Parse user input into a main block, check digit and extended block
+   * 
+   * @param userBarcode 
+   * @param flags construction flags
    * @param productCode constant indicating the current product code
-   **/
+   */
   ProductEngine(const QString &userBarcode, 
 	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct,
-	      const QString &defaultString = "",
-	      int minLength = NOT_FOUND, 
-	      int maxLength = NOT_FOUND,
-	      int checkDigitOffset = NOT_FOUND,
-	      int blockSize = NOT_FOUND,
-	      int encodedBlockSize = NOT_FOUND,
 	      upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__UNKNOWN);
+  
+  /**
+   * @brief SymbolList input constructor
+   * 
+   * @param barcodeSymbols ...
+   * @param flags construction flags
+   * @param productCode constant indicating the current product code
+   */
+  ProductEngine(const shared::SymbolList &barcodeSymbols, 
+		CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct,
+		upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__UNKNOWN);
   /**
    * destructor
    */
   virtual ~ProductEngine();
   
-  virtual QString userInput() const;
-  /**
+  // -- inline get/set members --
+  
+  /** 
+   * Default value
    * 
+   * @note parsed into a QStringList
    */
-  upc_common::PRODUCT_CODE_VALUES productCode() const; 
+    const QStringList codeDefault() const;
+  /**
+   * Get construction flags
+   */
+  CodeEngine::ConstructCodes constructionFlags() const;
+  /**
+   * Is the user input valid for the current barcode
+   * 
+   * The barcode will display a default value in case the user's is not  
+   */
+  const CodeEngine::ErrorCodes & statusFlags() const;
+  /**
+   * Add flags
+   */
+  const CodeEngine::ErrorCodes & addFlags(CodeEngine::ErrorCode flags);
+  /**
+   * Remove flags
+   */
+  const CodeEngine::ErrorCodes & removeFlags(CodeEngine::ErrorCode flags);
+  /**
+   * get Product type assiocated current engine 
+   */
+  upc_common::PRODUCT_CODE_VALUES productCode() const;
+  /**
+   * Length of primary section + checkDigit
+   */
+  int primaryLength() const;  
+  /**
+   * User input string
+   */
+  QString userInput() const;
+  /**
+   * Parsed symbols (user or defaultlt value)
+   */
+  QString parsedSymbolList() const;
+  /**
+   * Final list of symbols used to generate barcode
+   * 
+   * @note set by inherited constructor
+   */
+  QString finalSymbolList() const;
+  /**
+   * Validated full list of underling symbols
+   */
+  const shared::SymbolList symbols() const;
+  /**
+   * Get a list of symbol blocks formatted according to the barcode's specification
+   * 
+   * [systemdigit][block1][block2][checkdigit][extendedBlock]
+   * @note set unused blocks to null 
+   */
+  virtual const QStringList formatedSymbols() const = 0;
+  /**
+   * Main block (not including check digit)
+   * @sa local_mainBlock
+   */
+  const QStringList mainBlock() const;
+  /**
+   * Check digit string
+   * @sa local_checkDigit
+   */
+  const QString checkDigit() const; 
+  /**
+   * Extended block
+   * @sa local_checkDigit
+   */
+  const QStringList extendedBlock() const;
+  /**
+   * Number System 
+   * 
+   * @note may be blank since EAN-8 dosn't use one
+   * @sa local_numberSystem
+   */
+  const QString numberSystem() const;
+  /**
+   * First block
+   * 
+   * @sa local_block1
+   */
+  const QStringList block1() const;
+  /**
+   * Second block
+   * 
+   * @note  may be blank since UPC-E doesn't have one
+   * @sa local_block2
+   */
+  const QStringList block2() const;
+  /**
+   * Encoded barcode sections
+   * 
+   * [block1][block2(optinal)][extendedBlock(optional)]
+   * @note set unused blocks to null 
+   */
+  virtual const QList<QStringList> encoded() const = 0;
   /**
    * Get QImage of barcode data
    *
@@ -87,108 +189,125 @@ public:
    * @param background color of "white" space
    * @return QImage
    **/
-  QImage image(const QSizeF &requestedSize, QSizeF &minimumSize, 
+  virtual QImage image(const QSizeF &requestedSize, QSizeF &minimumSize, 
 		  const QColor &foregroundColor, const QColor &backgroundColor);
-protected:
+protected:  
   /**
-   * Class specicfic initialization
+   * Swap in private data
    */
-  virtual void initialize();
+  void swap(ProductEngine &other);    
   /**
-   * Set current barcode string
-   *
-   * @param userBarcode user string containing barcode symbols 
-   * @param flag contruction hints; Defaults to "Auto".
-   **/
-  virtual void setBarcodeString();
-  /**
-   * Parse user input string into list of valid symbols (strings)
-   *
-   * UPCs only use digits
+   * Initialize -> primary code - check digit - extended code
    * 
-   * @param symbolString user input string
-   * @returns similarly ordered list of single and multi-character symbols
+   * @sa fillExtendedEncodingList
    */
-  virtual QStringList parseSymbolString(const QString &symbolString) const;  
+  void initialize(); 
   /**
-   * Validate product codes and splits off the extended code (EAN-2/5)
+   * Validate basic length and splits off the extended code (EAN-2/5) if any 
    * 
-   * Verifies the check digit value and the valid sizes with the range 
+   * Verifies the sizes with the range and check digit value if found
+   * Invalid input is replaced with the default value  
    * 
    * @param symbolSrc list containing all symbol
-   * @param splitIndex[out] start of extended block 
+   * @returns valid symbol list
    */
-  virtual QStringList processSymbolList(const QStringList& userSymbols);
+  void processSymbolList(const shared::SymbolList& inputSymbols); 
   /**
-   * Calculate EAN checksum digit for a particular barcode
-   *
-   * Move right to left, starting with right-most value as odd, odd * 3, even * 1
-   * @sa AbstractBarcodeEngine::CommonChecksumOddEven()
-   *
-   * @note (checksum value + check digit) & 10 == 0
-   *
-   * @param symbolArray array of symbol indexes
-   * @return valid check digit
+   * get blocksize assiocated current engine 
    */
-  virtual int calculateCheckDigit(const shared::LookupIndexArray &symbolArray) const;
+  int fmtBlockSize() const;
+  /**
+   * get encoded blocksize of current engine
+   */
+  int encBlockSize() const;
+  /**
+   * Generate error codes if the supplied and calculated checkdigit are different
+   */
+  CodeEngine::ErrorCodes validateCheckDigit(const shared::Symbol& foundDigit, 
+					     const shared::Symbol& calculated) const;	    
+  /**
+   * Calculate correct checkdigit - standard "product" version
+   * 
+   * @note overrides AbstractBarcodeEngine::calculateCheckDigit()
+   * 
+   * @sa AbstractBarcodeEngine::calculateCheckDigit()
+   */
+  int calculateCheckDigit() const;
   /**
    * Calculate Ean-2 check digit
    * 
-   * @return check digit 
+   * @param symbolArray
    */
-  int calculateEan2CheckDigit(const shared::LookupIndexArray &symbolArray) const;
+  int calculateEan2CheckDigit(const QList<shared::Symbol>& symbolArray) const;
   /**
    * Calculate Ean-5 check digit
    * 
    * @return check digit 
    */
-  int calculateEan5CheckDigit(const shared::LookupIndexArray &symbolArray) const;
+  int calculateEan5CheckDigit(const QList<shared::Symbol>& symbolArray) const;
   /**
-   * Seperate digits/symbols into logical blocks based on encoded layout
-   *
-   * format:
-   * [leading digit|'<'] 
-   * [first block] [second block] 
-   * [trailing digit|'>'|' '(extended block)]
-   * [extended block]
-   * ['>'(extended block)]
-   *
-   * @param symbolSrc list containing all symbol
-   * @param splitIndex 
-   **/
-  virtual void formatSymbols(const QStringList& symbolSrc);
-  /**
-   * Format digits in the main block
-   * 
-   * UPC-A  format: [0][1-5][6-(10)][12-13|15]
-   * @param mainBlock list of symbols
+   * Set the raw parsed input from user
    */
-  virtual QStringList formatMainBlock(const QStringList &mainBlock) const;  
+  void setRawInput(shared::SymbolList symbolBlock);
   /**
-   * Format digits in the extended block (EAN-2/EAN-5)
-   * 
-   * @param extendedBlock list of symbols
+   * Raw parsed input from user
    */
-  QString formatExtendedBlock(const QStringList& extendedBlock) const;  
+  const QList<shared::Symbol> local_rawInput() const;
   /**
-   * Encode complete number according to current barcode type
-   *
-   * UPC-E  format  [-][1-6][-][8-9|13]
-   * 
-   * @param symbolSrc full list of symbols
-   * @param splitIndex index of the "end" of the first half
+   * Set the primary code block
    */
-  virtual void encodeSymbols(const QStringList &symbolSrc); 
+  void setPrimaryBlock(shared::SymbolList symbolBlock);
+  /**
+   * Primary code block
+   */
+  const QList<shared::Symbol> local_primaryBlock() const;
+  /**
+   * Save checksum value
+   */
+  void setCheckDigit(const shared::Symbol &s);
+  /**
+   * Get checksum value
+   */
+  const shared::Symbol local_checkDigit() const;  
+  /**
+   * Set the extended code block
+   */
+  void setExtendedBlock(shared::SymbolList symbolBlock);  
+  /**
+   * extended code block
+   */
+  const QList<shared::Symbol> local_extendedBlock() const;  
+  /**
+   * Main code block (primary code + checksum)
+   */
+  const QList<shared::Symbol> local_mainBlock() const;
+  /**
+    * Number System 
+    * 
+    * @note may be blank since EAN-8 dosn't use one
+    */
+  const shared::Symbol local_numberSystem() const;
+  /**
+    * First block
+    */
+  const QList<shared::Symbol> fmt_block1() const;
+  /**
+    * Second block
+    * 
+    * @note  may be blank; UPC-E doesn't have one
+    */
+  const QList<shared::Symbol> fmt_block2() const;
   /**
    * Encode complete number according to current barcode type
    * 
    * Overload UPC-A version because UPC-E only has 1 block of digits
    *  
-   * @note UPC-E  format  [-][1-6][-][8-9|13]
+   * @note format  [systemDigit][block1][block2][checkDigit][extended]
+   * @note each engine must overload
    * 
    * @param mainBlock first portion of the list of symbols 
    */ 
-  virtual QStringList encodeMainBlock(const QStringList &mainBlock) const; 
+  virtual QList<QStringList> encodeMainBlock(const shared::SymbolList& mainBlock) const = 0; 
   /**
    * Attempt to encode any remaining symbols as UPC SUPPLEMENTAL digits
    * 
@@ -200,103 +319,92 @@ protected:
    * @param extendedBlock list of symbols
    * @returns encoded version of passed symbol list 
    */
-  QStringList encodeExtendedBlock(const QStringList &extendedBlock) const;  
+  QStringList encodeExtendedBlock(const shared::SymbolList& extendedBlock) const;
   /**
-   * Get productCode specific encoding pattern for the first block of symbols
+   * Generates "user" for default constructor
+   */
+  QString defaultInputString(int size) const;
+  QList<shared::Symbol> defaultInputSymbols(int size) const;
+  /**
+   * Draw "bars" on image
+   */
+  int drawBars(QPainter* painter,
+	       int top, int bottom, int startOffset,
+	       QString strBars) const;
+  /**
+   * Draw "bars" on image
+   */
+  int drawBars(QPainter* painter,
+	       int top, int bottom, int startOffset,
+	       QStringList strLstBars) const;
+  /**
+   * default symbol used preform parsing 
    * 
-   * @param indexedPattern index of assiocated pattern
    */
-  virtual QString getFirstBlockEncodePattern(int indexedPattern = 0) const;
-  /**
-   * Encode symbol based on "parity" pattern
-   *
-   * char * array version of encodeSymbolParity for QString
+  shared::Symbol m_emptySymbol;
+  /** 
+   * barcode's minimum number of symbols 
    * 
-   * @param first1 start of symbols source
-   * @param last1 end of symbols source
-   * @param result start of destination
-   * @param userParityPattern parity pattern used to encode the source
-   */   
-  template<class InIt, class OutIt> 
-  OutIt encodeSymbolParity (InIt __first1, InIt __last1,OutIt __result,
-			    const char *userParityPattern) const
-  {
-    return encodeSymbolParity(__first1, __last1, __result, 
-			      QString(userParityPattern));
-  }
+   * @note product code specific,
+   * @note NOT_FOUND == no minimum
+   */ 
+  int minLength() const;
+  /** 
+   * barcode's maximum number of symbols
+   * 
+   * @note product code specific,
+   * @note NOT_FOUND == no maximum
+   */ 
+  int maxLength() const;
   /**
-   * Encode symbol based on "parity" pattern   
-   *
-   * @param first1 start of symbols source
-   * @param last1 end of symbols source
-   * @param result start of destination
-   * @param userParityPattern parity pattern used to encode the source   
+   * maximum number of check digits allow by the barcode
+   * 
+   * @note product code specific
    */
-  template<class InIt, class OutIt> 
-  OutIt encodeSymbolParity (InIt __first1, InIt __last1,OutIt __result, 
-			    const QString &parityPattern) const;      
-  /**
-   * Load all encoding patterns based on combo of system number (0-1) and check digit
-   */
-  virtual void fillWidthEncodingList();   
+  int maxCheckDigits() const;
   /**
    * Zero-based index of the product code's check digit
    * 
+   * @note product code specific,
    * @note "-1" == all check digit appear at end of barcode
    * @note only used for product codes (UPC/EAN-8/EAN-13)
    */
-  int m_checkDigitOffset;     
+  int checkDigitOffset() const;     
+
+  // user modifible - I plan on moving these in to Private
+  
   /**
-   * Zero-based offset of the product code's check digit
+   * copy of original user input
+   */
+  QString m_userInputString;
+  /**
+   * is user input string valid
    * 
-   * @note "-1" == all check digit appear at end of barcode
-   * @note only used for EAN-8/13
+   * @note current behavior: used default string when user input is invalid
    */
-  int m_mainBlockSize;
+  mutable CodeEngine::ErrorCodes m_isValid;
   /**
-   * The product code number system digit is used by object
-   */
-  upc_common::PRODUCT_CODE_VALUES m_productCode;
-  /**
-   * starting index of first block
-   */
-  int m_firstBlockStartIndex;
-  /**
-   * starting index of second block
+   * Input processing flags
    * 
-   * @note UPC-E does not contain a second block
+   * @note not currently implemented
    */
-  int m_secondBlockStartIndex;
+  CodeEngine::ConstructCodes m_constructionFlags;
   /** 
-   * block size
+   * machine readable/encoded barcode information
    */
-  int m_blockSize;
+  QString m_encodedSymbols;
+private:
   /**
-   * encoded block size
-   *
-   * @note format blockSize may/not be equal to m_encodeBlockSize    
+   * Private barcode information
    */
-  int m_encodeBlockSize;
-  /**
-   * encoding patterns for EAN-2 
-   */
-  QStringList m_parity2WidthEncoding;
-  /**
-   * encoding patterns for EAN-5
-   */
-  QStringList m_parity5WidthEncoding;    
-  /**
-   * "Left-hand Odd" symbol encoding used by all product codes
-   */
-  QStringList m_leftOddEncodingList;
-  /**
-   * "Left-hand Even" symbol encoding used by all product codes
-   */
-  QStringList m_leftEvenEncodingList;
-  /**
-   * "Right-hand" symbol encoding used by all product codes
-   */
-  QStringList m_rightEncodingList;
+  class Private;
+  Private * d;
+ /**
+  * Exteneded barcode encoding patterns - EAN-2, EAN-5 
+  */
+  void fillExtendedEncodingList();   
 };
+
+
 };
 #endif // PRODUCTENGINE_H

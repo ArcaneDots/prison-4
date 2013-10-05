@@ -54,11 +54,11 @@ QImage Ean8Barcode::toImage(const QSizeF& size) {
   
   product::Ean8Engine * prod = new product::Ean8Engine(data());  
  
-  QSizeF * currentMinimumSize = new QSizeF(minimumSize());
-  QImage image(prod->image(size, *currentMinimumSize, 
+  QSizeF currentMinimumSize(minimumSize());
+  QImage image(prod->image(size, currentMinimumSize,
 			   foregroundColor(), backgroundColor()));
   delete prod;
   
-  setMinimumSize(*currentMinimumSize);
+  setMinimumSize(currentMinimumSize);
   return image;
 }

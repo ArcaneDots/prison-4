@@ -26,40 +26,75 @@
 
 #include <QMap>
 #include <QPainter>
-#include "cellblock/product/ean13engine.h"
 #include "ean13barcode.h"
+#include "cellblock/product/ean13engine.h"
 
 using namespace prison;
 
 /**
  * @cond PRIVATE
  */
-class Ean13Barcode::Private {
+class Ean13Barcode::Private : product::Ean13Engine{
 public:
+  Private();
+  Private(const QString &data);
+  ~Private();
 };
 /**
  * @endcond
  */
 
-Ean13Barcode::Ean13Barcode() : d(0) {    
-  // empty
+Ean13Barcode::Private::Private() :
+  Ean13Engine()
+{  
+}
+
+Ean13Barcode::Private::Private(const QString& data) :
+  Ean13Engine(data)
+{  
+}
+
+Ean13Barcode::Private::~Private()
+{
+}
+
+// ------------------------------------------------------
+
+Ean13Barcode::Ean13Barcode() : AbstractBarcode(), d(0)  
+{ 
+  qDebug("Ean13Barcode default constructor");
 }
 
 Ean13Barcode::~Ean13Barcode() {
-  delete d;
+  qDebug("Ean13Barcode destructor");
+  delete d; 
 }
 
 QImage Ean13Barcode::toImage(const QSizeF& size) 
-{ 
+{  
   qDebug() << "Ean13Barcode::toImage() : data " << data();
-  
-  product::Ean13Engine * prod = new product::Ean13Engine(data());
-  
+  product::Ean13Engine ean13(data());
+
   QSizeF currentMinimumSize(minimumSize());
-  QImage image(prod->image(size, currentMinimumSize, 
-			   foregroundColor(), backgroundColor()));
-  delete prod;
-  
+  QImage image(ean13.image(size, currentMinimumSize,
+	     foregroundColor(), backgroundColor()));
   setMinimumSize(currentMinimumSize);
   return image;
 }
+//qDebug() << "Ean13Barcode::toImage() : ean13 data " << d->localEngine->userInput();
+// QImage image;
+//   qDebug() << "Ean13Barcode::toImage() : data " << data();
+//   //qDebug() << "Ean13Barcode::toImage() : ean13 data " << d->localEngine->userInput();
+//   
+//   if (d != 0 && d->localEngine->userInput() != data()) {
+//     qDebug() << "Ean13Barcode : old data " << d->localEngine->userInput();
+//     delete d;
+//     d = new Private(data());
+//   }
+//   
+//   QSizeF currentMinimumSize(minimumSize());
+//   QImage image(d->localEngine->image(size, currentMinimumSize, 
+// 			   foregroundColor(), backgroundColor()));  
+//   setMinimumSize(currentMinimumSize);
+//   return image;
+// }

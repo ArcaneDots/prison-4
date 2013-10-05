@@ -29,122 +29,146 @@
 using namespace product;
 
 UpcAEngine::UpcAEngine() :
-	ProductEngine("",
-		CodeEngine::AutoProduct,
-		upcA::DEFAULT_VALUE, 
-		upcA::MIN, 
-		upcA::MAX_LEN, 
-		upcA::CHECK_DIGIT_OFFSET, 
-		upcA::BLOCK_SIZE,
-		upc_common::ENCODE_BLOCK_SIZE,
-		upc_common::PS__UPC_A)
+	ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__UPC_A)
 {
-  qDebug("UpcAEngine default constructor");    
-  AbstractBarcodeEngine::setBarcodeString();
-}
-   
-		      
+  qDebug("UpcAEngine default constructor");  
+} 		    
+  		    
 UpcAEngine::UpcAEngine(const QString &userBarcode, 
-		       CodeEngine::ConstructCodes flags,
-		       const QString& defaultString, 
-		       int minLength, 
-		       int maxLength, 
-		       int checkDigitOffset, 
-		       int blockSize, 
-		       upc_common::PRODUCT_CODE_VALUES productCode): 
-		       ProductEngine(userBarcode,
-				  flags,
-				  defaultString, 
-				  minLength, 
-				  maxLength, 
-				  checkDigitOffset, 
-				  blockSize,
-				  upc_common::ENCODE_BLOCK_SIZE,
-				  productCode)
+	CodeEngine::ConstructCodes flags):
+	ProductEngine(userBarcode, flags, upc_common::PS__UPC_A)
 {
-  qDebug("UpcAEngine constructor");  
-  if (m_productCode == upc_common::PS__UPC_A) {
-    setBarcodeString();
-  }  
+  qDebug("UpcAEngine constructor::string");
 }
 
-
+UpcAEngine::UpcAEngine(const shared::SymbolList& userBarcode,
+	CodeEngine::ConstructCodes flags):
+	ProductEngine(toStringList(userBarcode).join(""), flags,
+		      upc_common::PS__UPC_A)
+{  
+  qDebug("UpcAEngine constructor::symbol");
+}
 
 UpcAEngine::~UpcAEngine()
 {
   qDebug("UpcAEngine destructor");
 }
 
-QString UpcAEngine::userInput() const
+const QStringList UpcAEngine::formatedSymbols() const
 {
-   return product::ProductEngine::userInput();
+  qDebug("UpcAEngine::formatedSymbols : start"); 
+  QStringList formatedString;
+  formatedString << numberSystem();
+  formatedString << block1().join("");
+  formatedString << block2().join("");
+  formatedString << checkDigit();
+  formatedString << extendedBlock().join("");
+  qDebug() << "UpcAEngine::formatedSymbols : " << formatedString;
+  qDebug("UpcAEngine::formatedSymbols : end");
+  return formatedString;
 }
 
-void UpcAEngine::setBarcodeString()
-{
-  ProductEngine::setBarcodeString();
+const QList<QStringList> UpcAEngine::encoded() const
+{  
+  QList<QStringList> encodedBlocks(encodeMainBlock(local_mainBlock()));
+  encodedBlocks += encodeExtendedBlock(local_extendedBlock());
+  return encodedBlocks;
 }
 
-QStringList UpcAEngine::compressUpc(const QStringList& symbolList) const
+QList<QStringList> UpcAEngine::encodeMainBlock(const shared::SymbolList& mainBlock) const
+{
+  qDebug("UpcAEngine encodeMainBlock() : start");    
+  int encBlockSize = upcA::ENCODE_BLOCK_SIZE;
+  QList<shared::Symbol> l_mainBlock(local_mainBlock());
+
+  QList<QStringList> encodeMainBlock;
+  if (l_mainBlock.isEmpty()) {
+    QStringList e_block;
+    for (int count = 0; count < encBlockSize; count++) {  
+      e_block.append(shared::Symbol::ERROR_ENCODING);
+    }
+    encodeMainBlock.append(e_block);
+    encodeMainBlock.append(e_block);
+  } else {
+    shared::SymbolList l_block1 = l_mainBlock.mid(0, encBlockSize);
+    shared::SymbolList l_block2 = l_mainBlock.mid(encBlockSize, encBlockSize);
+    // "O" and "R"
+    QString patternOs = QString(encBlockSize, 'O');
+    QString patternRs = QString(encBlockSize, 'R');
+
+    encodeMainBlock.append( encodeSymbolParity(l_block1, patternOs) );
+    encodeMainBlock.append( encodeSymbolParity(l_block2, patternRs) );
+    qDebug() << "UpcAEngine::encodeMainBlock() : l_block1" << encodeMainBlock.at(0);
+    qDebug() << "UpcAEngine::encodeMainBlock() : l_block2" << encodeMainBlock.at(1);
+  }
+  qDebug("UpcAEngine encodeMainBlock() : end");  
+  return encodeMainBlock;
+}
+
+shared::SymbolList UpcAEngine::compressUpc(const shared::SymbolList& inputSymbolList) const
 {
   qDebug("UpcAEngine toUpcE() : start");
-  qDebug() << "UpcAEngine toUpcE() : input " << symbolList;
-  qDebug() << "UpcAEngine toUpcE() : input size " << symbolList.size();
-  Q_ASSERT(symbolList.size() >= upcA::MIN && symbolList.size() <= upcA::MAX);
+  qDebug() << "UpcAEngine toUpcE() : input " << inputSymbolList;
+  qDebug() << "UpcAEngine toUpcE() : input size " << inputSymbolList.size();
+  Q_ASSERT(inputSymbolList.size() >= upcA::MIN && 
+    inputSymbolList.size() <= upcA::MAX);
   
   // 1. manf dd[0-2]00, prod code 00ddd -> mmppp[0-2]
   // 2. manf dd[3-9]00, prod code 000dd -> mmmpp3
   // 3. manf dddd0, prod code 0000d 	-> mmmmp4
   // 4. manf ddddd, prod code 0000[5-9] -> mmmmm[5-9] 
   
-  QStringList localUpcE;
+  shared::SymbolList localUpcE;
   // strip off number system and check digit symbols
   
   // -- compress to a UPC-E if possible --
-  QRegExp upceMatch("[0|1](\\d{1,5})0{4,5}(\\d{1,3})\\d)");
-  if (m_isValid.testFlag(CodeEngine::OK) &&
-    upceMatch.exactMatch(symbolList.join(""))) {    
-    QStringList manf(upceMatch.capturedTexts().at(0));
-    QStringList product(upceMatch.capturedTexts().at(1));
-    qDebug() << "UpcAEngine toUpcE() : manufactor code: " << manf;   
-    qDebug() << "UpcAEngine toUpcE() : product Code: " << product;   
-  
-    if (manf.size() == 3 && product.size() == 3 && lookupSymbolIndex(manf.back()) < 3) {
-    qDebug("UpcAEngine toUpcE(): 1. manf dd[0-2]00, prod code 00ddd -> mmppp[0-2]");
-	localUpcE << manf.mid(0,2); 
-	localUpcE << product << manf.back();	  
-    } else if (manf.size() == 4 && product.size() == 2 && lookupSymbolIndex(manf.back()) == 3) {
-      qDebug("UpcAEngine toUpcE(): 2. manf ddd300, prod code 000dd -> mmmpp3"); 
+  QString symbolString(toStringList(inputSymbolList).join("")); 
+  QRegExp upceMatch("([0|1]\\d{1,5})0{4,5}(\\d{1,3})\\d)");
+  if ( upceMatch.exactMatch(symbolString) ) {    
+    QStringList captured(upceMatch.capturedTexts());
+    
+    shared::SymbolList manf = m_emptySymbol.parse(captured.at(0));
+    shared::SymbolList product = m_emptySymbol.parse(captured.at(1));
+    qDebug() << "compressUpc : manufactor code: " << manf;   
+    qDebug() << "compressUpc : product Code: " << product;   
+    
+    if (manf.size() == 3 && product.size() == 3 && manf.back() < 3) {
+      qDebug("compressUpc : 1. manf dd[0-2]00, prod code 00ddd -> mmppp[0-2]");
+    localUpcE << manf.mid(0,2); 
+    localUpcE << product << manf.back();	  
+      } else if (manf.size() == 4 && product.size() == 2 && manf.back() == 3) {
+	qDebug("compressUpc : 2. manf ddd300, prod code 000dd -> mmmpp3"); 
 	localUpcE << manf.mid(0,3); 
 	localUpcE << product << manf.back();	  
-    } else if (manf.size() == 4 && product.size() == 1 && lookupSymbolIndex(product.back()) < 5) {
-    qDebug("UpcAEngine toUpcE(): 3. manf dddd0, prod code 0000d -> mmmmp4");
+      } else if (manf.size() == 4 && product.size() == 1 && product.back() < 5) {
+	qDebug("compressUpc : 3. manf dddd0, prod code 0000d -> mmmmp4");
 	localUpcE << manf; 
 	localUpcE << product << "4";	  
-    } else if (manf.size() == 5 && product.size() == 1) {
-      qDebug("UpcAEngine toUpcE(): 4. manf ddddd, prod code 0000[5-9] -> mmmmm[5-9]");
+      } else if (manf.size() == 5 && product.size() == 1) {
+	qDebug("compressUpc : 4. manf ddddd, prod code 0000[5-9] -> mmmmm[5-9]");
 	localUpcE << manf; 
 	localUpcE << product;	  
-    } else {
-      qDebug("UpcAEngine toUpcE() : unknown compression method");
-      localUpcE.clear();
-    }    
-   
-    qDebug() << "UpcAEngine toUpcE():" << manf << " " << product << " -> " << localUpcE;
-    qDebug() << "UpcAEngine toUpcE(): to UPC-E: " <<  localUpcE;    
-    Q_ASSERT(localUpcE.isEmpty() ||
+      } else {
+	qDebug("compressUpc : unknown compression method");
+	localUpcE.clear();
+      }    
+      
+      qDebug() << "compressUpc :" << manf << " " << product << " -> " << localUpcE;
+      qDebug() << "compressUpc : to UPC-E: " <<  localUpcE;    
+      Q_ASSERT(localUpcE.isEmpty() ||
       localUpcE.size() >= upcE::MIN && localUpcE.size() <= upcE::MAX);
-    qDebug("UpcAEngine expandUpc() : end");
+      qDebug("compressUpc  : end");
   }
   return localUpcE;
 }
 
-QStringList UpcAEngine::expandUpc(const QStringList& symbolList) const 
+
+shared::SymbolList UpcAEngine::expandUpc(const shared::SymbolList& inputSymbolList) const 
 {
   qDebug("UpcEEngine expandUpc() : start");
-  Q_ASSERT(symbolList.size() >= upcE::MIN && symbolList.size() <= upcE::MAX);
-  qDebug() << "UpcEEngine expandUpc() : input " << symbolList;
-  qDebug() << "UpcEEngine expandUpc() : input size " << symbolList.size();
+  Q_ASSERT(inputSymbolList.size() >= upcE::MIN && inputSymbolList.size() <= upcE::MAX);
+  qDebug() << "UpcEEngine expandUpc() : input " << inputSymbolList;
+  qDebug() << "UpcEEngine expandUpc() : input size " << inputSymbolList.size();
   
   // 1. manf dd[0-2]00, prod code 00ddd -> mmppp[0-2]
   // 2. manf dd[3-9]00, prod code 000dd -> mmmpp3
@@ -152,18 +176,18 @@ QStringList UpcAEngine::expandUpc(const QStringList& symbolList) const
   // 4. manf ddddd, prod code 0000[5-9] -> mmmmm[5-9] 
   
   // -- validate by expanding -> UPC-A --
-  QStringList expandedUpcA; 
+  shared::SymbolList expandedUpcA; 
   
-  QString compressionSymbol = symbolList.at(upcE::COMPRESS_METHOD_INDEX);
-  int compressionMethod = lookupSymbolIndex(compressionSymbol);
+  shared::Symbol compressionSymbol = inputSymbolList.at(upcE::COMPRESS_METHOD_INDEX);
+  int compressionMethod = compressionSymbol;
   qDebug() << "UpcAEngine expandUpc() : Compression Symbol: " << compressionSymbol;
   qDebug() << "UpcAEngine expandUpc() : Compression method: " << compressionMethod;
 
-  expandedUpcA << symbolList.at(upc_common::NUMBER_SYSTEM_INDEX);
-  QStringList compressedUpc(symbolList.mid(1, 6));
+  expandedUpcA << inputSymbolList.at(upc_common::NUMBER_SYSTEM_INDEX);
+  shared::SymbolList compressedUpc(inputSymbolList.mid(1, 6));
   qDebug() << "UpcAEngine expandUpc() : compressedUpc: " << compressedUpc;
-  QStringList manf;
-  QStringList product;
+  shared::SymbolList manf;
+  shared::SymbolList product;
   switch (compressionMethod) {
     case 0:
     case 1:
@@ -206,3 +230,4 @@ QStringList UpcAEngine::expandUpc(const QStringList& symbolList) const
   qDebug("UpcAEngine expandUpc() : end");
   return expandedUpcA;
 }
+

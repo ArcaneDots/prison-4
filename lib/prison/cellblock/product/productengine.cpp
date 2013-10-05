@@ -24,6 +24,8 @@
  */
 
 #include <QtCore/QtDebug>
+#include <QtCore/QByteArray>
+#include <QtCore/QBitArray>
 #include <QtGui/QFont>
 #include <QtGui/QFontMetrics>
 #include <QtGui/QPainter>
@@ -31,428 +33,590 @@
 #include "productengine.h"
 
 using namespace product;
+using namespace shared;
+
+typedef QMap<CODE_SECTIONS, QList<shared::Symbol> >CodeSections;
+
+/**
+ * @cond PRIVATE
+ */
+class ProductEngine::Private 
+{
+public:  
+  Private();
+  Private(upc_common::PRODUCT_CODE_VALUES productCode);
+  virtual ~Private();   
+  /**
+   * 
+   */
+  CodeSections m_symbolSections;
+  /**
+   * The first digit is treated as a "NumberSystem" and used for encoding
+   */
+  bool m_hasNumberSystem;
+  /**
+   * starting index of first text block
+   *
+   * @note All  = 1 but EAN-8 = 0
+   */
+  int m_fmtFirstBlockOffset;
+  /**
+   * text block size
+   * 
+   * @note format blockSize may/not be equal to m_encodeBlockSize    
+   */
+  int m_fmtBlockSize;
+  /**
+   * Has a second text block
+   * 
+   * @note UPC-E and EAN-8 do not contain a second block(s)
+   */
+  bool m_fmtHasSecondBlock;
+  /**
+   * starting index of first encoded block
+   * 
+   * @note All  = 1 but EAN-8 = 0
+   */
+  int m_encFirstBlockOffset;
+  /**
+  * encoded block size
+  * 
+  * @note format blockSize may/not be equal to m_encodeBlockSize    
+  */
+  int m_encBlockSize;
+  /**
+   * Has a second encoded block
+   * 
+   * @note UPC-E and EAN-8 do not contain a second block(s)
+   */
+  bool m_encHasSecondBlock; 
+  /**
+   * The product code number system digit is used by object
+   * 
+   * @note product code specific
+   */
+  upc_common::PRODUCT_CODE_VALUES m_productCode;
+  /**
+   * default string used if user input is invalid
+   * 
+   * @note product code specific
+   */
+  QString m_defaultString;    
+  /** 
+   * barcode's minimum number of symbols 
+   * 
+   * @note product code specific,
+   * @note NOT_FOUND == no minimum
+   */ 
+  int m_minLength;
+  /** 
+   * barcode's maximum number of symbols
+   * 
+   * @note product code specific,
+   * @note NOT_FOUND == no maximum
+   */ 
+  int m_maxLength;
+  /**
+  * Zero-based index of the product code's check digit
+  * 
+  * 
+  * @note UPC-E: uses checkDigit from uncompressed UPC-A for encoding only
+  * @note product code specific,
+  * @note "-1" == all check digit appear at end of barcode
+  * 
+  */
+  int m_checkDigitOffset;     
+  QStringList m_parity2WidthEncoding;
+  QStringList m_parity5WidthEncoding;
+};
+
+/**
+ * @endcond
+ */
+
+
+ProductEngine::Private::Private() :
+  m_productCode(upc_common::PS__UNKNOWN),
+  m_defaultString(),
+  m_minLength(0),
+  m_maxLength(0),
+  m_checkDigitOffset(0),
+  m_hasNumberSystem(false),
+  m_fmtFirstBlockOffset(1),
+  m_fmtHasSecondBlock(true),
+  m_encFirstBlockOffset(0),
+  m_encBlockSize(upc_common::ENCODE_BLOCK_SIZE)
+{
+  qDebug("ProductEngine::Private default constructor");
+}
+
+ProductEngine::Private::Private(upc_common::PRODUCT_CODE_VALUES productCode) :
+  m_productCode(productCode),
+  m_defaultString(""),
+  m_minLength(0),
+  m_maxLength(0),
+  m_checkDigitOffset(0),
+  m_hasNumberSystem(true),
+  m_fmtFirstBlockOffset(1),
+  m_fmtHasSecondBlock(true),
+  m_encFirstBlockOffset(0),
+  m_encBlockSize(0),
+  m_encHasSecondBlock(true)
+{  
+  qDebug("ProductEngine::Private \"copy\" constructor");
+  if (productCode ==  upc_common::PS__EAN_13) {
+      m_defaultString = ean13::DEFAULT_VALUE;
+      m_minLength = ean13::MIN;
+      m_maxLength = ean13::MAX_LEN;
+      m_checkDigitOffset = ean13::CHECK_DIGIT_OFFSET;
+      // [systemDigit][block1][block2]
+      m_fmtBlockSize = ean13::BLOCK_SIZE;
+      m_fmtFirstBlockOffset = 1;
+      m_fmtHasSecondBlock = true;
+      // [systemDigit][block1][block2]
+      m_encBlockSize = ean13::ENCODE_BLOCK_SIZE;
+      m_encFirstBlockOffset = 1;
+      m_encHasSecondBlock = true;
+  } else if (productCode == upc_common::PS__UPC_A) {
+      m_defaultString = upcA::DEFAULT_VALUE;
+      m_minLength = upcA::MIN;
+      m_maxLength = upcA::MAX_LEN;
+      m_checkDigitOffset = upcA::CHECK_DIGIT_OFFSET;
+      // [systemDigit][block1][block2][checkDigit]
+      m_fmtBlockSize = upcA::BLOCK_SIZE; 
+      m_fmtFirstBlockOffset = 1;
+      m_fmtHasSecondBlock = true;
+      // [block1][block2]
+      m_encBlockSize = upcA::ENCODE_BLOCK_SIZE;
+      m_encFirstBlockOffset = 1;
+      m_encHasSecondBlock = true;
+  } else if (productCode == upc_common::PS__EAN_8) {
+      m_defaultString = ean8::DEFAULT_VALUE;
+      m_minLength = ean8::MIN;
+      m_maxLength = ean8::MAX_LEN;
+      m_checkDigitOffset = ean8::CHECK_DIGIT_OFFSET;
+      // [block1][block2]
+      m_fmtBlockSize = ean8::BLOCK_SIZE;
+      m_fmtFirstBlockOffset = 0;
+      m_fmtHasSecondBlock = true;
+      // [block1][block2]
+      m_encBlockSize = ean8::ENCODE_BLOCK_SIZE;
+      m_encFirstBlockOffset = 1;
+      m_encHasSecondBlock = true;
+  }  else if (productCode == upc_common::PS__UPC_E) {
+      m_defaultString = upcE::DEFAULT_VALUE,
+      m_minLength = upcE::MIN,
+      m_maxLength = upcE::MAX_LEN,
+      m_checkDigitOffset = upcE::CHECK_DIGIT_OFFSET;
+      // [systemDigit][block1][checkDigit]
+      m_fmtBlockSize = upcE::BLOCK_SIZE;
+      m_fmtFirstBlockOffset = 0;
+      m_fmtHasSecondBlock = false;
+      // [systemDigit] X [checkDigit]->[block1
+      m_encBlockSize = upcE::ENCODE_BLOCK_SIZE;
+      m_encFirstBlockOffset = 1;
+      m_encHasSecondBlock = true;
+  }
+}
+
+ProductEngine::Private::~Private()
+{  
+  qDebug("ProductEngine::Private destructor");
+}
 
 ProductEngine::ProductEngine(const QString &userBarcode, 			     
-		  CodeEngine::ConstructCodes flags, 
-		  const QString& defaultString, 
-		  int minLength, 
-		  int maxLength, 
-		  int checkDigitOffset, 
-		  int blockSize,
-		  int encodedBlockSize,
-		  upc_common::PRODUCT_CODE_VALUES productCode): 		       
-	AbstractBarcodeEngine(userBarcode,
-			flags,
-			defaultString, 
-			minLength, 
-			maxLength, 
-		        false,
-		        upc_common::CHECKSUM_MODULUS_VALUE, // all product codes
-		        true,
-			NOT_FOUND,
- 			NOT_FOUND), 
-		m_checkDigitOffset(checkDigitOffset),	
-		m_mainBlockSize(),
-		m_blockSize(blockSize),
-		m_encodeBlockSize(encodedBlockSize),
-		m_productCode(productCode),	
-		m_firstBlockStartIndex(0),			     
-		m_parity2WidthEncoding(),
-		m_parity5WidthEncoding(),
-		m_leftOddEncodingList(),
-		m_leftEvenEncodingList(),
-		m_rightEncodingList()
+	CodeEngine::ConstructCodes flags, 
+		upc_common::PRODUCT_CODE_VALUES productCode) :
+	AbstractBarcodeEngine(),   
+	d(new Private(productCode)),
+	m_constructionFlags(flags),
+	m_isValid(CodeEngine::OK),
+	m_userInputString(userBarcode),
+	m_encodedSymbols()
 {
   qDebug("ProductEngine constructor");
   
+  switch (d->m_productCode) {
+    case upc_common::PS__EAN_13:
+      qDebug("------------ ProductEngine : ean-13 start");
+      break;
+    case upc_common::PS__UPC_A:
+      qDebug("------------ ProductEngine : upc-A start");
+      break;
+    case upc_common::PS__UPC_E:
+      qDebug("------------ ProductEngine : upc-E start");
+      break;
+    case upc_common::PS__EAN_8:
+      qDebug("------------ ProductEngine : ean-8 start");
+      break;
+    default:
+      qDebug("------------ ProductEngine : unknown start");
+      break;
+  }
+  qDebug() << " ProductEngine : user input " << m_userInputString;
+  if (m_userInputString.isEmpty()) {
+    qDebug(" ProductEngine : empty input  ");
+    return;
+  }
+  shared::SymbolList rawSymbols(m_emptySymbol.parse(m_userInputString));
+  qDebug() << " ProductEngine : parsed " << rawSymbols;
+  qDebug() << " ProductEngine : temp size " << rawSymbols.length();
+  if (rawSymbols.isEmpty()) {
+    qDebug(" ProductEngine : no valid symbols found ");
+    return;
+  }
+  setRawInput(rawSymbols);
+  // --- All engines (except for UPC-E) use productengine to calculate thier checksum
+  if (d->m_productCode != upc_common::PS__UPC_E) {
+    qDebug(" ProductEngine : setCheckDigit ");
+    processSymbolList(local_rawInput());
+    qDebug() << " ProductEngine::constructor : ==  " << local_primaryBlock();
+    if (local_primaryBlock().empty()) {
+      qDebug(" ProductEngine : local_primaryBlock empty ");
+      return;
+    }
+    qDebug() << " ProductEngine::constructor : calculatedCheckDigit ";
+    shared::Symbol calculatedCheckDigit = calculateCheckDigit();
+    qDebug() << " ProductEngine::constructor : ==  " << calculatedCheckDigit;
+    m_isValid |= validateCheckDigit(local_checkDigit(), calculatedCheckDigit);
+    setCheckDigit(calculatedCheckDigit);
+    qDebug() << " ProductEngine::constructor : setCheckDigit ";
+      
+  }
   // add symbol sets and thier encodings
   initialize();
   
-  if (m_productCode != upc_common::PS__EAN_8) { 
-    m_firstBlockStartIndex = 1;
+  switch (d->m_productCode) {
+    case upc_common::PS__EAN_13:
+      qDebug("------------ ProductEngine : ean-13 end");
+      break;
+    case upc_common::PS__UPC_A:
+      qDebug("------------ ProductEngine : upc-A end");
+      break;
+    case upc_common::PS__UPC_E:
+      qDebug("------------ ProductEngine : upc-E end");
+      break;
+    case upc_common::PS__EAN_8:
+      qDebug("------------ ProductEngine : ean-8 end");
+      break;
+    default:
+      qDebug("------------ ProductEngine : unknown end");
+      break;
   }
-  m_secondBlockStartIndex = m_blockSize + m_firstBlockStartIndex;  
-  m_mainBlockSize = minLength + 1; 
+}
+
+ProductEngine::ProductEngine(const shared::SymbolList& barcodeSymbols, 
+			     CodeEngine::ConstructCodes flags, 
+			     upc_common::PRODUCT_CODE_VALUES productCode) :
+		AbstractBarcodeEngine(),
+		d(new Private(productCode)),
+		m_constructionFlags(flags),
+		m_isValid(CodeEngine::OK),
+		m_userInputString(""),
+		m_encodedSymbols()
+{
+  qDebug("ProductEngine constructor");
+  
+  switch (d->m_productCode) {
+    case upc_common::PS__EAN_13:
+      qDebug("------------ ProductEngine : ean-13 start");
+      break;
+    case upc_common::PS__UPC_A:
+      qDebug("------------ ProductEngine : upc-A start");
+      break;
+    case upc_common::PS__UPC_E:
+      qDebug("------------ ProductEngine : upc-E start");
+      break;
+    case upc_common::PS__EAN_8:
+      qDebug("------------ ProductEngine : ean-8 start");
+      break;
+    default:
+      qDebug("------------ ProductEngine : unknown start");
+      break;
+  }
+  setRawInput(barcodeSymbols);
+  //m_userParsedSymbols = barcodeSymbols;
+  qDebug() << " ProductEngine : parsed " << parsedSymbolList();
+  // add symbol sets and thier encodings
+  initialize();
+  
+  switch (d->m_productCode) {
+    case upc_common::PS__EAN_13:
+      qDebug("------------ ProductEngine : ean-13 end");
+      break;
+    case upc_common::PS__UPC_A:
+      qDebug("------------ ProductEngine : upc-A end");
+      break;
+    case upc_common::PS__UPC_E:
+      qDebug("------------ ProductEngine : upc-E end");
+      break;
+    case upc_common::PS__EAN_8:
+      qDebug("------------ ProductEngine : ean-8 end");
+      break;
+    default:
+      qDebug("------------ ProductEngine : unknown end");
+      break;
+  }
 }
 
 ProductEngine::~ProductEngine()
 {
   qDebug("ProductEngine destructor");
+  if (d != 0) {
+    delete d;
+  }
 }
-upc_common::PRODUCT_CODE_VALUES ProductEngine::productCode() const
+
+const QStringList ProductEngine::codeDefault() const
 {
-  return m_productCode;
+  return QStringList(defaultInputString(d->m_minLength + 1).split("", 
+QString::SkipEmptyParts) );
+}
+
+CodeEngine::ConstructCodes ProductEngine::constructionFlags() const
+{
+  return m_constructionFlags;
 }
 
 QString ProductEngine::userInput() const
 {
-    return shared::AbstractBarcodeEngine::userInput();
+  return m_userInputString;
 }
 
+QString ProductEngine::parsedSymbolList() const
+{
+  return toStrings(local_rawInput());
+}
+
+QString ProductEngine::finalSymbolList() const
+{ 
+  return toStrings(symbols()) ;
+}
+
+int ProductEngine::primaryLength() const
+{
+  return d->m_minLength + 1;
+}
+
+const QStringList ProductEngine::mainBlock() const
+{
+  return toStringList(local_mainBlock());
+}
+
+const QString ProductEngine::checkDigit() const
+{
+  return local_checkDigit();
+}
+
+const QStringList ProductEngine::extendedBlock() const
+{
+  return toStringList(local_extendedBlock());
+}
+
+const shared::SymbolList  ProductEngine::symbols() const
+{
+  shared::SymbolList result(local_primaryBlock());
+  if (local_checkDigit().hasValue()) {
+    result += local_checkDigit();
+  }
+  if (!local_extendedBlock().isEmpty()) {
+    result +=  local_extendedBlock();
+  }
+  return result;
+}
+
+const QString ProductEngine::numberSystem() const
+{
+  return local_numberSystem();
+}
+
+const QStringList ProductEngine::block1() const
+{
+  return toStringList(fmt_block1());
+}
+
+const QStringList ProductEngine::block2() const
+{
+  return toStringList(fmt_block2());
+}
+
+const CodeEngine::ErrorCodes& ProductEngine::statusFlags() const
+{
+  return m_isValid;
+}   
+
+const CodeEngine::ErrorCodes& ProductEngine::addFlags(CodeEngine::ErrorCode flags)
+{
+  return m_isValid |= flags;
+}
+
+const CodeEngine::ErrorCodes& ProductEngine::removeFlags(CodeEngine::ErrorCode flags)
+{
+  return m_isValid ^= flags;
+}
+
+
+upc_common::PRODUCT_CODE_VALUES ProductEngine::productCode() const
+{
+  return d->m_productCode;
+}
+
+int ProductEngine::fmtBlockSize() const
+{
+  return d->m_fmtBlockSize;
+}
+
+
+int ProductEngine::encBlockSize() const
+{
+  return d->m_encBlockSize;
+}
+
+int ProductEngine::checkDigitOffset() const
+{
+  return d->m_checkDigitOffset;
+}
+
+int ProductEngine::minLength() const
+{
+  return d->m_minLength;
+}
+
+int ProductEngine::maxLength() const
+{
+  return d->m_maxLength;
+}
+
+void ProductEngine::swap(ProductEngine& other)
+{
+  using std::swap;  
+  swap(d, other.d);
+}
+
+// -- protected --
 void ProductEngine::initialize()
 {
-  qDebug("ProductEngine initialize");
-  AbstractBarcodeEngine::initialize();
-  this->fillWidthEncodingList();
+  qDebug("ProductEngine initialize");  
+  fillExtendedEncodingList();
 }
 
-void ProductEngine::setBarcodeString()
+void ProductEngine::processSymbolList(const shared::SymbolList& inputSymbols)
 {
-  shared::AbstractBarcodeEngine::setBarcodeString();
-}
-
-QStringList ProductEngine::parseSymbolString(const QString& symbolString) const
-{
-  QStringList parsedSymbols;
-  QRegExp parseDigits("(\\d)");
-  int pos = 0;
+  qDebug("ProductEngine::processSymbolList - start");
+  qDebug() << "input " << inputSymbols;
+  const int inputLength = inputSymbols.size();
+  const int minLength = d->m_minLength;
+  const int maxLength = d->m_maxLength;
+  const int validLength = minLength  + 1;
+  const int validEan2Length = validLength + ean2::BLOCK_SIZE;
+  const int validEan5Length = validLength + ean5::BLOCK_SIZE;
+  QList<Symbol> localSymbols(inputSymbols);
   
-  while ((pos = parseDigits.indexIn(symbolString, pos)) != -1) {
-    parsedSymbols << symbolString[pos];
-    pos += parseDigits.matchedLength();
-  }
-  return parsedSymbols;
-}
-
-
-// overloaded for EAN-2, EAN-5 : no check digit
-QStringList ProductEngine::processSymbolList(const QStringList &userSymbols)
-{
-  qDebug("ProductEngine processSymbolList() : start");  
-  // do not process UPC-E (has overloaded version) EAN-2 or EAN-5 only numbers
-
-  Q_ASSERT (upc_common::PS__EAN_2 != m_productCode &&
-	    upc_common::PS__EAN_5 != m_productCode);
-  
-  const int symbolLength = userSymbols.size();
-  const int wCheckDigitLength = m_minLength + 1;  
-  qDebug() << "#symbols: " << symbolLength 
-    << "offset: " << m_checkDigitOffset
-    << "symbols" << userSymbols.join(" ");
-  
-  // basic length sanity check
-  if ((symbolLength < m_minLength) || (symbolLength > m_maxLength)) {
-    qDebug("ProductEngine processSymbolList() : length out of range");
+  // completely out of range
+  if (inputLength < minLength || inputLength > maxLength) {
+    qDebug("ProductEngine::processSymbolList - input out of range");
     m_isValid |= CodeEngine::LengthOutOfRange;
-    return QStringList();
+    return;
   }
+  QList<Symbol> posPrimaryBlock(localSymbols.mid(0, d->m_checkDigitOffset));
   
-  // product code specific processing
-  if (m_productCode == upc_common::PS__UPC_E) {
-    // UPC-E barcodes must belong to either number systems;
-    // RegularUpcCodes_1 ("0") or Reserved_1 ("1")
-    const int currentNumberSystem =
-      lookupSymbolIndex(userSymbols.at(upc_common::NUMBER_SYSTEM_INDEX));
-    if ((currentNumberSystem != upc_common::NS__REGULAR_UPC_CODES_1) &&
-	(currentNumberSystem != upc_common::NS__RESERVED_1)) {
-      m_isValid |= CodeEngine::StandardsViolationError;
-      return QStringList();
+  // missing check digit
+  if (inputLength == minLength) {    
+    qDebug("ProductEngine::processSymbolList - input == primary only");
+    setPrimaryBlock(posPrimaryBlock);
+  } else if (inputLength > minLength) {
+    SymbolList inputSecondHalf(localSymbols.mid(d->m_checkDigitOffset));
+    int secondHalfSize = inputSecondHalf.size();
+    switch (secondHalfSize) {
+      case 1: // check digit only
+      case 3: // EAN-2 and check digit
+      case 6: // EAN-5 and check digit
+	qDebug("ProductEngine::processSymbolList - found checksum digit");
+	setCheckDigit(inputSecondHalf.front());
+	inputSecondHalf.pop_front();
+      case 2: // EAN-2, no check digit 
+      case 5: // EAN-5, no check digit 			
+	if (inputSecondHalf.size() == 2 || inputSecondHalf.size() == 5) {
+	  qDebug("ProductEngine::processSymbolList - also found extended block");
+	  setExtendedBlock(inputSecondHalf);
+	}
+      case 0: // no check digit or extended block
+	qDebug("ProductEngine::processSymbolList - save primary block");
+	setPrimaryBlock(posPrimaryBlock);
+	break;
+      default: // other 
+	break;
     }
-    Q_ASSERT((currentNumberSystem == upc_common::NS__REGULAR_UPC_CODES_1) ||
-	  (currentNumberSystem == upc_common::NS__RESERVED_1));
   }
+  qDebug("ProductEngine::processSymbolList - end");
+}
+
+CodeEngine::ErrorCodes ProductEngine::validateCheckDigit(
+    const shared::Symbol& foundDigit, 
+    const shared::Symbol& calculated) const
+{
+  qDebug() << "CheckDigit : calculated "<< calculated;
+  qDebug() << "CheckDigit : found "<< foundDigit;
   
-  //get main block w/o check digit to calculate the check digit
-  QStringList mainBlock_wo_Check(userSymbols.mid(0, m_checkDigitOffset));
-  QStringList extendedBlock(userSymbols.mid(m_checkDigitOffset));
-  qDebug() << "mainBlock_wo_Check: " << mainBlock_wo_Check; 
-  qDebug() << "m_minLength: " << m_minLength;
-  qDebug() << "m_checkDigitOffset  " << m_checkDigitOffset;
-  Q_ASSERT(mainBlock_wo_Check.size() == m_minLength);
-  
-  int foundCheckDigit = NOT_FOUND;
-  switch (extendedBlock.size()) {
-    case 0: // no check digit
-    case 2: // EAN-2 
-    case 5: // EAN-5  
-      qDebug("ProductEngine processSymbolList() : no check digit found");
-      break;
-    case 1: // check digit found
-    case 3: // EAN-2 
-    case 6: // EAN-5 
-      foundCheckDigit = lookupSymbolIndex(extendedBlock.front());
-      qDebug() << "ProductEngine processSymbolList() : found check digit " 
-	<< foundCheckDigit;
-      extendedBlock.pop_front();
-      break;
-    case 4:
-    default:   
-      qDebug() << "ProductEngine processSymbolList() : bad length";
-      m_isValid != CodeEngine::LengthOutOfRange;
-      return QStringList();
-      break;
-  }   
-  qDebug() << "extendedBlock "<< extendedBlock;
-  Q_ASSERT((extendedBlock.isEmpty()) || 
-    (extendedBlock.size() == ean2::BLOCK_SIZE) || 
-    (extendedBlock.size() == ean5::BLOCK_SIZE)); 
-  
-  const int calcuatedCheckDigit = this->calculateCheckDigit(
-    convertSymbolsToIndexes(mainBlock_wo_Check));  
-  qDebug() << "ProductEngine processSymbolList() : calculated check symbol" 
-   << calcuatedCheckDigit;
-   
-  QStringList fullMainBlock;
-  fullMainBlock << mainBlock_wo_Check;  
-  
-  if (foundCheckDigit == NOT_FOUND) {
-    if (m_constructionFlags.testFlag(CodeEngine::AddCheckDigits)) {
-      qDebug("ProductEngine processSymbolList() : Inserting missing checkDigit");	  
-      fullMainBlock << lookupSymbolAtIndex(calcuatedCheckDigit);  
-    } else {
-      qDebug("ProductEngine processSymbolList() : missing check digit");
-      m_isValid |= CodeEngine::MissingRequiredCheckDigits;
-      return QStringList();
-    } 
-  } else if (foundCheckDigit == calcuatedCheckDigit) {      
-      qDebug("ProductEngine processSymbolList() : append valid included check digit");
-      fullMainBlock << lookupSymbolAtIndex(foundCheckDigit);
-  } else {
+  CodeEngine::ErrorCodes checkDigitFlags;
+  // match
+  if (foundDigit == calculated) {      
+    qDebug("ProductEngine::validateCheckDigit : check digits correct ");
+  } else if (foundDigit != calculated) {
     if (m_constructionFlags.testFlag(CodeEngine::UpdateCheckDigit)) {
-      qDebug("ProductEngine processSymbolList() : replacing bad check digit");
-      fullMainBlock << lookupSymbolAtIndex(calcuatedCheckDigit);
+      qDebug("ProductEngine::validateCheckDigit : replacing bad check digit");
     } else {
-      qDebug("ProductEngine processSymbolList() : bad check digit");
-      m_isValid |= CodeEngine::InvalidCheckDigits;	
-      return QStringList();
+      qDebug("ProductEngine::validateCheckDigit : bad check digit");
+      checkDigitFlags |= CodeEngine::InvalidCheckDigits;	
     }
-  }      
-  qDebug() << "fullMainBlock "<< fullMainBlock;
-  Q_ASSERT(fullMainBlock.size() == m_mainBlockSize);
-  QStringList updatedUserSymbols(fullMainBlock);
-  updatedUserSymbols << extendedBlock;   
-  Q_ASSERT(updatedUserSymbols.size() == fullMainBlock.size() 
-    + extendedBlock.size());
-  qDebug() << "updatedUserSymbols "<< updatedUserSymbols; 
-
-  qDebug("ProductEngine processSymbolList() : end");
-  return updatedUserSymbols;
+  } else if (foundDigit == shared::NOT_FOUND) {
+    if (m_constructionFlags.testFlag(CodeEngine::AddCheckDigits)) {
+      qDebug("ProductEngine::validateCheckDigit : Inserting missing checkDigit");	
+    } else {
+      qDebug("ProductEngine::validateCheckDigit : missing check digit");
+      checkDigitFlags |= CodeEngine::MissingRequiredCheckDigits;
+    } 
+  }  
+  return checkDigitFlags;
 }
 
-int ProductEngine::calculateCheckDigit(const shared::LookupIndexArray& symbolArray) const
-{  
-  qDebug("ProductEngine calculateCheckDigit() -> CommonChecksumOddEven(3,1)"); 
-  if (m_productCode != upc_common::PS__UPC_E) {
-    Q_ASSERT(symbolArray.size() == m_minLength);
-  } else { // calculate check value based on expanded UPC-A code
-    Q_ASSERT(symbolArray.size() == upcA::MIN);
+int ProductEngine::calculateCheckDigit() const
+{
+  qDebug("ProductEngine calculateCheckDigit");
+  const int MODULUS = upc_common::CHECKSUM_MODULUS_VALUE;
+  shared::SymbolList symbolArray(local_primaryBlock());
+  if (symbolArray.size() < d->m_minLength) {
+    qDebug("ProductEngine calculateCheckDigit : bad size");
+    return 0;
   }
-  return AbstractBarcodeEngine::CommonChecksumOddEven(symbolArray, 3, 1, true);
+  return CommonChecksumOddEven(MODULUS, symbolArray, 3, 1, true);
 }
 
-int ProductEngine::calculateEan2CheckDigit(const shared::LookupIndexArray& symbolArray) const
+int ProductEngine::calculateEan2CheckDigit(
+    const QList<shared::Symbol>& symbolArray) const
 {
   qDebug("ProductEngine calculateEan2CheckDigit()");
-  Q_ASSERT(symbolArray.size() == 2);
+  if (symbolArray.size() != 2) { 
+    qDebug("ProductEngine calculateEan2CheckDigit() : incorrect length");
+    return shared::NOT_FOUND; 
+  }
   int checksum = (symbolArray[0] * 10 + symbolArray[1]) % ean2::CHECKSUM_MODULUS_VALUE;
   Q_ASSERT((checksum >= 0)&&(checksum <= 3));
   return checksum;
 }
 
-int ProductEngine::calculateEan5CheckDigit(const shared::LookupIndexArray& symbolArray) const
+int ProductEngine::calculateEan5CheckDigit(const QList<shared::Symbol> &symbolArray) const
 {
   qDebug("ProductEngine calculateEan5CheckDigit()");
-  Q_ASSERT(symbolArray.size() == 5);
-  return std::accumulate(symbolArray.rbegin(), symbolArray.rend(), 
-	0, shared::EvenOddChecksum<int>(3, 9)) % 
-	      upc_common::CHECKSUM_MODULUS_VALUE;	
-}
-
-void ProductEngine::formatSymbols(const QStringList &symbolSrc)
-{
-  qDebug("ProductEngine formatSymbols() : start");  
-  
-  qDebug() << "symbolSrc " << symbolSrc;
-  Q_ASSERT(symbolSrc.size() >= m_minLength && symbolSrc.size() <= m_maxLength);    
-  
-  QStringList mainBlock(symbolSrc.mid(0, m_mainBlockSize));
-  QStringList extendedBlock(symbolSrc.mid(m_mainBlockSize));  
-  qDebug() << "mainBlock " << mainBlock;
-  qDebug() << "extendedBlock " << extendedBlock;
-  Q_ASSERT(mainBlock.size() == m_mainBlockSize);
-  Q_ASSERT((extendedBlock.isEmpty()) || 
-    (extendedBlock.size() == ean2::BLOCK_SIZE) || 
-    (extendedBlock.size() == ean5::BLOCK_SIZE));   
-  m_formatedSymbols << this->formatMainBlock(mainBlock);
-  qDebug() << "ProductEngine formatSymbols() : main block" << m_formatedSymbols;
-  if (!extendedBlock.isEmpty()) {
-    m_formatedSymbols << formatExtendedBlock(extendedBlock); 
-  }  
-  qDebug() << "m_formatedSymbols" << m_formatedSymbols;
-  qDebug("ProductEngine formatSymbols() : end");  
-}
-
-QStringList ProductEngine::formatMainBlock(const QStringList& mainBlock) const
-{
-  qDebug("ProductEngine formatMainBlock() : start");  
-  Q_ASSERT(m_productCode != upc_common::PS__UPC_E);  
-  Q_ASSERT(mainBlock.size() == m_mainBlockSize);
-  if (m_productCode != upc_common::PS__EAN_8) {
-    Q_ASSERT((mainBlock.size() - 1) / 2 == m_blockSize);
-  } else {    
-    Q_ASSERT(mainBlock.size() / 2 == m_blockSize);
-  }  
-  qDebug() << "ProductEngine formatMainBlock() : input : " 
-	   << mainBlock;
-  QStringList formatedSymbols;
-  QStringList formatedBlock;
-  QStringList::const_iterator itrSymbols = mainBlock.constBegin();
-  // EAN-8 is not shown with a leading digit
-  if (m_productCode != upc_common::PS__EAN_8) {
-    formatedSymbols << *itrSymbols++;
-  } else {
-    formatedSymbols << "<";
+  if (symbolArray.size() != 5) { 
+    qDebug("ProductEngine calculateEan5CheckDigit() : incorrect length");
+    return shared::NOT_FOUND; 
   }
-  qDebug() << "ProductEngine formatMainBlock() : found leading digit : " 
-	   << formatedSymbols.at(0);
-  
-  qDebug() << "ProductEngine formatMainBlock() : block size: " << m_blockSize;
-  // first block
-  QStringList::const_iterator iterBlockEnd = itrSymbols + m_blockSize;
-  while (itrSymbols != iterBlockEnd) {
-    formatedBlock << *itrSymbols++;
-  }
-  formatedSymbols << formatedBlock.join("");
-  qDebug() << "ProductEngine formatMainBlock() : found first block : " 
-	   << formatedBlock;
-  formatedBlock.clear();
-  
-  // second block
-  iterBlockEnd = itrSymbols + m_blockSize;
-  while (itrSymbols != iterBlockEnd) {
-    formatedBlock << *itrSymbols++;
-  }
-  formatedSymbols << formatedBlock.join("");
-  qDebug() << "ProductEngine formatMainBlock() : found second block : " 
-	   << formatedBlock;
-  formatedBlock.clear();
-  
-  // EAN-13 and EAN-8 should not have a trailing digit
-  if (itrSymbols != mainBlock.end() && 
-    (m_productCode != upc_common::PS__EAN_13 || 
-    m_productCode != upc_common::PS__EAN_8)) {
-    formatedSymbols << *itrSymbols;
-    qDebug("ProductEngine formatMainBlock() : found check digit");
-  }
-  qDebug() << "ProductEngine formatMainBlock() : output : " 
-	 << formatedSymbols;
-  qDebug("ProductEngine formatMainBlock() : end");
-  return formatedSymbols;
+  const int MODULUS_VALUE = upc_common::CHECKSUM_MODULUS_VALUE;
+  return CommonChecksumOddEven(MODULUS_VALUE, symbolArray, 3, 9);
 }
 
-QString ProductEngine::formatExtendedBlock(const QStringList& extendedBlock) const
-{
-  qDebug("ProductEngine formatExtendedBlock()");
-  qDebug() << "ProductEngine formatExtendedBlock() : " << extendedBlock;
-  return extendedBlock.join("");
-}
-
-void ProductEngine::encodeSymbols(const QStringList& symbolSrc)
-{ 
-  qDebug("ProductEngine encodeSymbols() : start");    
-  Q_ASSERT(upc_common::PS__UPC_E != m_productCode);
-  Q_ASSERT(symbolSrc.size() >= m_minLength && symbolSrc.size() <= m_maxLength);
-  
-  QStringList mainBlock(encodeMainBlock(
-    symbolSrc.mid(0, m_mainBlockSize)));
-  QString encodedBlock1(mainBlock.at(0));
-  qDebug() << "ProductEngine encodeSymbols() : found first block : " 
-	   << encodedBlock1;
-  QString encodedBlock2(mainBlock.at(1));
-  qDebug() << "ProductEngine encodeSymbols() : found second block : " 
-	   << encodedBlock2;  
-  QStringList encodedExtBlocks(
-    encodeExtendedBlock(symbolSrc.mid(m_mainBlockSize)));
-
-  
-  // -- Encode main block (EAN-13/UPC-A/UPC-E) --
-  m_encodedSymbols = upc_common::QUIET_ZONE;
-  m_barPositions[shared::BAR_START] = m_encodedSymbols.size();
-  m_encodedSymbols += upc_common::LEFT_HAND_GUARD_BARS;
-  // -- block: 1 --
-  m_barPositions[shared::MAIN_BLOCK_1_START] = m_encodedSymbols.size() + 1;
-  m_encodedSymbols += encodedBlock1;  
-  m_barPositions[shared::MAIN_BLOCK_1_END] = m_encodedSymbols.size();
-  qDebug() << "block1" << encodedBlock1;
-  m_encodedSymbols += upc_common::CENTER_GUARD_BARS;  
-  // -- block: 2 --
-  m_barPositions[shared::MAIN_BLOCK_2_START] = m_encodedSymbols.size() + 1;
-  m_encodedSymbols += encodedBlock2;
-  m_barPositions[shared::MAIN_BLOCK_2_END] = m_encodedSymbols.size();
-  qDebug() << "block2" << encodedBlock2;
-  m_encodedSymbols += upc_common::RIGHT_HAND_GUARD_BARS;
-  m_barPositions[shared::MAIN_END] = m_encodedSymbols.size();
-  
-  // -- block: extended (EAN-2/EAN-5)--
-  if (!encodedExtBlocks.isEmpty()) {
-    qDebug("ProductEngine encodeSymbols() : encode extended block");  
-    m_encodedSymbols += upc_common::QUIET_ZONE;
-    m_barPositions[shared::EXTENDED_BLOCK_START] = m_encodedSymbols.size() -2;
-    m_encodedSymbols += upc_common::ADD_ON_GUARD_BARS;
-    m_encodedSymbols += encodedExtBlocks.join(upc_common::ADD_ON_SEPERATOR);
-    m_barPositions[shared::EXTENDED_BLOCK_END] = m_encodedSymbols.size() +2;
-    qDebug() << "extended block" 
-      << upc_common::ADD_ON_GUARD_BARS << encodedExtBlocks.join(upc_common::ADD_ON_SEPERATOR);
-  }
-  m_barPositions[shared::BAR_END] = m_encodedSymbols.size();
-  m_encodedSymbols.append(upc_common::QUIET_ZONE);
-  qDebug() << "m_barPositions :" << m_barPositions;
-  
-  qDebug("ProductEngine encodeSymbols() : end");  
-}
-
-QStringList ProductEngine::encodeMainBlock(const QStringList& mainBlock) const
-{
-  qDebug("ProductEngine encodeMainBlock() : start");  
-  // UPC-E should be handled by its own specific encoding function
-  Q_ASSERT(m_productCode != upc_common::PS__UPC_E);  
-  Q_ASSERT(mainBlock.size() == m_mainBlockSize);
-  if (m_productCode != upc_common::PS__EAN_8) {
-    Q_ASSERT((mainBlock.size() - 1) / 2 == m_blockSize);
-  } else {    
-    Q_ASSERT(mainBlock.size() / 2 == m_blockSize);
-  }  
-  QStringList encodedDigits;  
-  QStringList workingBlock; 
-  QString firstBlockPattern(m_encodeBlockSize, 'O');
-  QString secondBlockPattern(m_encodeBlockSize, 'R');
-  
-  QStringList::const_iterator itrSymbols = mainBlock.constBegin();
-  // --- Encode first block of digits:--- 
-  // formated block size equals encoded block size (EAN-13)
-  if (m_productCode == upc_common::PS__EAN_13) {
-    firstBlockPattern = getFirstBlockEncodePattern(lookupSymbolIndex(*itrSymbols++)); 
-  }  
-  qDebug() << "encodingBlockSize=" << m_encodeBlockSize;
-  qDebug() << "mainBlock size=" << mainBlock.size();
-  qDebug() << "firstBlockPattern=" << firstBlockPattern;
-  qDebug() << "secondBlockPattern=" << secondBlockPattern;  
-  qDebug("ProductEngine encodeMainBlock() : encode first block");
-  encodeSymbolParity(itrSymbols, itrSymbols + m_encodeBlockSize, 
-		     std::back_inserter(workingBlock),
-		     firstBlockPattern);
-  encodedDigits << workingBlock.join("");
-  workingBlock.clear();
-  itrSymbols += m_encodeBlockSize;
-  // --- Encode second block of digits:---  
-  qDebug("ProductEngine encodeMainBlock() : encode second block");
-  encodeSymbolParity(itrSymbols, mainBlock.end(), 
-		     std::back_inserter(workingBlock),
-		     secondBlockPattern);
-  encodedDigits << workingBlock.join("");
-  qDebug() << "ENCODE_LENGTH = " << upc_common::ENCODE_LENGTH; 
-  qDebug() <<  "m_encodeBlockSize " << m_encodeBlockSize; 
-  qDebug() <<  "encodedDigits.size " << encodedDigits.size();
-  qDebug() <<  "encodedDigits " << encodedDigits;
-  Q_ASSERT((upc_common::ENCODE_LENGTH - 1) * m_encodeBlockSize == 
-    encodedDigits.at(0).size());  
-  Q_ASSERT((upc_common::ENCODE_LENGTH - 1) * m_encodeBlockSize == 
-    encodedDigits.at(1).size());
-  qDebug("ProductEngine encodeMainBlock() : end");
-  return encodedDigits;
-}
-
-QStringList ProductEngine::encodeExtendedBlock(const QStringList& extendedBlock) const
+QStringList ProductEngine::encodeExtendedBlock(const shared::SymbolList& extendedBlock) const
 {
   qDebug("ProductEngine encodeExtendedDigits() : start");
   if (extendedBlock.size() != ean2::BLOCK_SIZE && 
@@ -463,19 +627,17 @@ QStringList ProductEngine::encodeExtendedBlock(const QStringList& extendedBlock)
     extendedBlock.size() == ean5::BLOCK_SIZE); 
   QStringList encodedSymbols;
   QStringList workingBlock;  
-  QString workingPattern(extendedBlock.size(),'O');    
-  shared::LookupIndexArray indexArray(convertSymbolsToIndexes(extendedBlock));
-  
+  QString workingPattern(extendedBlock.size(),'O');   
   if (extendedBlock.size() == 2) {
     qDebug("ProductEngine encodeExtendedDigits() : EAN-2");
     workingPattern = 
-      m_parity2WidthEncoding.at(calculateEan2CheckDigit(indexArray));
+    d->m_parity2WidthEncoding.at(calculateEan2CheckDigit(extendedBlock));
     qDebug() << "EAN-2 -> " << workingPattern;
   }
   else if (extendedBlock.size() == 5) {
     qDebug("ProductEngine encodeExtendedDigits() : EAN-5");
     workingPattern = 
-      m_parity5WidthEncoding.at(calculateEan5CheckDigit(indexArray));
+    d->m_parity5WidthEncoding.at(calculateEan5CheckDigit(extendedBlock));
     qDebug() << "EAN-5 -> " << workingPattern;
   } else {
     return QStringList();
@@ -485,200 +647,453 @@ QStringList ProductEngine::encodeExtendedBlock(const QStringList& extendedBlock)
 	     "size mismatch",
 	     "Encoding pattern length does not match number of digits");
   
-  encodeSymbolParity(extendedBlock.begin(), extendedBlock.end(),
-	     std::back_inserter(workingBlock),
-	     workingPattern);
+  workingBlock = encodeSymbolParity(extendedBlock, workingPattern);
   
   qDebug("ProductEngine encodeExtendedDigits() : end");
   return QStringList(workingBlock);
 }
 
-QString ProductEngine::getFirstBlockEncodePattern(int indexedPattern) const
+QString ProductEngine::defaultInputString(int size) const
 {
-  return QString(m_encodeBlockSize, 'O');
+  return QString(size,'0');
+}
+
+QList< shared::Symbol > ProductEngine::defaultInputSymbols(int size) const
+{
+  return m_emptySymbol.parse(defaultInputString(size)); 
+}
+
+void ProductEngine::setRawInput(SymbolList symbolBlock)
+{
+  qDebug() << " ProductEngine::setRawInput " << symbolBlock;
+  QList<shared::Symbol> fake_symbols(symbolBlock);
+  if (!fake_symbols.isEmpty()) {
+    d->m_symbolSections[shared::RAW] = symbolBlock;
+  }
+}
+
+const QList<shared::Symbol> ProductEngine::local_rawInput() const
+{
+  return d->m_symbolSections.value(shared::RAW);
 }
 
 
-template<class InIt, class OutIt>
-OutIt ProductEngine::encodeSymbolParity(InIt __first1, InIt __last1, 
-				     OutIt __result, 
-				     const QString& parityPattern) const
-{       
-  const QString Zeros(upc_common::ENCODE_LENGTH,'0');
-  Q_ASSERT_X(!parityPattern.isEmpty(),
-	 "Empty string",
-	 "Missing Parity Pattern string");
-  qDebug() << "parityPattern size" << parityPattern.size();
-  QString encodedPattern; //(upc_common::encodeLength, '0');
-  int index = 0;
-  while(__first1 != __last1 && index < parityPattern.size()) {
-    int curSymbolIndex = lookupSymbolIndex(const_cast<const QString&>(*__first1++));
-    if (curSymbolIndex != NOT_FOUND) {
-	// encode each digit based on matching parity type
-	qDebug() << "current index" << index;
-	qDebug() << "symbol index" << curSymbolIndex;
-	if (parityPattern.at(index) == 'O') {
-	  qDebug() << "encode LeftOdd: " << m_leftOddEncodingList.at(curSymbolIndex);
-	    *__result++ = m_leftOddEncodingList.at(curSymbolIndex);
-	}
-	else if (parityPattern.at(index) == 'E') {
-	  qDebug() << "encode LeftEven: " << m_leftEvenEncodingList.at(curSymbolIndex);
-	  *__result++ = m_leftEvenEncodingList.at(curSymbolIndex);
-	}
-	else if (parityPattern.at(index) == 'R') {
-	  qDebug() << "encode Right: " << m_rightEncodingList.at(curSymbolIndex);
-	  *__result++ = m_rightEncodingList.at(curSymbolIndex);
-	}
-	// output all zeros when no pattern is available
-	else {
-	  qDebug() << "encode Zeros: " << Zeros;
-	  *__result++ = Zeros;
-	}
-    }
-    index++;
+void ProductEngine::setPrimaryBlock(SymbolList symbolBlock)
+{
+  qDebug() << " ProductEngine::setPrimaryBlock " << symbolBlock;
+  int inputLength = symbolBlock.size();
+  QList<shared::Symbol> fake_symbols(symbolBlock);
+  // reset the symbol list in case not a valid length
+  if (inputLength != d->m_minLength) {
+    fake_symbols.clear();
+  }
+  d->m_symbolSections[shared::PRIMARY] = symbolBlock;
+}
+
+const QList<Symbol> ProductEngine::local_primaryBlock() const
+{  
+  return d->m_symbolSections.value(shared::PRIMARY);
+}
+void ProductEngine::setExtendedBlock(SymbolList symbolBlock)
+{
+  qDebug() << " ProductEngine::setExtendedBlock " << symbolBlock;
+  QList<shared::Symbol> fake_symbols(symbolBlock);
+  int inputLength = fake_symbols.size();
+  // reset the symbol list in case not a valid length
+  if (inputLength == 2 || inputLength == 5) {
+    d->m_symbolSections[shared::EXTENDED] = fake_symbols;
   }  
-  return __result;    
+}
+
+const QList<Symbol> ProductEngine::local_extendedBlock() const
+{
+  QList<shared::Symbol> fake_symbols(
+    d->m_symbolSections.value(shared::EXTENDED));
+  return fake_symbols;
+}
+
+const QList< Symbol > ProductEngine::local_mainBlock() const
+{
+  shared::SymbolList result(local_primaryBlock());
+  if (local_checkDigit().hasValue()) {
+    result += local_checkDigit();
+  }
+  return result;
+}
+
+void ProductEngine::setCheckDigit(const Symbol& s)
+{
+  qDebug("ProductEngine::setCheckDigit - start");
+  QList<shared::Symbol> fake_symbols;
+  fake_symbols.append(s);
+  qDebug() << "saving " << fake_symbols;
+  d->m_symbolSections[shared::CHECK_DIGIT] = fake_symbols;
+}
+
+const shared::Symbol ProductEngine::local_checkDigit() const
+{
+  QList<shared::Symbol> fake_symbols(
+    d->m_symbolSections.value(shared::CHECK_DIGIT));
+  if (!fake_symbols.isEmpty()) {
+    return fake_symbols.front();
+  }
+  return m_emptySymbol;
+}
+
+const shared::Symbol ProductEngine::local_numberSystem() const
+{  
+  QList<shared::Symbol> fake_symbols(
+    d->m_symbolSections.value(shared::PRIMARY));
+  if (d->m_hasNumberSystem && fake_symbols.size() >= d->m_minLength) {
+    return fake_symbols.at(0);
+  }
+  return m_emptySymbol;
+}
+
+const QList<Symbol> ProductEngine::fmt_block1() const
+{
+  QList<shared::Symbol> fake_symbols(
+    d->m_symbolSections.value(shared::PRIMARY));
+  if (!fake_symbols.isEmpty()) {
+    return fake_symbols.mid(d->m_fmtFirstBlockOffset, d->m_fmtBlockSize);
+  }
+  return fake_symbols;
+}
+
+const QList<Symbol> ProductEngine::fmt_block2() const
+{
+  QList<shared::Symbol> results;
+  QList<shared::Symbol> fake_symbols(
+    d->m_symbolSections.value(shared::PRIMARY));
+  if (!fake_symbols.isEmpty() && d->m_fmtHasSecondBlock) {
+    results = fake_symbols.mid(d->m_fmtFirstBlockOffset + d->m_fmtBlockSize, 
+			  d->m_fmtBlockSize);
+    if (upc_common::PS__EAN_13 == d->m_productCode) {
+      results << local_checkDigit();      
+    }
+  }
+  return results;
 }
 
 QImage ProductEngine::image(const QSizeF &requestedSize, QSizeF &minimumSize, 
 			      const QColor &foreground, const QColor &background)
 {
   QImage eanImage;
-  Q_ASSERT(requestedSize.isValid() && foreground.isValid() && background.isValid());
-  // not user input or valid encoding
-  if (m_userInputString.isEmpty() || m_encodedSymbols.isEmpty()) {
-    return eanImage;
-  }    
-    // font size 
-    QFont font("OCRA", 7, QFont::Bold); 
-    const int fontHeight = QFontMetrics(font).height();
-    const int fontWidth = QFontMetrics(font).width("<");
-    const int fontHalfHeight = fontHeight / 2;  
-    const int yFontMultiplier = 4;
-    const int fullHeight = fontHeight * yFontMultiplier;    
-    const int textLowerTopY = fontHeight * (yFontMultiplier - 1);
-    const int imageHeight = fontHeight * yFontMultiplier;
-    const int margin = 6;
-    
-    // size of a single charactor
-    QSize sizeChar(fontWidth, fontHeight);      
-    qDebug() << m_formatedSymbols; 
-    qDebug() << m_encodedSymbols; 
-    qDebug() << m_barPositions; 
-    //Q_ASSERT(m_formatedSymbols.size() >= 3);   
-    
-    QList<QRect> textBlocks;  
-    // "number system" digit (EAN-13/EAN-8("<")/UPC-A/UPC-E)
-    textBlocks.append(QRect(QPoint(0, textLowerTopY), sizeChar));      
-    // first block
-    qDebug() << "add first and second block \"text\"";
-    textBlocks.append(
-    QRect(
-      m_barPositions[shared::MAIN_BLOCK_1_START],
-      textLowerTopY,
-      m_barPositions[shared::MAIN_BLOCK_1_END] - m_barPositions[shared::MAIN_BLOCK_1_START],
-      fontHeight));
-    Q_ASSERT(textBlocks.size() == 2);
-    // second block (EAN-13/EAN-8/UPC-A)
-    if (upc_common::PS__UPC_E != m_productCode) {
-      qDebug() << "add second block \"text\"";
-      textBlocks.append(
-	QRect(
-	  m_barPositions[shared::MAIN_BLOCK_2_START], 
-	  textLowerTopY,
-	  m_barPositions[shared::MAIN_BLOCK_2_END] - m_barPositions[shared::MAIN_BLOCK_2_START],
-	  fontHeight));       
+
+  // dimension constants
+  // expand/contract by 1/13
+  //
+  // -- GS1 printing info -- 
+  // bar pixel width - spec: 0.330 mm or 0.0313in (5.2.1.4.1 -> 5.2.3.6)
+  const float mmPixelSize = 0.33; // 0.33
+  const int mmPerMeter = 1000;	// 1000 mm = 1 meter
+  // vertical
+  /// white space above bar - guessed
+  const float mmVerticalBuffer = 2.5;
+  /// full bar height - spec (22.85 / 18.23 (EAN-8))
+  const float mmBarHeight = 24.50; 	
+  /// bar height when "cut-off" for the text box - spec
+  const float mmTextBarHeight = 22.85;
+  /// height of bar in extended block section - spec
+  const float mmExtBarHeight = 21.9;
+  // space between bar bottom and top of the text
+  const float mmExtBottomText_BarSeperation = 0.5 * mmPixelSize;
+  // horizontal
+  /// white space at before and after main barcode - spec (2.97 - 3.96)
+  const float mmQuietZone = 2.97;
+  /// white space after extended block - spec (2.97 - 3.96)
+  const float mmExtQuietZone = 1.65; 	// 1.65
+
+  // sizes at x1.00 magnifacition (bar width of 0.330)
+  ///  figure 5.3.3.6 - 2
+  const float mmX1MaxLenUpcA = 37.29;
+  ///  figure 5.3.3.6 - 4
+  const float mmX1MaxLenEan8 = 22.11;
+  ///  figure 5.3.3.6 - 5
+  const float mmX1MaxLenUpcE = 22.11;
+  ///  figure 5.3.3.6 - 6
+  const float mmX1MaxLenUpcAEan2 = 45.54;
+  ///  figure 5.3.3.6 - 5
+  const float mmX1MaxLenEan13Ean5 = 54.45;
+
+  // font size info);
+  QFont font("OCRA", 10, QFont::Bold);
+  int fontHeight = QFontMetrics(font).height();
+  int vertWhiteBuffer = mmVerticalBuffer / mmPixelSize;
+  int pixelPerMeter = mmPerMeter / mmPixelSize;
+  int quietPixels = mmQuietZone / mmPixelSize;
+  int barPixelHeight = mmBarHeight / mmPixelSize; 
+  int textBoxTop =  (mmTextBarHeight / mmPixelSize); //  + vertWhiteBuffer;
+  int textBoxBottom =  fontHeight  + textBoxTop;
+  int extQuietPixels = mmExtQuietZone / mmPixelSize;
+  eanImage.setDotsPerMeterX(pixelPerMeter);
+  eanImage.setDotsPerMeterY(pixelPerMeter);
+
+  // size in "bars"
+  const int REGULAR_QUIET_ZONE = quietPixels; //upc_common::QUIET_ZONE.size();
+  const int EXTENDED_QUIET_ZONE =  extQuietPixels; //8
+
+  // insert "invalid" in text area when the barcode is empty
+  QStringList formatedText(formatedSymbols());
+  QString textSystemDigit(formatedText.value(0));
+  QString textBlock1(formatedText.value(1));
+  QString textBlock2(formatedText.value(2));
+  QString textCheckDigit(formatedText.value(3));
+  QString textExtBlock(formatedText.value(4));
+
+  qDebug() << "textBlock1" << textBlock1;
+  if (textSystemDigit.isEmpty()) {
+    textSystemDigit = "<";
+    formatedText[0] = textSystemDigit;
+  }
+  
+  if (textBlock1.isEmpty()) {
+    if (productCode() == upc_common::PS__EAN_8) {
+      textBlock1 = "inva";
+      textBlock2 = "lid ";
     }
-    // seperated check digit (UPC-A/UPC-E)
-    if (upc_common::PS__UPC_A == m_productCode || 
-      upc_common::PS__UPC_E == m_productCode) {
-      textBlocks.append(QRect(
-	QPoint(m_barPositions[shared::MAIN_END], textLowerTopY), sizeChar));
+    if (productCode() == upc_common::PS__UPC_A ||
+      productCode() == upc_common::PS__EAN_13) {
+      textBlock1 = " inva";
+      textBlock2 = "lid  ";
     }
-    
-    // text boxes : asserts
-    switch (m_productCode) {
-      case upc_common::PS__EAN_13:
-      case upc_common::PS__EAN_8:
-      case upc_common::PS__UPC_E:	
-	Q_ASSERT(textBlocks.size() == 3);
-	break;
-      case upc_common::PS__UPC_A:
-	Q_ASSERT(textBlocks.size() == 4);
-	break;
-      default:
-	Q_ASSERT(false);
-	break;
+    if (productCode() == upc_common::PS__UPC_A) {
+      textBlock1 = "invalid";
+      textBlock2 = "";
     }
-    
-    // ean-2, ean-5; extended code 
-    if (!m_userParsedSymbols.mid(m_mainBlockSize).isEmpty()) {   
-      // text on top of bars
-      textBlocks.append(QRect(
-	m_barPositions[shared::EXTENDED_BLOCK_START], 
-	0,
-	m_barPositions[shared::EXTENDED_BLOCK_END] - m_barPositions[shared::EXTENDED_BLOCK_START] + 1,
-	fontHeight));
-    }     
-    qDebug() << "text boxes: " << textBlocks.size();
-    Q_ASSERT(textBlocks.size() >= m_formatedSymbols.size());
-    QSize defaultImageSize(m_encodedSymbols.size() + margin * 2, 
-			   fullHeight + margin * 4);
-    minimumSize = QSizeF(defaultImageSize);
-    eanImage = QImage(defaultImageSize,  QImage::Format_ARGB32);    
-    // start drawing, set background to white
-    QPainter * painter = new QPainter(&eanImage);   
+    formatedText[1] = textBlock1;
+    formatedText[2] = textBlock2;
+  }
+
+  if (textCheckDigit.isEmpty()) {
+    textCheckDigit = ">";
+    formatedText[3] = textCheckDigit;
+  }
+  
+  int textWidthSystemDigit = QFontMetrics(font).width(textSystemDigit);
+  int textWidthBlock1 = QFontMetrics(font).width(textBlock1);
+  int textWidthBlock2 = QFontMetrics(font).width(textBlock2);
+  int textWidthCheckDigit = QFontMetrics(font).width(textCheckDigit);
+  int textWidthExtBlock = QFontMetrics(font).width(textExtBlock);
+  
+  // image width = final barcode pixel width
+  // ---------------------------------------------------------------------
+  const int ONE_BLOCK_SIZE =	REGULAR_QUIET_ZONE +
+				upc_common::LEFT_HAND_GUARD_BARS.size() + 
+				upc_common::RIGHT_HAND_GUARD_BARS.size() +
+				//upc_common::QUIET_ZONE.size();
+				REGULAR_QUIET_ZONE;
+				
+  const int TWO_BLOCK_SIZE =	REGULAR_QUIET_ZONE +
+				upc_common::LEFT_HAND_GUARD_BARS.size() + 
+				upc_common::CENTER_GUARD_BARS.size() +
+				upc_common::RIGHT_HAND_GUARD_BARS.size() +
+				REGULAR_QUIET_ZONE;
+				//upc_common::QUIET_ZONE.size();
+				
+  const int EXT_BLOCK_SIZE =	upc_common::ADD_ON_GUARD_BARS.size() +
+				EXTENDED_QUIET_ZONE;
+				
+				
+  const int ENCODE_SYMBOL_LEN = upc_common::ENCODE_LENGTH;	
+  const int EXT_SEP_LEN = upc_common::ADD_ON_SEPERATOR.size();
+
+
+  // ---------------------------- "bit" length --------------------------------
+  QList<QStringList> encodedSymbols(encoded());
+  // unpack encoding
+  QStringList block1Encoding(encodedSymbols.at(0));
+  QStringList block2Encoding(encodedSymbols.at(1));
+  QStringList blockExtEncoding(encodedSymbols.at(2));
+  
+  // calculate actual bit Size
+  int actualSize = 0;
+  // block1  
+  actualSize += block1Encoding.size() * ENCODE_SYMBOL_LEN;
+  actualSize += block2Encoding.size() * ENCODE_SYMBOL_LEN;
+  // check second block to determine number of additional bars
+  if (block2Encoding.isEmpty() || productCode() == upc_common::PS__EAN_8) {
+    actualSize += ONE_BLOCK_SIZE;
+  } else {
+    actualSize += TWO_BLOCK_SIZE;
+  }
+  // check extended block to determine number of additional bars
+  actualSize += blockExtEncoding.size() * ENCODE_SYMBOL_LEN;
+  if (!blockExtEncoding.isEmpty()) {
+    actualSize += EXT_BLOCK_SIZE;
+  }
+  
+  qDebug() << "size = " << actualSize << " mm = " << actualSize * mmPixelSize;
+  // ------------------------------ image size -----------------------------
+  // set minimum required by the barcode
+  QSize defaultImageSize(actualSize + vertWhiteBuffer * 2,
+			 barPixelHeight + vertWhiteBuffer * 4);
+  minimumSize = QSizeF(defaultImageSize);
+  eanImage = QImage(defaultImageSize,  QImage::Format_ARGB32);
+  eanImage.setDotsPerMeterX(pixelPerMeter);
+  eanImage.setDotsPerMeterY(pixelPerMeter);
+
+  // -- set image "device" --
+  QPainter * painter = new QPainter(&eanImage);
+  QPen eanPen;
+  eanPen.setWidth(1);
+  eanPen.setColor(foreground);
+  painter->setPen(eanPen);  
+  painter->setFont(font);
+  
+  // paint background
+  painter->fillRect(eanImage.rect(), background); // was Qt::white
+  
+
+  // ------------------------------ draw bars -----------------------------
+  QList<QRect> textBlocks;
+  int runningIndex = 0;
+  
+  // -- Encode main block (EAN-13/EAN-8/UPC-A/UPC-E) --
+  // left "quiet zone"
+  int systemDigit_start = runningIndex;
+  runningIndex +=  REGULAR_QUIET_ZONE;
+  int systemDigit_end = runningIndex;
+  textBlocks.append(QRect(systemDigit_start, textBoxTop,
+	systemDigit_end, fontHeight));
+  
+  runningIndex += drawBars(painter,
+			  vertWhiteBuffer, barPixelHeight, runningIndex,
+			  upc_common::LEFT_HAND_GUARD_BARS);
+  
+  // -- block: 1 --
+  qDebug() << "block1" << block1Encoding;
+  int block1_start = runningIndex;
+  runningIndex += drawBars(painter,
+			vertWhiteBuffer, barPixelHeight, runningIndex,
+			block1Encoding);
+  // ---------------------
+  int block1_end = runningIndex;
+  // -- block1 text --
+  int block1Offset = block1_end - block1_start - textWidthBlock1;
+  textBlocks.append(QRect(block1_start, textBoxTop,
+	textWidthBlock1, fontHeight));
+
+  qDebug() << "block2 start index " << runningIndex;
+  qDebug() << "block2 empty " << block2Encoding.isEmpty();
+  // -- section: block 2 --
+  if (!block2Encoding.isEmpty()) {
+    qDebug() << "block2" << block2Encoding;
+    // ---------------------
+    qDebug("center gauard");
+    runningIndex += drawBars(painter,
+			     vertWhiteBuffer, barPixelHeight, runningIndex,
+			     upc_common::CENTER_GUARD_BARS);
+    int block2_start = runningIndex;
+    runningIndex += drawBars(painter,
+			      vertWhiteBuffer, barPixelHeight, runningIndex,
+			      block2Encoding);
+    int block2_end = runningIndex;
+    textBlocks.append(QRect(block2_start + 2, textBoxTop,
+	textWidthBlock2, fontHeight));
+
+    // ---------------------
+  }
+  
+  // -- section: RIGHT_HAND_GUARD_BARS--
+  runningIndex += drawBars(painter,
+			   vertWhiteBuffer, barPixelHeight, runningIndex,
+			   upc_common::RIGHT_HAND_GUARD_BARS);
+  int checkDigit_start = runningIndex;
+  runningIndex +=  REGULAR_QUIET_ZONE;
+  int checkDigit_end = runningIndex;
+  textBlocks.append(
+      QRect(checkDigit_start, textBoxTop,
+	    textWidthCheckDigit, fontHeight));
+
+  // Draw text 
+  // -------------------------------------------------------------
+  int numTextBlocks = textBlocks.size();
+  // start drawing, set forground = black, background = white
+
+  int textBlockSize = textBlocks.size();
+  for (int rText = 0; rText < textBlockSize; rText++) {
+    painter->fillRect(textBlocks.at(rText), background);
     painter->setPen(QPen(foreground));
     painter->setFont(font);
-    painter->fillRect(eanImage.rect(), background); // was Qt::white	
+    painter->drawText(textBlocks[rText],
+	Qt::AlignCenter,
+	formatedText.at(rText));
+  }
+  delete painter;
     
-    qDebug() << " -- draw the barcode lines -- ";
-    QLine drawBar(0, margin, 0, fullHeight); 
-    for (int index = 0; index < m_encodedSymbols.size(); index++) {
-      if (m_encodedSymbols.at(index) == '1') {
-	painter->drawLine(drawBar.translated(index + margin, margin));	
-      }
-    }    
-     // -- add human readable digits to barcode image --
-    for (int index = 0; index < m_formatedSymbols.size(); index++) {      
-      painter->fillRect(textBlocks[index].translated(index + margin, margin * 2), 
-			background); //normally Qt::white
-      painter->drawText(textBlocks[index].translated(index + margin, margin * 2), 
-			Qt::AlignCenter, 
-			m_formatedSymbols[index]);
-    }   
-    delete painter;    
-    
-    minimumSize = QSizeF(eanImage.width(), eanImage.height()*1.5);//setMinimumSize(QSize(eanImage.width(), eanImage.height()*1.5));
- 
-  // prevent the widths of individual bars from being distorted 
-  // by stretching the image 
-  qreal heightFinal = qMax<qreal>(minimumSize.height(),requestedSize.height()); //qreal heightFinal = qMax<qreal>(minimumSize().height(),size.height());
-  qreal widthFinal = minimumSize.width(); 
-  if (requestedSize.width() > minimumSize.width()) {
-    int widthMultipler = requestedSize.width() / minimumSize.width();
-    widthFinal *= widthMultipler;
-  } 
-  return eanImage.scaled(widthFinal, heightFinal);
+  // resize:
+  // not sure how to indicate range of scaling to widget;
+  // image can only scaled by the changing pixel size
+  // according to GS1 specs or the barcode's readability suffers
+  // i.e. pixel size = 0.33 * magnifacition (0.80 <-> 2.00 step 5)
+  // 
+  // information is lieted in figure 5.2.4.7-1  (p. 252 of GS1 general spec pdf)
+  // -----------------------------------------------------------------
+  minimumSize = QSizeF(eanImage.width()*0.80, eanImage.height()*0.80);
+
+  return eanImage;
 }
 
-void ProductEngine::fillWidthEncodingList()
+// ----------------------------------------------------------------------------
+//                                    private
+// ----------------------------------------------------------------------------
+int ProductEngine::drawBars(QPainter* painter, int top, int bottom,
+			    int startOffset, QStringList strLstBars) const
 {
-  qDebug("ProductEngine fillWidthEncodingList() : start");
-  if (m_parity2WidthEncoding.isEmpty()) {
-    m_parity2WidthEncoding.append(ean2::PARITY_2[0]);
-    m_parity2WidthEncoding.append(ean2::PARITY_2[1]);
-    m_parity2WidthEncoding.append(ean2::PARITY_2[2]);
-    m_parity2WidthEncoding.append(ean2::PARITY_2[3]);
+  int drawLength = 0;
+  
+  QStringList::const_iterator _first = strLstBars.begin();
+  QStringList::const_iterator _last = strLstBars.end();
+  
+  while (_first != _last) {
+    int wordLength = drawBars(painter, top, bottom, startOffset, *_first);
+    drawLength += wordLength;
+    startOffset += wordLength;
+    _first++;
+  }
+  return drawLength;
+}
+
+
+int ProductEngine::drawBars(QPainter* painter, int top, int bottom,
+			    int startOffset, QString strBars) const
+{
+  int index = 0;
+  if (painter == 0) {
+    qDebug("painter object missing");
+    return index;
+  }
+  if (strBars.isEmpty()) {
+    qDebug("string empty");
+    return index;
+  }
+  QPoint pointTop(startOffset, top);
+  QPoint pointBottom(startOffset, bottom);
+  QLine bar(pointTop, pointBottom);
+  
+  int strBarsSize = strBars.size();
+  while (index < strBarsSize) {
+    if (strBars.at(index) == '1') {
+      painter->drawLine(bar.translated(index + top, top));
+    }
+    index++;
+  }
+  return index;
+}    
+
+void ProductEngine::fillExtendedEncodingList()
+{
+  if (d->m_parity2WidthEncoding.isEmpty()) {
+    d->m_parity2WidthEncoding.append(ean2::PARITY_2[0]);
+    d->m_parity2WidthEncoding.append(ean2::PARITY_2[1]);
+    d->m_parity2WidthEncoding.append(ean2::PARITY_2[2]);
+    d->m_parity2WidthEncoding.append(ean2::PARITY_2[3]);
 
     for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {
-      m_leftEvenEncodingList.append(upc_common::LEFT_EVEN_ENCODE_TABLE[i]);
-      m_leftOddEncodingList.append(upc_common::LEFT_ODD_ENCODE_TABLE[i]);
-      m_rightEncodingList.append(upc_common::RIGHT_HAND_ENCODE_TABLE[i]);
-      m_parity5WidthEncoding.append(ean5::PARITY_5[i]);
-    }    
-    setSymbolEncodingLookupTable(m_leftOddEncodingList);
-    qDebug("ProductEngine fillWidthEncodingList() : set");
+      d->m_parity5WidthEncoding.append(ean5::PARITY_5[i]);
+    }
   }
-  qDebug("ProductEngine fillWidthEncodingList() : end");
 }
+
+

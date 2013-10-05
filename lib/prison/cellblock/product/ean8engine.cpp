@@ -27,39 +27,26 @@
 #include "ean8engine.h"
 
 using namespace product;
-using namespace shared;
 
 Ean8Engine::Ean8Engine(): 	
-	ProductEngine("", 
-		CodeEngine::AutoProduct,
-		ean8::DEFAULT_VALUE,
-		ean8::MIN_8,
-		ean8::MAX_LEN,
-		ean8::CHECK_DIGIT_OFFSET,
-		ean8::BLOCK_SIZE,
-		ean8::ENCODE_BLOCK_SIZE,
-		upc_common::PS__EAN_8)
+	ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__EAN_8)
 {
   qDebug("Ean8Engine constructor");
-  ProductEngine::initialize();
-  ProductEngine::setBarcodeString();
 }
 
 Ean8Engine::Ean8Engine(const QString &userBarcode, 
-		       CodeEngine::ConstructCodes flags): 	
-	ProductEngine(userBarcode, 
-		flags,
-		ean8::DEFAULT_VALUE,
-		ean8::MIN_8,
-		ean8::MAX_LEN,
-		ean8::CHECK_DIGIT_OFFSET,
-		ean8::BLOCK_SIZE,
-		ean8::ENCODE_BLOCK_SIZE,
-		upc_common::PS__EAN_8)
+	CodeEngine::ConstructCodes flags):
+	ProductEngine(userBarcode, flags, upc_common::PS__EAN_8)
 {
   qDebug("Ean8Engine constructor");
-  ProductEngine::initialize();
-  ProductEngine::setBarcodeString();
+}
+
+Ean8Engine::Ean8Engine(const shared::SymbolList& userBarcode,
+	CodeEngine::ConstructCodes flags):
+	ProductEngine(toStrings(userBarcode), flags,
+		      upc_common::PS__EAN_8)
+{
+  qDebug("UpcAEngine constructor::symbol");
 }
 
 Ean8Engine::~Ean8Engine()
@@ -67,7 +54,53 @@ Ean8Engine::~Ean8Engine()
   qDebug("Ean8Engine destructor");
 }
 
-QStringList Ean8Engine::getSymbolList() const
+const QStringList Ean8Engine::formatedSymbols() const
 {
-  return m_userParsedSymbols;
+  qDebug("Ean8Engine::formatedSymbols : start"); 
+  QStringList formatedString;
+  formatedString << QString();
+  formatedString << block1().join("");
+  formatedString << block2().join("");
+  formatedString << QString();
+  formatedString << extendedBlock().join("");
+  qDebug() << "UpcAEngine::formatedSymbols : " << formatedString;
+  qDebug("Ean8Engine::formatedSymbols : end");
+  return formatedString;
+}
+
+const QList<QStringList> Ean8Engine::encoded() const
+{  
+  QList<QStringList> encodedBlocks(encodeMainBlock(local_mainBlock()));
+  encodedBlocks += encodeExtendedBlock(local_extendedBlock());
+  return encodedBlocks;
+}
+
+QList<QStringList> Ean8Engine::encodeMainBlock(const shared::SymbolList& mainBlock) const
+{  
+  qDebug("Ean8Engine encodeMainDigits() : start");
+  int encBlockSize = ean8::ENCODE_BLOCK_SIZE;
+  QList<shared::Symbol> l_mainBlock(local_mainBlock());
+
+  QList<QStringList> encodeMainBlock;
+  if (l_mainBlock.isEmpty()) {
+    QStringList e_block;
+    for (int count = 0; count < encBlockSize; count++) {
+      e_block.append(shared::Symbol::ERROR_ENCODING);
+    }
+    encodeMainBlock.append(e_block);
+    encodeMainBlock.append(e_block);
+  } else {
+    shared::SymbolList l_block1 = l_mainBlock.mid(0, encBlockSize);
+    shared::SymbolList l_block2 = l_mainBlock.mid(encBlockSize, encBlockSize);
+    // "O" and "R"
+    QString patternOs = QString(encBlockSize, 'O');
+    QString patternRs = QString(encBlockSize, 'R');
+
+    encodeMainBlock.append( encodeSymbolParity(l_block1, patternOs) );
+    encodeMainBlock.append( encodeSymbolParity(l_block2, patternRs) );
+    qDebug() << "Ean8Engine::encodeMainBlock() : l_block1" << encodeMainBlock.at(0);
+    qDebug() << "Ean8Engine::encodeMainBlock() : l_block2" << encodeMainBlock.at(1);
+  }
+  qDebug("Ean8Engine encodeMainDigits() : end");
+  return encodeMainBlock;
 }
