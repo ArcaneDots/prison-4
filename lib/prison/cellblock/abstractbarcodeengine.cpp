@@ -25,38 +25,12 @@
 
 #include <algorithm>
 #include <numeric>
+#include "abstractbarcodeengine_p.h"
 #include "abstractbarcodeengine.h"
 
-using namespace shared;
+//using namespace barcodeEngine;
 
-/**
- * @cond PRIVATE
- */
-
-/**
- * @endcond
- */
-
-// -------------- AbstractBarcodeEngine --------------
-
-AbstractBarcodeEngine::AbstractBarcodeEngine() : d(0)
-{
-  qDebug("AbstractBarcodeEngine constructor");
-}
-
-AbstractBarcodeEngine::~AbstractBarcodeEngine()
-{
-  qDebug("AbstractBarcodeEngine destructor");
-}
-
-
-int AbstractBarcodeEngine::calculateCheckDigit() const
-{  
-  qDebug("AbstractBarcodeEngine calculateCheckDigit()");
-  return 0;
-}
-
-int CommonChecksumOddEven(int checksumModulus, const SymbolList& symbols, int oddMultipler, int evenMultipler, bool reverse)
+int barcodeEngine::CommonChecksumOddEven(int checksumModulus, const barcodeEngine::SymbolList& symbols, int oddMultipler, int evenMultipler, bool reverse)
 {
   qDebug("CommonChecksumOddEven() : start");
   int l_accum = 0;
@@ -80,7 +54,7 @@ int CommonChecksumOddEven(int checksumModulus, const SymbolList& symbols, int od
   return NextMultipleCheckDigit(checksumModulus, l_accum); 
 }
 
-int CommonChecksumLinear(int modulusValue, const SymbolList& symbols, bool reverse)
+int barcodeEngine::CommonChecksumLinear(int checksumModulus, const barcodeEngine::SymbolList& symbols, bool reverse)
 {
   qDebug("CommonChecksumLinear() : start");
   int total = 0;
@@ -91,16 +65,16 @@ int CommonChecksumLinear(int modulusValue, const SymbolList& symbols, bool rever
     std::reverse_iterator<QList<Symbol>::const_iterator> rend(symbols.begin()) ;
     std::reverse_iterator<QList<Symbol>::const_iterator> rbegin(symbols.end());
     total = std::accumulate(rbegin, rend, 0,		
-		    LinearMultiple(modulusValue));
+		    LinearMultiple(checksumModulus));
   } else {
     std::accumulate(symbols.begin(), symbols.end(), 0,		
-		    LinearMultiple(modulusValue));
+		    LinearMultiple(checksumModulus));
   }
   qDebug("CommonChecksumLinear() : end");
-  return  (total != 0) ? (modulusValue % total) : modulusValue;
+  return  (total != 0) ? (checksumModulus % total) : checksumModulus;
 }
 
-int NextMultipleCheckDigit(int modulusValue, int checksum)
+int barcodeEngine::NextMultipleCheckDigit(int modulusValue, int checksum)
 {
   qDebug("NextMultipleCheckDigit()");
   int checkValue = 0;
@@ -112,3 +86,18 @@ int NextMultipleCheckDigit(int modulusValue, int checksum)
   checkValue = modulusValue - checkValue;
   return checkValue;
 }
+using namespace barcodeEngine;
+
+// -------------- AbstractBarcodeEngine --------------
+
+AbstractBarcodeEngine::AbstractBarcodeEngine() : d(0)
+{
+  qDebug("AbstractBarcodeEngine constructor");
+}
+
+AbstractBarcodeEngine::~AbstractBarcodeEngine()
+{
+  qDebug("AbstractBarcodeEngine destructor");
+}
+
+

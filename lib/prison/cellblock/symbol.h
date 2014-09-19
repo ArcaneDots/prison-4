@@ -32,10 +32,9 @@
 
 #include "shareddefines.h"
 
-namespace shared  
+namespace barcodeEngine  
 {
   
-const int NOT_FOUND = -1;  
   
 
 class Symbol

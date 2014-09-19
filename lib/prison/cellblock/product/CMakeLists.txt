@@ -2,6 +2,7 @@ INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}")
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 SET (product_engines_SRC
+     productengine_p.h
      productengine.cpp
      upcaengine.cpp
      ean8engine.cpp

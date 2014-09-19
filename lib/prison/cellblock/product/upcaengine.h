@@ -56,7 +56,7 @@ public:
    *
    * @param productCode constant indicating the current product code
    **/
-  UpcAEngine(const shared::SymbolList &userBarcode, 
+  UpcAEngine(const barcodeEngine::SymbolList &userBarcode, 
 	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   /**
    * destructor
@@ -80,7 +80,7 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */ 
-  QList< QStringList > encodeMainBlock(const shared::SymbolList& mainBlock) const;
+  QList< QStringList > encodeMainBlock(const barcodeEngine::SymbolList& mainBlock) const;
   /**
     * Compress UPC-A barcode information into UPC-E format
     *
@@ -92,7 +92,7 @@ protected:
     * 
     * @param inputSymbolList list of symbols, not including the extended block
     */
-  shared::SymbolList compressUpc(const shared::SymbolList& inputSymbolList) const;
+  barcodeEngine::SymbolList compressUpc(const barcodeEngine::SymbolList& inputSymbolList) const;
   /**
     * Expand UPC-E barcode information into UPC-A format
     *
@@ -104,7 +104,7 @@ protected:
     * 
     * @param inputSymbolList list of symbols, not including the extended block
     */
-  shared::SymbolList expandUpc(const shared::SymbolList& inputSymbolList) const;
+  barcodeEngine::SymbolList expandUpc(const barcodeEngine::SymbolList& inputSymbolList) const;
 };
 };
 #endif // UPCAENGINE_H

@@ -26,6 +26,8 @@
 #include <algorithm>
 #include "ean13engine.h"
 
+using namespace barcodeEngine;
+
 namespace product {
 /**
  * @cond PRIVATE
@@ -105,9 +107,9 @@ Ean13Engine::Ean13Engine(const QString &userBarcode,
   qDebug("Ean13Engine user constructor");
 }
 
-Ean13Engine::Ean13Engine(const QList<shared::Symbol> & userSymbols, 
+Ean13Engine::Ean13Engine(const QList< barcodeEngine::Symbol >& userBarcode, 
 			 CodeEngine::ConstructCodes flags) : 
-  ProductEngine(toStrings(userSymbols), flags, upc_common::PS__EAN_13), d(new Private())
+  ProductEngine(toStrings(userBarcode), flags, upc_common::PS__EAN_13), d(new Private())
 {
   qDebug("Ean13Engine symbol constructor");
 }
@@ -136,29 +138,29 @@ const QList<QStringList> Ean13Engine::encoded() const
   return encodedBlocks;
 }
 
-QList< QStringList > Ean13Engine::encodeMainBlock(const shared::SymbolList& mainBlock) const
+QList< QStringList > Ean13Engine::encodeMainBlock(const barcodeEngine::SymbolList& mainBlock) const
 {
   qDebug("Ean13Engine encodeSymbols() : start");    
   int blockSize = ean13::BLOCK_SIZE;
-  QList<shared::Symbol> l_mainBlock(local_mainBlock());
+  QList<barcodeEngine::Symbol> l_mainBlock(local_mainBlock());
 
   QList<QStringList> encodeMainBlock;
   if (l_mainBlock.isEmpty()) {
     QStringList e_block;
     for (int count = 0; count < encBlockSize(); count++) {
-      e_block.append(shared::Symbol::ERROR_ENCODING);
+      e_block.append(barcodeEngine::Symbol::ERROR_ENCODING);
     }
     encodeMainBlock.append(e_block);
     encodeMainBlock.append(e_block);
   } else {
-    shared::SymbolList l_block1 = l_mainBlock.mid(1, encBlockSize());
-    shared::SymbolList l_block2 = l_mainBlock.mid(1 + encBlockSize(), encBlockSize());
+    barcodeEngine::SymbolList l_block1 = l_mainBlock.mid(1, encBlockSize());
+    barcodeEngine::SymbolList l_block2 = l_mainBlock.mid(1 + encBlockSize(), encBlockSize());
 
     // block1
     int numberSystemIndex = local_numberSystem();
     qDebug() << "Ean13Engine encodeSymbols() : system digit = " << numberSystemIndex;
     QString pattern1 = QString(encBlockSize(), 'O');
-    if (numberSystemIndex != Symbol::NOT_FOUND) {
+    if (numberSystemIndex != barcodeEngine::Symbol::NOT_FOUND) {
       pattern1 = d->getFirstBlockEncodePattern(numberSystemIndex);
     }
     qDebug() << "Ean13Engine encodeSymbols() : pattern = " << pattern1;

@@ -50,6 +50,7 @@ namespace std
 
 namespace shared
 {
+  const int NOT_FOUND = -1;  
   /**
    * index of important barcode positions
    * 

@@ -54,7 +54,7 @@ public:
    *
    * @param productCode constant indicating the current product code
    **/
-  Ean13Engine(const QList<shared::Symbol>& userBarcode,
+  Ean13Engine(const QList<barcodeEngine::Symbol>& userBarcode,
 	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   /**
    * destructor
@@ -78,7 +78,7 @@ protected:
    *
    * @param mainBlock first portion of the list of symbols
    */ 
-  QList<QStringList> encodeMainBlock(const shared::SymbolList& mainBlock) const; 
+  QList<QStringList> encodeMainBlock(const barcodeEngine::SymbolList& mainBlock) const; 
 private:
   /**
    * Private barcode information

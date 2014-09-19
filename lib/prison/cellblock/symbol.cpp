@@ -33,7 +33,7 @@
 
 #include <QRegExp>
 
-namespace shared {
+namespace barcodeEngine {
 
   
 // -------- Private ----------
@@ -172,7 +172,7 @@ Symbol::Private::~Private()
 
 };
 
-using namespace shared;
+using namespace barcodeEngine;
 // -------- Symbols ----------
 
 const QString Symbol::ERROR_ENCODING = "1010101";
@@ -344,20 +344,20 @@ void Symbol::setSymbolIndex(const QString & string)
   }
 }
 
-QDebug shared::operator<<(QDebug& dbg, const Symbol& s)
+QDebug barcodeEngine::operator<<(QDebug& dbg, const Symbol& s)
 { 
   dbg << s.toString(); 
   return dbg;
 }
 
-QList<Symbol> shared::operator<<(const QList<Symbol>& symbols, const QString& userInput)
+QList<Symbol> barcodeEngine::operator<<(const QList<Symbol>& symbols, const QString& userInput)
 {
   SymbolList tempSymbols(symbols);  
   tempSymbols += tempSymbols.front().parse(userInput);   
   return tempSymbols;
 }
 
-QString shared::toStrings(const QList<Symbol> & symbolStrings)
+QString barcodeEngine::toStrings(const QList<Symbol> & symbolStrings)
 {
   QStringList strings; 
   
@@ -366,7 +366,7 @@ QString shared::toStrings(const QList<Symbol> & symbolStrings)
   return strings.join("");
 }
 
-QStringList shared::toStringList(const QList<Symbol>& symbolStrings)
+QStringList barcodeEngine::toStringList(const QList<Symbol>& symbolStrings)
 {
   QStringList strings; 
   
@@ -389,7 +389,7 @@ std::vector<int> toIntVector(const QList< Symbol >& symbolStrings)
   return vecInt;
 }
 
-QStringList shared::encodeSymbolParity(const QList<Symbol>& symbols, 
+QStringList barcodeEngine::encodeSymbolParity(const QList<Symbol>& symbols, 
 			       const QString& parityPattern)
 {
   //const QString Zeros(symbols.size(),'0');
