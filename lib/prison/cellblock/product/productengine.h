@@ -32,7 +32,7 @@
 
 #include "../abstractbarcodeengine.h"
 #include "upceandefines_p.h"
-#include "../shareddefines.h"
+// #include "../shareddefines.h"
 
 
 namespace product 
@@ -65,8 +65,9 @@ public:
    * @param productCode constant indicating the current product code
    */
   ProductEngine(const QString &userBarcode, 
-	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct,
-	      upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__UNKNOWN);
+	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);//,
+	      
+//	      upc_common::PRODUCT_CODE_VALUES productCode = upc_common::PS__UNKNOWN, 	      );
   
   /**
    * @brief SymbolList input constructor
@@ -92,10 +93,6 @@ public:
    */
   const QStringList codeDefault() const;
   /**
-   * User input string
-   */
-  virtual QString userInput() const;
-  /**
    * Parsed symbols (user or defaultlt value)
    */
   virtual QString parsedSymbolList() const;
@@ -109,26 +106,7 @@ public:
   // ---- product code specific ----
   
   
-  // --- construction flags ---
-  
-  /**
-   * Get construction flags
-   */
-  CodeEngine::ConstructCodes constructionFlags() const;
-  /**
-   * Is the user input valid for the current barcode
-   * 
-   * The barcode will display a default value in case the user's is not  
-   */
-  const CodeEngine::ErrorCodes & statusFlags() const;
-  /**
-   * Add flags
-   */
-  const CodeEngine::ErrorCodes & addFlags(CodeEngine::ErrorCode flags);
-  /**
-   * Remove flags
-   */
-  const CodeEngine::ErrorCodes & removeFlags(CodeEngine::ErrorCode flags);
+ 
   /**
    * get Product type associated current engine 
    */
@@ -386,7 +364,10 @@ protected:
   QList<barcodeEngine::Symbol> parse(const QString& userInput) const;
  
 protected:
-  const QScopedPointer<ProductEnginePrivate> d_ptr;    
+  /**
+   * Subclass constructor
+   */
+  ProductEngine(ProductEnginePrivate &d); 
 private:
   Q_DECLARE_PRIVATE(ProductEngine);
 };

@@ -1,8 +1,10 @@
-#include "../abstractbarcodeengine_p.h"
-#include "productengine.h"
+
 
 #ifndef PRODUCTENGINE_PRIVATE
 #define PRODUCTENGINE_PRIVATE
+
+#include "../abstractbarcodeengine_p.h"
+#include "productengine.h"
 
 namespace product{
 
@@ -86,61 +88,34 @@ public:
   /**
    * copy of original user input
    */
-  QString m_userInputString;
-  /**
-   * is user input string valid
-   * 
-   * @note current behavior: used default string when user input is invalid
-   */
-  mutable CodeEngine::ErrorCodes m_isValid;
-  /**
-   * Input processing flags
-   * 
-   * @note not currently implemented
-   */
-  CodeEngine::ConstructCodes m_constructionFlags;
+  barcodeEngine::SymbolList m_userParsedSymbols;
+ 
   /** 
    * machine readable/encoded barcode information
    */
   QString m_encodedSymbols;
-  /**
-   * default constructor
-   */
-  ProductEnginePrivate():  
-  barcodeEngine::AbstractBarcodeEnginePrivate(),
-  m_productCode(upc_common::PS__UNKNOWN),
-  m_hasNumberSystem(false),
-  m_fmtFirstBlockOffset(1),
-  m_fmtHasSecondBlock(true),
-  m_encFirstBlockOffset(0),
-  m_encBlockSize(upc_common::ENCODE_BLOCK_SIZE)
-  {
-    qDebug("ProductEngine::Private default constructor");    
-  };
   
-  /**
-   * constructor
-   */
-  ProductEnginePrivate(upc_common::PRODUCT_CODE_VALUES productCode,
-	  CodeEngine::ConstructCodes flags, 
-	  CodeEngine::ErrorCodes OK,
-	  QString userBarcode):
-  barcodeEngine::AbstractBarcodeEnginePrivate("", 1, 1, 1, 2),
-  m_productCode(productCode),
-  m_hasNumberSystem(true),
-  m_fmtFirstBlockOffset(1),
-  m_fmtHasSecondBlock(true),
-  m_encFirstBlockOffset(0),
-  m_encBlockSize(0),
-  m_encHasSecondBlock(true),
+  //ProductEngine * q_ptr;
+//   /**
+//    * default constructor
+//    */
+//   ProductEnginePrivate(ProductEngine *q):  
+//     barcodeEngine::AbstractBarcodeEnginePrivate(q),
+//     m_productCode(upc_common::PS__UNKNOWN),
+//     m_hasNumberSystem(false),
+//     m_fmtFirstBlockOffset(1),
+//     m_fmtHasSecondBlock(true),
+//     m_encFirstBlockOffset(0),
+//     m_encBlockSize(upc_common::ENCODE_BLOCK_SIZE)
+//   {
+//     qDebug("ProductEngine::Private default constructor");    
+//   }
   
-  m_constructionFlags(flags),
-  m_isValid(CodeEngine::OK),
-  m_userInputString(userBarcode),
-  m_encodedSymbols()
-{  
-  qDebug("ProductEngine::Private \"copy\" constructor");
-  if (productCode ==  upc_common::PS__EAN_13) {
+ void setProductCode(upc_common::PRODUCT_CODE_VALUES productCode) 
+ {
+   m_productCode = productCode;
+      
+   if (m_productCode ==  upc_common::PS__EAN_13) {
       m_defaultString = ean13::DEFAULT_VALUE;
       m_minLength = ean13::MIN;
       m_maxLength = ean13::MAX_LEN;
@@ -153,7 +128,7 @@ public:
       m_encBlockSize = ean13::ENCODE_BLOCK_SIZE;
       m_encFirstBlockOffset = 1;
       m_encHasSecondBlock = true;
-  } else if (productCode == upc_common::PS__UPC_A) {
+  } else if (m_productCode == upc_common::PS__UPC_A) {
       m_defaultString = upcA::DEFAULT_VALUE;
       m_minLength = upcA::MIN;
       m_maxLength = upcA::MAX_LEN;
@@ -166,7 +141,7 @@ public:
       m_encBlockSize = upcA::ENCODE_BLOCK_SIZE;
       m_encFirstBlockOffset = 1;
       m_encHasSecondBlock = true;
-  } else if (productCode == upc_common::PS__EAN_8) {
+  } else if (m_productCode == upc_common::PS__EAN_8) {
       m_defaultString = ean8::DEFAULT_VALUE;
       m_minLength = ean8::MIN;
       m_maxLength = ean8::MAX_LEN;
@@ -179,7 +154,7 @@ public:
       m_encBlockSize = ean8::ENCODE_BLOCK_SIZE;
       m_encFirstBlockOffset = 1;
       m_encHasSecondBlock = true;
-  }  else if (productCode == upc_common::PS__UPC_E) {
+  }  else if (m_productCode == upc_common::PS__UPC_E) {
       m_defaultString = upcE::DEFAULT_VALUE,
       m_minLength = upcE::MIN,
       m_maxLength = upcE::MAX_LEN,
@@ -192,42 +167,50 @@ public:
       m_encBlockSize = upcE::ENCODE_BLOCK_SIZE;
       m_encFirstBlockOffset = 1;
       m_encHasSecondBlock = true;
-  }
-};
+  } 
+ }
+   
+ upc_common::PRODUCT_CODE_VALUES getProductCode()
+ {
+   return m_productCode;
+ }
+ 
   /** 
    * destructor 
    */
   virtual ~ProductEnginePrivate()
   {  
     qDebug("ProductEngine::Private destructor");
-  };  
-  
+  }
+protected:
   void initialize() {
-    qDebug("ProductEngine initialize");  
+    qDebug("ProductEngine initialize");    
     fillExtendedEncodingList();
-  };
+  }
+  
 private:
+  
   /**
   * Exteneded barcode encoding patterns - EAN-2, EAN-5 
   */
   void fillExtendedEncodingList()
-{
-  if (m_parity2WidthEncoding.isEmpty()) {
-    m_parity2WidthEncoding.append(ean2::PARITY_2[0]);
-    m_parity2WidthEncoding.append(ean2::PARITY_2[1]);
-    m_parity2WidthEncoding.append(ean2::PARITY_2[2]);
-    m_parity2WidthEncoding.append(ean2::PARITY_2[3]);
+  {
+    if (m_parity2WidthEncoding.isEmpty()) {
+      m_parity2WidthEncoding.append(ean2::PARITY_2[0]);
+      m_parity2WidthEncoding.append(ean2::PARITY_2[1]);
+      m_parity2WidthEncoding.append(ean2::PARITY_2[2]);
+      m_parity2WidthEncoding.append(ean2::PARITY_2[3]);
 
-    for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {
-      m_parity5WidthEncoding.append(ean5::PARITY_5[i]);
+      for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {
+	m_parity5WidthEncoding.append(ean5::PARITY_5[i]);
+      }
     }
   }
-}
 };
 
 /**
  * @endcond
  */
 
-}
+};
 #endif // PRODUCTENGINE_PRIVATE

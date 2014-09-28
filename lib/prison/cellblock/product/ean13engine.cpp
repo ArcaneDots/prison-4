@@ -24,100 +24,49 @@
 */
 
 #include <algorithm>
-#include "ean13engine.h"
+#include "ean13engine_p.h"
 
 using namespace barcodeEngine;
 
 namespace product {
-/**
- * @cond PRIVATE
- */
-class Ean13Engine::Private
-{
-public:
-  Private();
-  virtual ~Private();
-  /**
-   * Get productCode specific encoding pattern for the first block of symbols
-   *
-   * @param indexedPattern index of assiocated pattern
-   */
-  QString getFirstBlockEncodePattern(int indexedPattern = 0) const;
-private:
-  /**
-   * Load all encoding patterns based on combo of system number (0-1) and check digit
-   */
-  void fillSystemEncodingList(); 
-  /**
-   * encoding patterns for EAN-13 first block
-   */
-  QStringList m_parity13WidthEncoding;
-};
-};
-/**
- * @endcond
- */
 
-using namespace product;
-using namespace shared;
-// ----------------- Ean13Engine::Private -----------------------
-Ean13Engine::Private::Private() : 
-  m_parity13WidthEncoding()
+Ean13Engine::Ean13Engine(): ProductEngine(*new Ean13EnginePrivate)	
 {
-  fillSystemEncodingList();
-}
-
-Ean13Engine::Private::~Private()
-{
-  // empty
-}
-
-void Ean13Engine::Private::fillSystemEncodingList()
-{
-  qDebug("ProductEngine::Private fillWidthEncodingList() : start");
-  for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {
-    m_parity13WidthEncoding.append(ean13::PARITY_13[i]);
-  }
-  qDebug("ProductEngine::Private fillWidthEncodingList() : end");
-}
-
-QString Ean13Engine::Private::getFirstBlockEncodePattern(int indexedPattern) const
-{
-  qDebug("Ean13Engine getFirstBlockEncodePattern() : EAN-13 pattern ");
-  if(indexedPattern >= 0 &&
-    indexedPattern <= m_parity13WidthEncoding.size()) {
-    return m_parity13WidthEncoding.at(indexedPattern);
-  } else {
-    qDebug("Ean13Engine getFirstBlockEncodePattern() : bad index ");
-    return QString("");
-  }
-}
-// ----------------------- Ean13Engine -----------------------
-Ean13Engine::Ean13Engine(): 
-  ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__EAN_13)
-{
-  qDebug("Ean13Engine default constructor");
-}
+  qDebug("Ean13Engine default constructor"); 
+  Q_D(Ean13Engine);
+  d->setProductCode(upc_common::PS__EAN_13);
+  d->m_userInputString = "";
+  d->m_constructionFlags = CodeEngine::AutoProduct;
+} 
 
 // user constructor
 Ean13Engine::Ean13Engine(const QString &userBarcode, 
 			 CodeEngine::ConstructCodes flags): 
-  ProductEngine(userBarcode, flags, upc_common::PS__EAN_13), d(new Private())
+	ProductEngine(*new Ean13EnginePrivate)
 {
-  qDebug("Ean13Engine user constructor");
+  qDebug("Ean13Engine constructor::string");
+  Q_D(Ean13Engine);
+  d->setProductCode(upc_common::PS__EAN_13);
+  d->m_userInputString = userBarcode;
+  d->m_constructionFlags = flags;
 }
+
 
 Ean13Engine::Ean13Engine(const QList< barcodeEngine::Symbol >& userBarcode, 
 			 CodeEngine::ConstructCodes flags) : 
-  ProductEngine(toStrings(userBarcode), flags, upc_common::PS__EAN_13), d(new Private())
-{
-  qDebug("Ean13Engine symbol constructor");
+	ProductEngine(*new Ean13EnginePrivate)
+{ 
+  qDebug("Ean13Engine constructor::symbol");
+  Q_D(Ean13Engine);
+  d->setProductCode(upc_common::PS__EAN_13);
+  d->m_userInputString = toStringList(userBarcode).join("");
+  d->m_userParsedSymbols = userBarcode;
+  d->m_constructionFlags = flags;
 }
 
 Ean13Engine::~Ean13Engine()
 {
   qDebug("Ean13Engine destructor");
-  delete d;
 }
 
 const QStringList Ean13Engine::formatedSymbols() const
@@ -140,6 +89,7 @@ const QList<QStringList> Ean13Engine::encoded() const
 
 QList< QStringList > Ean13Engine::encodeMainBlock(const barcodeEngine::SymbolList& mainBlock) const
 {
+  Q_D(const Ean13Engine);
   qDebug("Ean13Engine encodeSymbols() : start");    
   int blockSize = ean13::BLOCK_SIZE;
   QList<barcodeEngine::Symbol> l_mainBlock(local_mainBlock());
@@ -173,10 +123,10 @@ QList< QStringList > Ean13Engine::encodeMainBlock(const barcodeEngine::SymbolLis
     qDebug() << "Ean13Engine::encodeMainBlock() : l_block1" << encodeMainBlock.at(0);
     qDebug() << "Ean13Engine::encodeMainBlock() : l_block2" << encodeMainBlock.at(1);
   }
-  qDebug("UpcAEngine encodeMainBlock() : end");
+  qDebug("Ean13Engine encodeMainBlock() : end");
   return encodeMainBlock; 
 }
-
+}
 
 
 

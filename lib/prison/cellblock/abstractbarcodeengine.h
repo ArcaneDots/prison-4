@@ -200,7 +200,28 @@ namespace barcodeEngine
     /**
      * Get user's input string
      */
-    virtual QString userInput() const = 0;
+    virtual QString userInput() const;
+    
+    // --- construction flags ---
+  
+    /**
+    * Get construction flags
+    */
+    virtual CodeEngine::ConstructCodes constructionFlags() const;
+    /**
+    * Is the user input valid for the current barcode
+    * 
+    * The barcode will display a default value in case the user's is not  
+    */
+    virtual const CodeEngine::ErrorCodes & statusFlags() const;
+    /**
+    * Add flags
+    */
+    virtual const CodeEngine::ErrorCodes & addFlags(CodeEngine::ErrorCode flags);
+    /**
+    * Remove flags
+    */
+    virtual const CodeEngine::ErrorCodes & removeFlags(CodeEngine::ErrorCode flags);
     /**
      * initial list of parsed symbols
      */
@@ -234,17 +255,22 @@ namespace barcodeEngine
      * @param symbolArray array of symbol's look-up index
      * @return number of valid check digit
      */
-    virtual int calculateCheckDigit() const = 0;  
+    virtual int calculateCheckDigit() const = 0;
+    
+    /**
+     * Subclass constructor
+     */
+    AbstractBarcodeEngine(AbstractBarcodeEnginePrivate &d);
+    const QScopedPointer<AbstractBarcodeEnginePrivate> d_ptr;     
   private:
     /**
      * Not used but included for ABI
      */
-    //class AbstractBarcodeEnginePrivate;
-    AbstractBarcodeEnginePrivate *d;     
+    Q_DECLARE_PRIVATE(AbstractBarcodeEngine);
   };
 
-  //class LinearMultiple;
-  // helper functions
+  
+  // -- helper functions --
 
   /**
    * Calculate "Odd/Even" check sum pattern for a array of symbol look-up indexes

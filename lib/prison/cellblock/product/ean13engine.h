@@ -31,6 +31,7 @@
 
 namespace product
 {
+  class Ean13EnginePrivate;
   
 /**
  * EAN-13 barcode generator
@@ -79,12 +80,9 @@ protected:
    * @param mainBlock first portion of the list of symbols
    */ 
   QList<QStringList> encodeMainBlock(const barcodeEngine::SymbolList& mainBlock) const; 
+  Ean13Engine(Ean13EnginePrivate &d); 
 private:
-  /**
-   * Private barcode information
-   */
-  class Private;
-  Private * d;
+  Q_DECLARE_PRIVATE(Ean13Engine);
 };
 };
 #endif // EAN13ENGINE_H

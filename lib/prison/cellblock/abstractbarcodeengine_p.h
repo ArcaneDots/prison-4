@@ -1,8 +1,9 @@
-#include "abstractbarcodeengine.h"
-
 
 #ifndef ABSTRACTENGINE_PRIVATE
 #define ABSTRACTENGINE_PRIVATE
+
+#include "abstractbarcodeengine.h"
+
 namespace barcodeEngine
 {
 
@@ -46,40 +47,64 @@ public:
    * number of check digits
    */
   int m_numCheckDigits;
+  /**
+   * copy of original user input
+   */
+  QString m_userInputString;
+   /**
+   * is user input string valid
+   * 
+   * @note current behavior: used default string when user input is invalid
+   */
+  mutable CodeEngine::ErrorCodes m_isValid;
+  /**
+   * Input processing flags
+   * 
+   * @note not currently implemented
+   */
+  CodeEngine::ConstructCodes m_constructionFlags;
   
-  AbstractBarcodeEnginePrivate();
-  AbstractBarcodeEnginePrivate(const QString &defaultString,
-				int minLength, 
-				int maxLength,
-				int checkDigits, 
-				int checkDigitOffset = NOT_FOUND);
+  AbstractBarcodeEngine *q_ptr;
+//   AbstractBarcodeEnginePrivate(barcodeEngine::AbstractBarcodeEngine* q);
+  //AbstractBarcodeEnginePrivate(barcodeEngine::AbstractBarcodeEngine* q, const QString& defaultString, int minLength, int maxLength, int checkDigits, int checkDigitOffset = NOT_FOUND);
+
+  virtual ~AbstractBarcodeEnginePrivate()
+  {
+    qDebug("AbstractBarcodeEnginePrivate destructor");
+  }
+protected: 
+  //AbstractBarcodeEnginePrivate();
 };
 
-/**
- * Default constructor
- */
-AbstractBarcodeEnginePrivate::AbstractBarcodeEnginePrivate() :
-  m_defaultString(""),
-  // length => 1
-  m_minLength(1),
-  m_maxLength(NOT_FOUND),
-  // 1 check digit end of code
-  m_numCheckDigits(1),
-  m_checkDigitOffset(NOT_FOUND)
-{  
- 
-}
-/**
- * Constructor
- */
-AbstractBarcodeEnginePrivate::AbstractBarcodeEnginePrivate(const QString& defaultString, 
-							     int minLength, 
-							     int maxLength, 
-							     int checkDigits, 
-							     int checkDigitOffset)
-{
-  
-}
+// /**
+//  * Default constructor
+//  */
+// AbstractBarcodeEnginePrivate::AbstractBarcodeEnginePrivate() : 
+//   q_ptr(0),
+//   m_defaultString(""),
+//   // length => 1
+//   m_minLength(1),
+//   m_maxLength(NOT_FOUND),
+//   // 1 check digit end of code
+//   m_numCheckDigits(1),
+//   m_checkDigitOffset(NOT_FOUND)
+// {  
+//  
+// }
+// AbstractBarcodeEnginePrivate::AbstractBarcodeEnginePrivate(barcodeEngine::AbstractBarcodeEngine *q) : 
+//   q_ptr(q),
+//   m_defaultString(""),
+//   // length => 1
+//   m_minLength(1),
+//   m_maxLength(NOT_FOUND),
+//   // 1 check digit end of code
+//   m_numCheckDigits(1),
+//   m_checkDigitOffset(NOT_FOUND)
+// {  
+//  
+// }
+
+
 
 /**
  * @endcond
@@ -170,6 +195,6 @@ AbstractBarcodeEnginePrivate::AbstractBarcodeEnginePrivate(const QString& defaul
     mutable int m_multipler;
   };      
  
-} 
+};
   
 #endif // ABSTRACTENGINE_PRIVATE

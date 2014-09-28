@@ -32,6 +32,7 @@
 
 namespace product
 {
+   class UpcAEnginePrivate;
   
 /**
  * UPC-A barcode generator
@@ -105,6 +106,8 @@ protected:
     * @param inputSymbolList list of symbols, not including the extended block
     */
   barcodeEngine::SymbolList expandUpc(const barcodeEngine::SymbolList& inputSymbolList) const;
+private:
+  Q_DECLARE_PRIVATE(UpcAEngine);
 };
 };
 #endif // UPCAENGINE_H

@@ -24,29 +24,45 @@
 */
 
 #include <numeric>
-#include "upcaengine.h"
+#include "upcaengine_p.h"
 
 using namespace product;
+//using namespace upca;
 
+/**
+ * Default constructor
+ */
 UpcAEngine::UpcAEngine() :
-	ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__UPC_A)
+	ProductEngine(*new UpcAEnginePrivate)	
 {
   qDebug("UpcAEngine default constructor");  
+  Q_D(UpcAEngine);
+  d->setProductCode(upc_common::PS__UPC_A);
+  d->m_userInputString = "";
+  d->m_constructionFlags = CodeEngine::AutoProduct;
 } 		    
   		    
 UpcAEngine::UpcAEngine(const QString &userBarcode, 
 	CodeEngine::ConstructCodes flags):
-	ProductEngine(userBarcode, flags, upc_common::PS__UPC_A)
+	ProductEngine(*new UpcAEnginePrivate)
 {
   qDebug("UpcAEngine constructor::string");
+  Q_D(UpcAEngine);
+  d->setProductCode(upc_common::PS__UPC_A);
+  d->m_userInputString = userBarcode;
+  d->m_constructionFlags = flags;
 }
 
 UpcAEngine::UpcAEngine(const barcodeEngine::SymbolList& userBarcode,
 	CodeEngine::ConstructCodes flags):
-	ProductEngine(toStringList(userBarcode).join(""), flags,
-		      upc_common::PS__UPC_A)
+	ProductEngine(*new UpcAEnginePrivate)
 {  
   qDebug("UpcAEngine constructor::symbol");
+   Q_D(UpcAEngine);
+  d->setProductCode(upc_common::PS__UPC_A);
+  d->m_userInputString = toStringList(userBarcode).join("");
+  d->m_userParsedSymbols = userBarcode;
+  d->m_constructionFlags = flags;
 }
 
 UpcAEngine::~UpcAEngine()

@@ -90,9 +90,17 @@ using namespace barcodeEngine;
 
 // -------------- AbstractBarcodeEngine --------------
 
-AbstractBarcodeEngine::AbstractBarcodeEngine() : d(0)
+AbstractBarcodeEngine::AbstractBarcodeEngine() : 
+  d_ptr(new AbstractBarcodeEnginePrivate())
+//  d_ptr(new AbstractBarcodeEnginePrivate(this))
 {
   qDebug("AbstractBarcodeEngine constructor");
+}
+
+AbstractBarcodeEngine::AbstractBarcodeEngine(AbstractBarcodeEnginePrivate &d):
+  d_ptr(&d)
+{
+
 }
 
 AbstractBarcodeEngine::~AbstractBarcodeEngine()
@@ -100,4 +108,32 @@ AbstractBarcodeEngine::~AbstractBarcodeEngine()
   qDebug("AbstractBarcodeEngine destructor");
 }
 
+QString AbstractBarcodeEngine::userInput() const
+{
+  Q_D(const AbstractBarcodeEngine);
+  return d->m_userInputString;
+}
 
+const CodeEngine::ErrorCodes& AbstractBarcodeEngine::statusFlags() const
+{
+  Q_D(const AbstractBarcodeEngine);
+  return d->m_isValid;
+}   
+
+const CodeEngine::ErrorCodes& AbstractBarcodeEngine::addFlags(CodeEngine::ErrorCode flags)
+{
+  Q_D(const AbstractBarcodeEngine);
+  return d->m_isValid |= flags;
+}
+
+const CodeEngine::ErrorCodes& AbstractBarcodeEngine::removeFlags(CodeEngine::ErrorCode flags)
+{
+  Q_D(const AbstractBarcodeEngine);
+  return d->m_isValid ^= flags;
+}
+
+CodeEngine::ConstructCodes AbstractBarcodeEngine::constructionFlags() const
+{
+  Q_D(const AbstractBarcodeEngine);
+  return d->m_constructionFlags;
+}

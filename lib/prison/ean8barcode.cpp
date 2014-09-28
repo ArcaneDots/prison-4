@@ -52,7 +52,7 @@ Ean8Barcode::~Ean8Barcode() {
 QImage Ean8Barcode::toImage(const QSizeF& size) { 
   qDebug() << "Ean8Barcode::toImage() : data " << data();
   
-  product::Ean8Engine * prod = new product::Ean8Engine(data());  
+  ean8::Ean8Engine * prod = new ean8::Ean8Engine(data());  
  
   QSizeF currentMinimumSize(minimumSize());
   QImage image(prod->image(size, currentMinimumSize,

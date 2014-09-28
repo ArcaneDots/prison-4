@@ -24,28 +24,34 @@
 */
 
 #include <QtDebug>
-#include "ean8engine.h"
+#include "ean8engine_p.h"
 
-using namespace product;
+using namespace ean8;
 
-Ean8Engine::Ean8Engine(): 	
-	ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__EAN_8)
-{
-  qDebug("Ean8Engine constructor");
-}
+
 
 Ean8Engine::Ean8Engine(const QString &userBarcode, 
-	CodeEngine::ConstructCodes flags):
-	ProductEngine(userBarcode, flags, upc_common::PS__EAN_8)
+	CodeEngine::ConstructCodes flags) : 
+	ProductEngine(*new Ean8EnginePrivate())
+	//ProductEngine(userBarcode, flags, upc_common::PS__EAN_8)
 {
   qDebug("Ean8Engine constructor");
 }
 
-Ean8Engine::Ean8Engine(const barcodeEngine::SymbolList& userBarcode, CodeEngine::ConstructCodes flags):
-	ProductEngine(toStrings(userBarcode), flags,
-		      upc_common::PS__EAN_8)
+Ean8Engine::Ean8Engine(const barcodeEngine::SymbolList& userBarcode, 
+		       CodeEngine::ConstructCodes flags) :
+	ProductEngine(*new Ean8EnginePrivate())
+	//ProductEngine(toStrings(userBarcode), flags,
+	//	      upc_common::PS__EAN_8)
 {
   qDebug("UpcAEngine constructor::symbol");
+}
+
+Ean8Engine::Ean8Engine(Ean8EnginePrivate& d): 	
+	//ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__EAN_8)
+	ProductEngine(d)
+{
+  qDebug("Ean8Engine constructor");
 }
 
 Ean8Engine::~Ean8Engine()

@@ -21,20 +21,18 @@
 
 #include "productengine.h"
 
-namespace product 
+namespace ean8 
 {
+  
+   class Ean8EnginePrivate;
 
 /**
  * EAN-8 barcode generator
  */
-class Ean8Engine : public ProductEngine 
+class Ean8Engine : public product::ProductEngine 
 {
   
-public:
-  /**
-   * @brief default constructor
-   */
-  Ean8Engine();
+public: 
   /**
    * String constructor
    *
@@ -73,7 +71,12 @@ protected:
    */ 
   QList<QStringList> encodeMainBlock(const barcodeEngine::SymbolList& mainBlock) const;   
   
-  
+   /**
+    * Subclass constructor
+    */
+   Ean8Engine(Ean8EnginePrivate &d); 
+private:
+   Q_DECLARE_PRIVATE(Ean8Engine);
 };
 };
 #endif // EAN8ENGINE_H
