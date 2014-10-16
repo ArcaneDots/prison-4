@@ -24,45 +24,29 @@
 */
 
 #include <numeric>
-#include "upcaengine_p.h"
+#include "upcaengine.h"
 
 using namespace product;
-//using namespace upca;
 
-/**
- * Default constructor
- */
 UpcAEngine::UpcAEngine() :
-	ProductEngine(*new UpcAEnginePrivate)	
+	ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__UPC_A)
 {
   qDebug("UpcAEngine default constructor");  
-  Q_D(UpcAEngine);
-  d->setProductCode(upc_common::PS__UPC_A);
-  d->m_userInputString = "";
-  d->m_constructionFlags = CodeEngine::AutoProduct;
 } 		    
   		    
 UpcAEngine::UpcAEngine(const QString &userBarcode, 
 	CodeEngine::ConstructCodes flags):
-	ProductEngine(*new UpcAEnginePrivate)
+	ProductEngine(userBarcode, flags, upc_common::PS__UPC_A)
 {
   qDebug("UpcAEngine constructor::string");
-  Q_D(UpcAEngine);
-  d->setProductCode(upc_common::PS__UPC_A);
-  d->m_userInputString = userBarcode;
-  d->m_constructionFlags = flags;
 }
 
-UpcAEngine::UpcAEngine(const barcodeEngine::SymbolList& userBarcode,
+UpcAEngine::UpcAEngine(const shared::SymbolList& userBarcode,
 	CodeEngine::ConstructCodes flags):
-	ProductEngine(*new UpcAEnginePrivate)
+	ProductEngine(toStringList(userBarcode).join(""), flags,
+		      upc_common::PS__UPC_A)
 {  
   qDebug("UpcAEngine constructor::symbol");
-   Q_D(UpcAEngine);
-  d->setProductCode(upc_common::PS__UPC_A);
-  d->m_userInputString = toStringList(userBarcode).join("");
-  d->m_userParsedSymbols = userBarcode;
-  d->m_constructionFlags = flags;
 }
 
 UpcAEngine::~UpcAEngine()
@@ -91,23 +75,23 @@ const QList<QStringList> UpcAEngine::encoded() const
   return encodedBlocks;
 }
 
-QList<QStringList> UpcAEngine::encodeMainBlock(const barcodeEngine::SymbolList& mainBlock) const
+QList<QStringList> UpcAEngine::encodeMainBlock(const shared::SymbolList& mainBlock) const
 {
   qDebug("UpcAEngine encodeMainBlock() : start");    
   int encBlockSize = upcA::ENCODE_BLOCK_SIZE;
-  QList<barcodeEngine::Symbol> l_mainBlock(local_mainBlock());
+  QList<shared::Symbol> l_mainBlock(local_mainBlock());
 
   QList<QStringList> encodeMainBlock;
   if (l_mainBlock.isEmpty()) {
     QStringList e_block;
     for (int count = 0; count < encBlockSize; count++) {  
-      e_block.append(barcodeEngine::Symbol::ERROR_ENCODING);
+      e_block.append(shared::Symbol::ERROR_ENCODING);
     }
     encodeMainBlock.append(e_block);
     encodeMainBlock.append(e_block);
   } else {
-    barcodeEngine::SymbolList l_block1 = l_mainBlock.mid(0, encBlockSize);
-    barcodeEngine::SymbolList l_block2 = l_mainBlock.mid(encBlockSize, encBlockSize);
+    shared::SymbolList l_block1 = l_mainBlock.mid(0, encBlockSize);
+    shared::SymbolList l_block2 = l_mainBlock.mid(encBlockSize, encBlockSize);
     // "O" and "R"
     QString patternOs = QString(encBlockSize, 'O');
     QString patternRs = QString(encBlockSize, 'R');
@@ -121,7 +105,7 @@ QList<QStringList> UpcAEngine::encodeMainBlock(const barcodeEngine::SymbolList& 
   return encodeMainBlock;
 }
 
-barcodeEngine::SymbolList UpcAEngine::compressUpc(const barcodeEngine::SymbolList& inputSymbolList) const
+shared::SymbolList UpcAEngine::compressUpc(const shared::SymbolList& inputSymbolList) const
 {
   qDebug("UpcAEngine toUpcE() : start");
   qDebug() << "UpcAEngine toUpcE() : input " << inputSymbolList;
@@ -134,7 +118,7 @@ barcodeEngine::SymbolList UpcAEngine::compressUpc(const barcodeEngine::SymbolLis
   // 3. manf dddd0, prod code 0000d 	-> mmmmp4
   // 4. manf ddddd, prod code 0000[5-9] -> mmmmm[5-9] 
   
-  barcodeEngine::SymbolList localUpcE;
+  shared::SymbolList localUpcE;
   // strip off number system and check digit symbols
   
   // -- compress to a UPC-E if possible --
@@ -143,10 +127,8 @@ barcodeEngine::SymbolList UpcAEngine::compressUpc(const barcodeEngine::SymbolLis
   if ( upceMatch.exactMatch(symbolString) ) {    
     QStringList captured(upceMatch.capturedTexts());
     
-    barcodeEngine::SymbolList manf = parse(captured.at(0));
-    barcodeEngine::SymbolList product = parse(captured.at(1));
-//     barcodeEngine::SymbolList manf = d->m_emptySymbol.parse(captured.at(0));
-//     barcodeEngine::SymbolList product = d->m_emptySymbol.parse(captured.at(1));
+    shared::SymbolList manf = m_emptySymbol.parse(captured.at(0));
+    shared::SymbolList product = m_emptySymbol.parse(captured.at(1));
     qDebug() << "compressUpc : manufactor code: " << manf;   
     qDebug() << "compressUpc : product Code: " << product;   
     
@@ -181,7 +163,7 @@ barcodeEngine::SymbolList UpcAEngine::compressUpc(const barcodeEngine::SymbolLis
 }
 
 
-barcodeEngine::SymbolList UpcAEngine::expandUpc(const barcodeEngine::SymbolList& inputSymbolList) const 
+shared::SymbolList UpcAEngine::expandUpc(const shared::SymbolList& inputSymbolList) const 
 {
   qDebug("UpcEEngine expandUpc() : start");
   Q_ASSERT(inputSymbolList.size() >= upcE::MIN && inputSymbolList.size() <= upcE::MAX);
@@ -194,18 +176,18 @@ barcodeEngine::SymbolList UpcAEngine::expandUpc(const barcodeEngine::SymbolList&
   // 4. manf ddddd, prod code 0000[5-9] -> mmmmm[5-9] 
   
   // -- validate by expanding -> UPC-A --
-  barcodeEngine::SymbolList expandedUpcA; 
+  shared::SymbolList expandedUpcA; 
   
-  barcodeEngine::Symbol compressionSymbol = inputSymbolList.at(upcE::COMPRESS_METHOD_INDEX);
+  shared::Symbol compressionSymbol = inputSymbolList.at(upcE::COMPRESS_METHOD_INDEX);
   int compressionMethod = compressionSymbol;
   qDebug() << "UpcAEngine expandUpc() : Compression Symbol: " << compressionSymbol;
   qDebug() << "UpcAEngine expandUpc() : Compression method: " << compressionMethod;
 
   expandedUpcA << inputSymbolList.at(upc_common::NUMBER_SYSTEM_INDEX);
-  barcodeEngine::SymbolList compressedUpc(inputSymbolList.mid(1, 6));
+  shared::SymbolList compressedUpc(inputSymbolList.mid(1, 6));
   qDebug() << "UpcAEngine expandUpc() : compressedUpc: " << compressedUpc;
-  barcodeEngine::SymbolList manf;
-  barcodeEngine::SymbolList product;
+  shared::SymbolList manf;
+  shared::SymbolList product;
   switch (compressionMethod) {
     case 0:
     case 1:

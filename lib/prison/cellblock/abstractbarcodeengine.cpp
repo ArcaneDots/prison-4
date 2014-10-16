@@ -26,11 +26,38 @@
 #include <algorithm>
 #include <numeric>
 #include "abstractbarcodeengine_p.h"
-#include "abstractbarcodeengine.h"
 
-//using namespace barcodeEngine;
+using namespace linearBarcode;
 
-int barcodeEngine::CommonChecksumOddEven(int checksumModulus, const barcodeEngine::SymbolList& symbols, int oddMultipler, int evenMultipler, bool reverse)
+
+// -------------- AbstractBarcodeEngine --------------
+
+AbstractBarcodeEngine::AbstractBarcodeEngine() : 
+  d_ptr(new AbstractBarcodeEnginePrivate)
+{
+  qDebug("AbstractBarcodeEngine constructor");
+}
+
+AbstractBarcodeEngine::AbstractBarcodeEngine(AbstractBarcodeEnginePrivate& d) : 
+  d_ptr(&d)
+{
+
+}
+
+
+AbstractBarcodeEngine::~AbstractBarcodeEngine()
+{
+  qDebug("AbstractBarcodeEngine destructor");
+}
+
+
+int AbstractBarcodeEngine::calculateCheckDigit() const
+{  
+  qDebug("AbstractBarcodeEngine calculateCheckDigit()");
+  return 0;
+}
+
+int CommonChecksumOddEven(int checksumModulus, const QList<Symbol>& symbols, int oddMultipler, int evenMultipler, bool reverse)
 {
   qDebug("CommonChecksumOddEven() : start");
   int l_accum = 0;
@@ -54,7 +81,7 @@ int barcodeEngine::CommonChecksumOddEven(int checksumModulus, const barcodeEngin
   return NextMultipleCheckDigit(checksumModulus, l_accum); 
 }
 
-int barcodeEngine::CommonChecksumLinear(int checksumModulus, const barcodeEngine::SymbolList& symbols, bool reverse)
+int CommonChecksumLinear(int checksumModulus, const QList<Symbol>& symbols, bool reverse)
 {
   qDebug("CommonChecksumLinear() : start");
   int total = 0;
@@ -74,7 +101,7 @@ int barcodeEngine::CommonChecksumLinear(int checksumModulus, const barcodeEngine
   return  (total != 0) ? (checksumModulus % total) : checksumModulus;
 }
 
-int barcodeEngine::NextMultipleCheckDigit(int modulusValue, int checksum)
+int NextMultipleCheckDigit(int modulusValue, int checksum)
 {
   qDebug("NextMultipleCheckDigit()");
   int checkValue = 0;
@@ -85,55 +112,4 @@ int barcodeEngine::NextMultipleCheckDigit(int modulusValue, int checksum)
   }
   checkValue = modulusValue - checkValue;
   return checkValue;
-}
-using namespace barcodeEngine;
-
-// -------------- AbstractBarcodeEngine --------------
-
-AbstractBarcodeEngine::AbstractBarcodeEngine() : 
-  d_ptr(new AbstractBarcodeEnginePrivate())
-//  d_ptr(new AbstractBarcodeEnginePrivate(this))
-{
-  qDebug("AbstractBarcodeEngine constructor");
-}
-
-AbstractBarcodeEngine::AbstractBarcodeEngine(AbstractBarcodeEnginePrivate &d):
-  d_ptr(&d)
-{
-
-}
-
-AbstractBarcodeEngine::~AbstractBarcodeEngine()
-{
-  qDebug("AbstractBarcodeEngine destructor");
-}
-
-QString AbstractBarcodeEngine::userInput() const
-{
-  Q_D(const AbstractBarcodeEngine);
-  return d->m_userInputString;
-}
-
-const CodeEngine::ErrorCodes& AbstractBarcodeEngine::statusFlags() const
-{
-  Q_D(const AbstractBarcodeEngine);
-  return d->m_isValid;
-}   
-
-const CodeEngine::ErrorCodes& AbstractBarcodeEngine::addFlags(CodeEngine::ErrorCode flags)
-{
-  Q_D(const AbstractBarcodeEngine);
-  return d->m_isValid |= flags;
-}
-
-const CodeEngine::ErrorCodes& AbstractBarcodeEngine::removeFlags(CodeEngine::ErrorCode flags)
-{
-  Q_D(const AbstractBarcodeEngine);
-  return d->m_isValid ^= flags;
-}
-
-CodeEngine::ConstructCodes AbstractBarcodeEngine::constructionFlags() const
-{
-  Q_D(const AbstractBarcodeEngine);
-  return d->m_constructionFlags;
 }

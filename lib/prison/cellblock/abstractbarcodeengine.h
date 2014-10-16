@@ -41,7 +41,7 @@
 #include <QColor>
 
 #include "shareddefines.h"
-#include "indexedregexp.h"
+//#include "indexedregexp.h"
 #include "symbol.h"
 
 /**
@@ -169,109 +169,176 @@ public:
 Q_DECLARE_OPERATORS_FOR_FLAGS(CodeEngine::ErrorCodes);
 Q_DECLARE_OPERATORS_FOR_FLAGS(CodeEngine::ConstructCodes);
 
-namespace barcodeEngine
+using namespace linearSymbology;
+namespace linearBarcode
 {
-  
-  
   class AbstractBarcodeEnginePrivate;
   
-
+/**
+ * Base for all barcodeEngine class
+ * 
+ * Contains shared functionality used to contruct linear barcodes
+ */
+class AbstractBarcodeEngine
+{
+public:     
   /**
-   * Base for all barcodeEngine class
-   * 
-   * Contains shared functionality used to contruct linear barcodes
+   * Default constructor
    */
-  class AbstractBarcodeEngine
-  {
-  public:     
-    /**
-     * Default constructor
-     */
-    AbstractBarcodeEngine();
-    /**
-     * destructor
-     */
-    virtual ~AbstractBarcodeEngine(); 
-    // -- inline get/set members --
-    /** 
-     * Default value
-     */
-    virtual const QStringList codeDefault() const = 0;
-    /**
-     * Get user's input string
-     */
-    virtual QString userInput() const;
-    
-    // --- construction flags ---
+  AbstractBarcodeEngine();
+  /**
+   * destructor
+   */
+  virtual ~AbstractBarcodeEngine(); 
+  // -- inline get/set members --
+  /** 
+   * Default value
+   */
+  const QStringList codeDefault() const;
+  /**
+   * Get user's input string
+   */
+  virtual QString userInput() const = 0;
+  /**
+   * initial list of parsed symbols
+   */
+  virtual QString parsedSymbolList() const = 0;
+  /**
+   * final list of symbols
+   */
+  virtual QString finalSymbolList() const = 0;  
+  /**
+   * Get QImage of barcode data
+   * 
+   * @note virtual
+   *
+   * @param requestedSize size of wigdet viewable area
+   * @param minimumSize size reqired to correctly display the barcode information
+   * @param foregroundColor text and bar color
+   * @param background color of "white" space
+   * @return QImage
+   **/
+  virtual QImage image(const QSizeF &requestedSize, QSizeF &minimumSize, 
+		  const QColor &foregroundColor, const QColor &backgroundColor) = 0;
+protected:
+  /**
+   * Calculate check sum digit for a array of symbol look-up indexes
+   * 
+   * Uses the most common method of calculating a check digit; 
+   * = Sum(index values) % modulus value
+   * @note default version returns 0; 
+   * @note please override with correct checksum function
+   * 
+   * @param symbolArray array of symbol's look-up index
+   * @return number of valid check digit
+   */
+  virtual int calculateCheckDigit() const = 0;
   
-    /**
-    * Get construction flags
-    */
-    virtual CodeEngine::ConstructCodes constructionFlags() const;
-    /**
-    * Is the user input valid for the current barcode
-    * 
-    * The barcode will display a default value in case the user's is not  
-    */
-    virtual const CodeEngine::ErrorCodes & statusFlags() const;
-    /**
-    * Add flags
-    */
-    virtual const CodeEngine::ErrorCodes & addFlags(CodeEngine::ErrorCode flags);
-    /**
-    * Remove flags
-    */
-    virtual const CodeEngine::ErrorCodes & removeFlags(CodeEngine::ErrorCode flags);
-    /**
-     * initial list of parsed symbols
-     */
-    virtual QString parsedSymbolList() const = 0;
-    /**
-     * final list of symbols
-     */
-    virtual QString finalSymbolList() const = 0;  
-    /**
-     * Get QImage of barcode data
-     * 
-     * @note virtual
-     *
-     * @param requestedSize size of wigdet viewable area
-     * @param minimumSize size reqired to correctly display the barcode information
-     * @param foregroundColor text and bar color
-     * @param background color of "white" space
-     * @return QImage
-     */
-    virtual QImage image(const QSizeF &requestedSize, QSizeF &minimumSize, 
-		    const QColor &foregroundColor, const QColor &backgroundColor) = 0;
-  protected:
-    /**
-     * Calculate check sum digit for a array of symbol look-up indexes
-     * 
-     * Uses the most common method of calculating a check digit; 
-     * = Sum(index values) % modulus value
-     * @note default version returns 0; 
-     * @note please override with correct checksum function
-     * 
-     * @param symbolArray array of symbol's look-up index
-     * @return number of valid check digit
-     */
-    virtual int calculateCheckDigit() const = 0;
-    
+  
+    const QScopedPointer<AbstractBarcodeEnginePrivate> d_ptr; 
     /**
      * Subclass constructor
      */
-    AbstractBarcodeEngine(AbstractBarcodeEnginePrivate &d);
-    const QScopedPointer<AbstractBarcodeEnginePrivate> d_ptr;     
+    AbstractBarcodeEngine(AbstractBarcodeEnginePrivate &d);   
+    
   private:
-    /**
-     * Not used but included for ABI
-     */
     Q_DECLARE_PRIVATE(AbstractBarcodeEngine);
-  };
+};
 
-  
-  // -- helper functions --
 
+// =======
+//   template <class T_SYMBOL> class AbstractBarcodeEngine
+//   {
+//   public:     
+//     /**
+//      * Default constructor
+//      */
+//     AbstractBarcodeEngine();
+//     /**
+//      * destructor
+//      */
+//     virtual ~AbstractBarcodeEngine(); 
+//     // -- inline get/set members --
+//     /** 
+//      * Default value
+//      */
+//     virtual const QStringList codeDefault() const = 0;
+//     /**
+//      * Get user's input string
+//      */
+//     virtual QString userInput() const;
+//     
+//     // --- construction flags ---
+//   
+//     /**
+//     * Get construction flags
+//     */
+//     virtual CodeEngine::ConstructCodes constructionFlags() const;
+//     /**
+//     * Is the user input valid for the current barcode
+//     * 
+//     * The barcode will display a default value in case the user's is not  
+//     */
+//     virtual const CodeEngine::ErrorCodes & statusFlags() const;
+//     /**
+//     * Add flags
+//     */
+//     virtual const CodeEngine::ErrorCodes & addFlags(CodeEngine::ErrorCode flags);
+//     /**
+//     * Remove flags
+//     */
+//     virtual const CodeEngine::ErrorCodes & removeFlags(CodeEngine::ErrorCode flags);
+//     /**
+//      * initial list of parsed symbols
+//      */
+//     virtual QString parsedSymbolList() const = 0;
+//     /**
+//      * final list of symbols
+//      */
+//     virtual QString finalSymbolList() const = 0;  
+//     /**
+//      * Get QImage of barcode data
+//      * 
+//      * @note virtual
+//      *
+//      * @param requestedSize size of wigdet viewable area
+//      * @param minimumSize size reqired to correctly display the barcode information
+//      * @param foregroundColor text and bar color
+//      * @param background color of "white" space
+//      * @return QImage
+//      */
+//     virtual QImage image(const QSizeF &requestedSize, QSizeF &minimumSize, 
+// 		    const QColor &foregroundColor, const QColor &backgroundColor) = 0;
+//   protected:
+//     /**
+//      * Calculate check sum digit for a array of symbol look-up indexes
+//      * 
+//      * Uses the most common method of calculating a check digit; 
+//      * = Sum(index values) % modulus value
+//      * @note default version returns 0; 
+//      * @note please override with correct checksum function
+//      * 
+//      * @param symbolArray array of symbol's look-up index
+//      * @return number of valid check digit
+//      */
+//     virtual int calculateCheckDigit() const = 0;
+//     
+//     /**
+//      * Subclass constructor
+//      */
+//     AbstractBarcodeEngine(AbstractBarcodeEnginePrivate &d);
+//     const QScopedPointer<AbstractBarcodeEnginePrivate> d_ptr;     
+//   private:
+//     /**
+//      * Not used but included for ABI
+//      */
+//     Q_DECLARE_PRIVATE(AbstractBarcodeEngine);
+//   };
+// //>>>>>>> Stashed changes
+// 
+// };
+
+// helper functions
   /**
    * Calculate "Odd/Even" check sum pattern for a array of symbol look-up indexes
    * 
@@ -287,7 +354,7 @@ namespace barcodeEngine
    * @return value of valid check digit
    */
   int CommonChecksumOddEven(int checksumModulus,
-			  const barcodeEngine::SymbolList& symbols, 
+			  const QList<Symbol>& symbols, 
 			  int oddMultipler,
 			  int evenMultipler,
 			  bool reverse = false);
@@ -302,7 +369,7 @@ namespace barcodeEngine
    * @return number of valid check digit
    */
   int CommonChecksumLinear(int checksumModulus,
-			  const barcodeEngine::SymbolList& symbols,
+			  const QList<Symbol>& symbols,
 			  bool reverse = false);
   /**
    * Value + checksum == multiple of the "Modulus" value
@@ -311,9 +378,7 @@ namespace barcodeEngine
    * @return modulus value - (checksum & modulus value)
    */
   int NextMultipleCheckDigit(int modulusValue, int checksum);
-};
 
-
-			       
+};	       
 #endif // ABSTRACTBARCODEENGINE_H
 

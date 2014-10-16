@@ -8,12 +8,12 @@
 
 namespace product{
 
-typedef QMap<shared::CODE_SECTIONS, QList<barcodeEngine::Symbol> >CodeSections;
+typedef QMap<shared::CODE_SECTIONS, QList<ProductSymbology> >CodeSections;
 
 /**
  * @cond PRIVATE
  */
-class ProductEnginePrivate : public barcodeEngine::AbstractBarcodeEnginePrivate
+class ProductEnginePrivate : public linearBarcode::AbstractBarcodeEnginePrivate
 {
 public: 
   
@@ -29,7 +29,7 @@ public:
    * default symbol used preform parsing 
    * 
    */
-  barcodeEngine::Symbol m_emptySymbol;
+  ProductSymbology m_emptySymbol;
    /**
    * The product code number system digit is used by object
    * 
@@ -88,28 +88,13 @@ public:
   /**
    * copy of original user input
    */
-  barcodeEngine::SymbolList m_userParsedSymbols;
+  QList<ProductSymbology> m_userParsedSymbols;
  
   /** 
    * machine readable/encoded barcode information
    */
   QString m_encodedSymbols;
-  
-  //ProductEngine * q_ptr;
-//   /**
-//    * default constructor
-//    */
-//   ProductEnginePrivate(ProductEngine *q):  
-//     barcodeEngine::AbstractBarcodeEnginePrivate(q),
-//     m_productCode(upc_common::PS__UNKNOWN),
-//     m_hasNumberSystem(false),
-//     m_fmtFirstBlockOffset(1),
-//     m_fmtHasSecondBlock(true),
-//     m_encFirstBlockOffset(0),
-//     m_encBlockSize(upc_common::ENCODE_BLOCK_SIZE)
-//   {
-//     qDebug("ProductEngine::Private default constructor");    
-//   }
+
   
  void setProductCode(upc_common::PRODUCT_CODE_VALUES productCode) 
  {
@@ -182,13 +167,13 @@ public:
   {  
     qDebug("ProductEngine::Private destructor");
   }
-protected:
+  
   void initialize() {
     qDebug("ProductEngine initialize");    
     fillExtendedEncodingList();
   }
   
-private:
+protected:
   
   /**
   * Exteneded barcode encoding patterns - EAN-2, EAN-5 

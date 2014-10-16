@@ -24,34 +24,29 @@
 */
 
 #include <QtDebug>
-#include "ean8engine_p.h"
+#include "ean8engine.h"
 
-using namespace ean8;
+using namespace product;
 
-
+Ean8Engine::Ean8Engine(): 	
+	ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__EAN_8)
+{
+  qDebug("Ean8Engine constructor");
+}
 
 Ean8Engine::Ean8Engine(const QString &userBarcode, 
-	CodeEngine::ConstructCodes flags) : 
-	ProductEngine(*new Ean8EnginePrivate())
-	//ProductEngine(userBarcode, flags, upc_common::PS__EAN_8)
+	CodeEngine::ConstructCodes flags):
+	ProductEngine(userBarcode, flags, upc_common::PS__EAN_8)
 {
   qDebug("Ean8Engine constructor");
 }
 
-Ean8Engine::Ean8Engine(const barcodeEngine::SymbolList& userBarcode, 
-		       CodeEngine::ConstructCodes flags) :
-	ProductEngine(*new Ean8EnginePrivate())
-	//ProductEngine(toStrings(userBarcode), flags,
-	//	      upc_common::PS__EAN_8)
+Ean8Engine::Ean8Engine(const shared::SymbolList& userBarcode,
+	CodeEngine::ConstructCodes flags):
+	ProductEngine(toStrings(userBarcode), flags,
+		      upc_common::PS__EAN_8)
 {
   qDebug("UpcAEngine constructor::symbol");
-}
-
-Ean8Engine::Ean8Engine(Ean8EnginePrivate& d): 	
-	//ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__EAN_8)
-	ProductEngine(d)
-{
-  qDebug("Ean8Engine constructor");
 }
 
 Ean8Engine::~Ean8Engine()
@@ -80,23 +75,23 @@ const QList<QStringList> Ean8Engine::encoded() const
   return encodedBlocks;
 }
 
-QList<QStringList> Ean8Engine::encodeMainBlock(const barcodeEngine::SymbolList& mainBlock) const
+QList<QStringList> Ean8Engine::encodeMainBlock(const shared::SymbolList& mainBlock) const
 {  
   qDebug("Ean8Engine encodeMainDigits() : start");
   int encBlockSize = ean8::ENCODE_BLOCK_SIZE;
-  QList<barcodeEngine::Symbol> l_mainBlock(local_mainBlock());
+  QList<shared::Symbol> l_mainBlock(local_mainBlock());
 
   QList<QStringList> encodeMainBlock;
   if (l_mainBlock.isEmpty()) {
     QStringList e_block;
     for (int count = 0; count < encBlockSize; count++) {
-      e_block.append(barcodeEngine::Symbol::ERROR_ENCODING);
+      e_block.append(shared::Symbol::ERROR_ENCODING);
     }
     encodeMainBlock.append(e_block);
     encodeMainBlock.append(e_block);
   } else {
-    barcodeEngine::SymbolList l_block1 = l_mainBlock.mid(0, encBlockSize);
-    barcodeEngine::SymbolList l_block2 = l_mainBlock.mid(encBlockSize, encBlockSize);
+    shared::SymbolList l_block1 = l_mainBlock.mid(0, encBlockSize);
+    shared::SymbolList l_block2 = l_mainBlock.mid(encBlockSize, encBlockSize);
     // "O" and "R"
     QString patternOs = QString(encBlockSize, 'O');
     QString patternRs = QString(encBlockSize, 'R');

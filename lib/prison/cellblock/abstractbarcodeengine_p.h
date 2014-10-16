@@ -4,16 +4,22 @@
 
 #include "abstractbarcodeengine.h"
 
-namespace barcodeEngine
+namespace linearBarcode
 {
 
 /**
  * @cond PRIVATE
  */
+
 class AbstractBarcodeEnginePrivate 
 {
-public: 
-    /**
+public:   
+  virtual ~AbstractBarcodeEnginePrivate()
+  {
+    qDebug("AbstractBarcodeEnginePrivate destructor");
+  }
+   
+  /**
    * default string used if user input is invalid
    * 
    * @note product code specific
@@ -64,51 +70,11 @@ public:
    */
   CodeEngine::ConstructCodes m_constructionFlags;
   
-  AbstractBarcodeEngine *q_ptr;
-//   AbstractBarcodeEnginePrivate(barcodeEngine::AbstractBarcodeEngine* q);
-  //AbstractBarcodeEnginePrivate(barcodeEngine::AbstractBarcodeEngine* q, const QString& defaultString, int minLength, int maxLength, int checkDigits, int checkDigitOffset = NOT_FOUND);
-
-  virtual ~AbstractBarcodeEnginePrivate()
-  {
-    qDebug("AbstractBarcodeEnginePrivate destructor");
-  }
-protected: 
-  //AbstractBarcodeEnginePrivate();
 };
-
-// /**
-//  * Default constructor
-//  */
-// AbstractBarcodeEnginePrivate::AbstractBarcodeEnginePrivate() : 
-//   q_ptr(0),
-//   m_defaultString(""),
-//   // length => 1
-//   m_minLength(1),
-//   m_maxLength(NOT_FOUND),
-//   // 1 check digit end of code
-//   m_numCheckDigits(1),
-//   m_checkDigitOffset(NOT_FOUND)
-// {  
-//  
-// }
-// AbstractBarcodeEnginePrivate::AbstractBarcodeEnginePrivate(barcodeEngine::AbstractBarcodeEngine *q) : 
-//   q_ptr(q),
-//   m_defaultString(""),
-//   // length => 1
-//   m_minLength(1),
-//   m_maxLength(NOT_FOUND),
-//   // 1 check digit end of code
-//   m_numCheckDigits(1),
-//   m_checkDigitOffset(NOT_FOUND)
-// {  
-//  
-// }
-
-
-
 /**
  * @endcond
  */
+
 
 /**
   * Calculate checksum 
@@ -119,7 +85,7 @@ protected:
   * @param oddMultipler 
   * @param evenMultipler
   */
-  class EvenOddChecksum : public std::binary_function<int, barcodeEngine::Symbol, int>
+  class EvenOddChecksum : public std::binary_function<int, Symbol, int>
   {
   public:
     EvenOddChecksum (int oddMultipler,
@@ -136,10 +102,10 @@ protected:
       qDebug("evenOddChecksum constructor() : end");
     }
     
-    int operator()(int total, const barcodeEngine::Symbol & s) const {
+    int operator()(int total, const Symbol & s) const {
       qDebug("evenOddChecksum operator() : start");
       // ignore symbols with no value
-      if (s == NOT_FOUND) {
+      if (s == shared::NOT_FOUND) {
 	qDebug("evenOddChecksum operator(missing index) : end");
 	return 0;
       }     
@@ -165,12 +131,13 @@ protected:
     int m_evenMultipler;
     mutable int m_parity;
   };
+  
   /**
   * linear increament multipler
   * 
   * @param T type of numbers 
   */
-  class LinearMultiple : public std::binary_function<int, barcodeEngine::Symbol, int>
+  class LinearMultiple : public std::binary_function<int, AbstractSymbology, int>
   {
   public:
     /**
@@ -182,9 +149,9 @@ protected:
     {
       // empty
     }
-  int operator() (int total, const barcodeEngine::Symbol & s) const 
+  int operator() (int total, const Symbol & s) const 
     {
-      if (s == NOT_FOUND) { return 0; }
+      if (s == shared::NOT_FOUND) { return 0; }
       if (m_multipler >= m_maxWeight) { 
 	m_multipler = 1; 
       }

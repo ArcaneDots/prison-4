@@ -31,7 +31,6 @@
 
 namespace product
 {
-  class Ean13EnginePrivate;
   
 /**
  * EAN-13 barcode generator
@@ -55,7 +54,7 @@ public:
    *
    * @param productCode constant indicating the current product code
    **/
-  Ean13Engine(const QList<barcodeEngine::Symbol>& userBarcode,
+  Ean13Engine(const QList<shared::Symbol>& userBarcode,
 	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   /**
    * destructor
@@ -79,10 +78,13 @@ protected:
    *
    * @param mainBlock first portion of the list of symbols
    */ 
-  QList<QStringList> encodeMainBlock(const barcodeEngine::SymbolList& mainBlock) const; 
-  Ean13Engine(Ean13EnginePrivate &d); 
+  QList<QStringList> encodeMainBlock(const shared::SymbolList& mainBlock) const; 
 private:
-  Q_DECLARE_PRIVATE(Ean13Engine);
+  /**
+   * Private barcode information
+   */
+  class Private;
+  Private * d;
 };
 };
 #endif // EAN13ENGINE_H

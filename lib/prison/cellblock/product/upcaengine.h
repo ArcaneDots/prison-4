@@ -32,7 +32,6 @@
 
 namespace product
 {
-   class UpcAEnginePrivate;
   
 /**
  * UPC-A barcode generator
@@ -57,7 +56,7 @@ public:
    *
    * @param productCode constant indicating the current product code
    **/
-  UpcAEngine(const barcodeEngine::SymbolList &userBarcode, 
+  UpcAEngine(const shared::SymbolList &userBarcode, 
 	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   /**
    * destructor
@@ -81,7 +80,7 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */ 
-  QList< QStringList > encodeMainBlock(const barcodeEngine::SymbolList& mainBlock) const;
+  QList< QStringList > encodeMainBlock(const shared::SymbolList& mainBlock) const;
   /**
     * Compress UPC-A barcode information into UPC-E format
     *
@@ -93,7 +92,7 @@ protected:
     * 
     * @param inputSymbolList list of symbols, not including the extended block
     */
-  barcodeEngine::SymbolList compressUpc(const barcodeEngine::SymbolList& inputSymbolList) const;
+  shared::SymbolList compressUpc(const shared::SymbolList& inputSymbolList) const;
   /**
     * Expand UPC-E barcode information into UPC-A format
     *
@@ -105,9 +104,7 @@ protected:
     * 
     * @param inputSymbolList list of symbols, not including the extended block
     */
-  barcodeEngine::SymbolList expandUpc(const barcodeEngine::SymbolList& inputSymbolList) const;
-private:
-  Q_DECLARE_PRIVATE(UpcAEngine);
+  shared::SymbolList expandUpc(const shared::SymbolList& inputSymbolList) const;
 };
 };
 #endif // UPCAENGINE_H

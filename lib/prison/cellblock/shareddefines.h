@@ -29,7 +29,7 @@
 #include <QtCore/QtDebug>
 #include <deque>
 
-#include "indexedregexp.h"
+//#include "indexedregexp.h"
 
 namespace std
 {
@@ -50,7 +50,9 @@ namespace std
 
 namespace shared
 {
-  const int NOT_FOUND = -1;  
+  const int NOT_FOUND = -1; 
+  const QString DEFAULT_SET("__DEFAULT_SET__");
+  const QString EmptyString("");
   /**
    * index of important barcode positions
    * 
@@ -104,10 +106,10 @@ namespace shared
    */
   typedef std::vector<int> LookupIndexArray;
   
-  /**
-   * collection of Indexed regular expression output objects
-   */
-  typedef std::vector<IndexedRegExp> RegexpCollection;
+//   /**
+//    * collection of Indexed regular expression output objects
+//    */
+//   typedef std::vector<IndexedRegExp> RegexpCollection;
   
   /**
    * Mapped collection of barcode location offsets
