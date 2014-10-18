@@ -9,25 +9,28 @@
 #include "abstractsymbology.h"
 
 namespace linearSymbology {
-     
-//     class Symbol;
-    class AbstractSymbology;
-    class AbstractSymbologyPrivate;
+ 
+  class AbstractSymbology;
+  class AbstractSymbologyPrivate;
 
  
-   class SymbolNode;
+  class SymbolNode;
     
-   //     typedef QMap<QString, QStringList> One2Many;
-   typedef QMap<QString, QString> SymbolEncoding;
-   //     typedef QMap<QString, QStringList> NamedSet;
-   //     
-   typedef QList<SymbolNode *> SymbolNodeList;
-   typedef QSet<SymbolNode *> SymbolNodeSet;
-   //    typedef QMap<QString, SymbolDataList> SymbolDataListMap;
-   typedef QSet<SymbolNode> ExpandedSymbolsSet;
-   typedef QList<SymbolNode> ExpandedSymbolsList;
+  //     typedef QMap<QString, QStringList> One2Many;
+  typedef QMap<QString, QString> SymbolEncoding;
+  //     typedef QMap<QString, QStringList> NamedSet;
+  //     
+  typedef QList<SymbolNode *> SymbolNodeList;
+  typedef QSet<SymbolNode *> SymbolNodeSet;
+  //    typedef QMap<QString, SymbolDataList> SymbolDataListMap;
+  typedef QSet<SymbolNode> ExpandedSymbolsSet;
+  typedef QList<SymbolNode> ExpandedSymbolsList;
+  
+  class SymbolNodePrivate;
    
-
+   
+  
+   
    /**
     * Underling indiviual shared Symbol data info object
     */
@@ -47,12 +50,37 @@ namespace linearSymbology {
       */
       SymbolNode(const SymbolNode &other);
 	
-	   
       /**
        * "Empty Symbol" constructor
        */		
       SymbolNode(const AbstractSymbology* symbology);
-      	      
+            	
+      /**
+       * Standard constructor
+       *
+       *  @note 1 or many symbol sets to 1 encoding
+       *
+       * code 39 or EAN-128
+       */
+      SymbolNode(const AbstractSymbology* symbology, 
+		const QString& symbolString, 
+		int index, 
+		QString defaultEncoding,
+		const QString& symbolSetName = shared::DEFAULT_SET, 
+		const QString& encodingSetName = shared::DEFAULT_SET, 
+		bool isVisible = true);
+     
+      /**
+       * Multiple encoding
+       */
+      SymbolNode(const AbstractSymbology* symbology, 
+	  const QString& symbolString, 
+	  int index, 
+	  const SymbolEncoding& encodings, 
+	  const QString& symbolSetName = shared::DEFAULT_SET, 
+	  const QString& encodingSetName = shared::DEFAULT_SET, 
+	  bool isVisible = true);
+      
       const AbstractSymbology* getSymbology() const;
       /**
        * Get syymbology name
@@ -72,7 +100,9 @@ namespace linearSymbology {
        */
       bool hasValue() const;
       
-      QString toString() const { return m_string; }
+      bool isVisible() const;
+      
+      QString toString() const; 
       /**
        * Symbol's set index
        */
@@ -92,21 +122,23 @@ namespace linearSymbology {
       /**
        *
        */
-      bool operator() (const QString& lhs, const QString& rhs) const;
+      QString operator() () const;
 	
       bool operator< (const SymbolNode &other) const;
       bool operator== (const SymbolNode &other) const;
       bool operator== (const QString &string) const;
       
-      operator QString() const {return m_string;}
+      operator QString() const; 
     protected:   
-      /**
-       * "Empty Symbol" constructor
-       */	
-      SymbolNode(const linearSymbology::AbstractSymbology& symbology, 
-		 int index, const QString& string, 
-		 const QString& namedSymbolSet = shared::DEFAULT_SET, 
-		 bool isVisible = true);
+//       /**
+//        * "Empty Symbol" constructor
+//        */	
+//       SymbolNode(const AbstractSymbology& symbology, 
+// 		 int index, 
+// 		 const QString& visibleString, 
+// 		 const QString& encoding, 
+// 		 const QString& namedSymbolSet = shared::DEFAULT_SET, 
+// 		 bool isVisible = true);
 //       /**
 //       * 1 to 1 - Visible symbology to Encoding pair
 //       */
@@ -144,24 +176,29 @@ namespace linearSymbology {
 // 	Q_ASSERT(!SymbolString.isEmpty());
 //       
 //       }
-      
-    private:
-      
-      const AbstractSymbology * m_symbology;
-      
-      // set name; null if in the DEFAULT_SET 
-      QString m_namedSet;
-      // index of symbol in "symbol set" list 
-      const int m_index;
-      QString m_string;
-      bool m_isVisible;
-      // pointer to expanded SymbolNodes
-      QScopedPointer<ExpandedSymbolsList> m_expandedNodes;
-      // pointer to encoding map
-      QScopedPointer<SymbolEncoding> * m_encoding;
-      QStringList m_defaultEncoding;
-    };  
+   protected:
+     const QScopedPointer<SymbolNodePrivate> d_ptr;
+   private:
+     Q_DECLARE_PRIVATE(SymbolNode);
+  };  
   
+  struct find_string {
+    find_string(const QString & string) : symbolString(string) {}
+    bool operator()(const SymbolNode * node) {
+      return node->toString() == symbolString;
+    }
+  private:
+    QString symbolString;
+  };
+  
+  struct find_index {
+    find_index(int & index) : m_index(index) {}
+    bool operator()(const SymbolNode * node) {
+      return node->index() == m_index;
+    }
+  private:
+    int m_index;
+  };
 bool operator<= (const SymbolNode& left, const SymbolNode& right);
 bool operator>= (const SymbolNode& left, const SymbolNode& right);
 

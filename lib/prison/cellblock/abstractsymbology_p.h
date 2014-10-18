@@ -10,40 +10,109 @@
 
 namespace linearSymbology{
     
-  
-
-      
-
   // -------- Private ----------
 class AbstractSymbologyPrivate 
 {
-//   typedef linearSymbology::hidden::SymbolNode SymbolNode;
 public:
-  AbstractSymbologyPrivate();
-  AbstractSymbologyPrivate(const QScopedPointer<AbstractSymbologyPrivate> & other);
-  virtual ~AbstractSymbologyPrivate();
+  AbstractSymbologyPrivate() : 
+    m_name("Abstract Symbology"),
+    m_nodeSet(),
+    m_expandedNodeList()
+  {  
+    qDebug("SymbolPrivate::SymbolPrivate default constructor");
+  }
+  AbstractSymbologyPrivate(const QScopedPointer<AbstractSymbologyPrivate> & other):
+    m_name("Abstract Symbology"),
+    m_nodeSet(other->m_nodeSet),
+    m_expandedNodeList(other->m_expandedNodeList){  /* empty */ }
+  
+  virtual ~AbstractSymbologyPrivate(){  /* empty */ }
   
   
   /// Initialize
-  void init();
+  void init(){  /* empty? */ }
   
   virtual SymbolNode * findNode(int index,
-	   const QString & symbolSet = shared::DEFAULT_SET) const;
-  virtual SymbolNode * findNode(const QString& userSymbol,
-	   const QString & symbolSet = shared::DEFAULT_SET) const;
+	   const QString & symbolSet = shared::DEFAULT_SET) const
+  {
+    SymbolNode * foundNode = 0;
+    
+    SymbolNodeSet::const_iterator result = 
+      std::find_if(m_nodeSet.constBegin(), 
+		   m_nodeSet.constEnd(), 
+		   find_index(index));
+    if(result != m_nodeSet.constEnd()) {
+      foundNode = static_cast<SymbolNode *>(*result);
+    }
+    
+    return foundNode;
+  }
+ 
+ virtual SymbolNode * findNode(const QString& userSymbol,
+	   const QString & symbolSet = shared::DEFAULT_SET) const
+  {
+    SymbolNode * foundNode = 0;
+    
+    SymbolNodeSet::const_iterator result = 
+      std::find_if(m_nodeSet.constBegin(), 
+		   m_nodeSet.constEnd(), 
+		   find_string(userSymbol));
+    if(result != m_nodeSet.constEnd()) {
+      foundNode = static_cast<SymbolNode *>(*result);
+    }
+    
+    return foundNode;
+  }
  
   /**
     * Attempt to parse a single QString into a list of ordered Symbols
     * 
-    * @must be "valid"
+    * @note this version only handles single charactor symbols
     */
-    QList<Symbol> parse(const QString& userInput) const;
+  virtual QList<Symbol> parse(const QString& userInput) const
+  {  
+    if (m_nodeSet.isEmpty() || userInput.isEmpty()) { 
+      return QList<Symbol>();  
+    }
+    
+    QList<Symbol> parsedSymbols;
+    
+    // try matching whole QString
+    SymbolNode * foundNode = findNode(userInput);
+    if (foundNode != 0) {
+      parsedSymbols.append(foundNode);
+    } else {
+      QString::const_iterator itrFirstChar = userInput.begin();
+      QString::const_iterator itrLastChar = userInput.end(); 
+      for (;itrFirstChar != itrLastChar; ++itrFirstChar) {
+	SymbolNode * foundNode = findNode(QString(*itrFirstChar));
+	if (foundNode != 0) {
+	  parsedSymbols.append(foundNode);
+	}
+      }
+    }
+    
+    return parsedSymbols;
+  }
   /**
     * Attempt to parse a list of QStrings into a list of ordered Symbols
     * 
     * @must be "valid"
     */
-  virtual QList<Symbol> parse(const QStringList& userInput) const;
+ virtual QList<Symbol> parse(const QStringList& userInput) const
+ {
+   if (m_nodeSet.isEmpty() || userInput.isEmpty()) { 
+      return QList<Symbol>();  
+    }
+    
+    QList<Symbol> parsedSymbols;
+    QStringList::const_iterator itrFirstString = userInput.begin();
+    QStringList::const_iterator itrLastString = userInput.end(); 
+    while (itrFirstString != itrLastString) {
+      parsedSymbols += parse(userInput);
+    }
+    return parsedSymbols;
+ }
       
   /// string version of integer value
   virtual QString str() const { return m_name; };
@@ -52,123 +121,6 @@ public:
   SymbolNodeSet m_nodeSet;
   SymbolNodeSet m_expandedNodeList;
 };
-
-
-AbstractSymbologyPrivate::AbstractSymbologyPrivate() : 
-  m_name("Abstract Symbology"),
-  m_nodeSet(),
-  m_expandedNodeList()
-{  
-  qDebug("SymbolPrivate::SymbolPrivate default constructor");
-}
-
-// SymbolPrivate::SymbolPrivate(const SymbolPrivate &other) : 
-//   //QSharedData(other), 
-//   m_data(other.m_data)
-// {
-//   // empty
-// }
-
-AbstractSymbologyPrivate::AbstractSymbologyPrivate(
-  const QScopedPointer<AbstractSymbologyPrivate>& other) :
-  m_name("Abstract Symbology"),
-  m_nodeSet(other->m_nodeSet),
-  m_expandedNodeList(other->m_expandedNodeList)
-{
-
-}
-
-
-AbstractSymbologyPrivate::~AbstractSymbologyPrivate()
-{
-  // empty
-}
-//const AbstractSymbologyPrivate::NameString_AbstractSymbology = QString("Abstract Symbology");
-
-void AbstractSymbologyPrivate::init()
-{
-
-}
-
-
-QList<Symbol> AbstractSymbologyPrivate::parse(const QString& userInput) const
-{  
-  if (m_nodeSet.isEmpty() || userInput.isEmpty()) { 
-    return QList<Symbol>();  
-  }
-  
-  QList<Symbol> parsedSymbols;
-  QString::const_iterator itrFirstString = userInput.begin();
-  QString::const_iterator itrLastString = userInput.end(); 
-  SymbolNodeSet::const_iterator itrFirstNode = m_nodeSet.constBegin();
-  SymbolNodeSet::const_iterator itrLastNode = m_nodeSet.constEnd();
-  while (itrFirstString != itrLastString) {
-    //itrFirstNode = m_nodeList.find(Sy(*itrFirstString));
-    if (itrFirstNode != itrLastNode) {
-      Symbol wrapped(static_cast<SymbolNode *>(*itrFirstNode));
-      parsedSymbols.append(wrapped);
-    }
-  }
-  return parsedSymbols;
-}
-
-SymbolNode* AbstractSymbologyPrivate::findNode(int index, const QString& symbolSet) const
-{
-  SymbolNode * result = 0;
-  
-  SymbolNodeSet::const_iterator itrFirstNode = m_nodeSet.constBegin();
-  SymbolNodeSet::const_iterator itrLastNode = m_nodeSet.constEnd(); 
-  for(; itrFirstNode != itrLastNode; ++itrFirstNode) {
-    if (static_cast<SymbolNode *>(*itrFirstNode)->index() == index) {
-      result = *itrFirstNode;
-    }
-  }
-  
-  return result;
-}
-
-SymbolNode* AbstractSymbologyPrivate::findNode(const QString& userSymbol, const QString& symbolSet) const
-{
-  // SymbolNodeSet nodeList = m_nodeSet.toList();
-  SymbolNodeSet::const_iterator itrEnd = m_nodeSet.constEnd();  
-  SymbolNodeSet::const_iterator itrStart = m_nodeSet.constBegin();  
-  
-  SymbolNode * foundNode = 0;
-  for (; itrStart != itrEnd; ++itrStart) {
-    if (static_cast<SymbolNode *>(*itrStart)->toString() >= userSymbol) { 
-      foundNode = static_cast<SymbolNode *>(*itrStart);
-    }
-  }
-  
-  return foundNode;
-}
-
-// void AbstractSymbologyPrivate::copy(QScopedPointer< AbstractSymbologyPrivate >& data)
-// {
-//   m_data = data->m_data;
-// }
-// 
-// void AbstractSymbologyPrivate::copy(const QScopedPointer< AbstractSymbologyPrivate >& data)
-// {
-//   m_data = data->m_data;
-// }
-
-
-// /**
-//  * 
-//  * subclass need to layer conditions
-//  */
-// bool AbstractSymbologyPrivate::operator==(const AbstractSymbology& other) const
-// {
-//   return operator==(other.getIndex());
-// }
-// 
-// bool AbstractSymbologyPrivate::operator==(int index) const
-// {
-//   return getIndex() == index;
-// }
-
-
   
 }
 

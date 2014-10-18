@@ -31,8 +31,8 @@
 #include <QtCore/QtDebug>
 
 #include "../abstractbarcodeengine.h"
+#include "productsymbology.h"
 #include "upceandefines_p.h"
-#include "productsymbol.h"
 
 using namespace linearBarcode;
 namespace product 
@@ -55,6 +55,8 @@ class ProductEngine : public linearBarcode::AbstractBarcodeEngine
 {    
 public:
   ProductEngine();
+
+  ProductEngine(AbstractBarcodeEnginePrivate& d);
 
   /**
    * destructor
@@ -112,7 +114,7 @@ public:
   /**
    * Validated full list of underling symbols
    */
-  const QList<ProductSymbology> symbols() const;
+  const QList<Symbol> symbols() const;
   /**
    * Get a list of symbol blocks formatted according to the barcode's specification
    * 
@@ -174,10 +176,10 @@ public:
   virtual QImage image(const QSizeF &requestedSize, QSizeF &minimumSize, 
 		  const QColor &foregroundColor, const QColor &backgroundColor);
 protected:  
-  /**
-   * Swap in private data
-   */
-  void swap(ProductEngine &other);    
+//   /**
+//    * Swap in private data
+//    */
+//   void swap(ProductEngine &other);    
   /**
    * Initialize -> primary code - check digit - extended code
    * 
@@ -193,7 +195,7 @@ protected:
    * @param symbolSrc list containing all symbol
    * @returns valid symbol list
    */
-  void processSymbolList(const QList<ProductSymbology>& inputSymbols); 
+  void processSymbolList(const QList<Symbol>& inputSymbols); 
   /**
    * get blocksize assiocated current engine 
    */
@@ -205,7 +207,7 @@ protected:
   /**
    * Generate error codes if the supplied and calculated checkdigit are different
    */
-  CodeEngine::ErrorCodes validateCheckDigit(const ProductSymbology& foundDigit, const ProductSymbology& calculated) const;	    
+  CodeEngine::ErrorCodes validateCheckDigit(const Symbol& foundDigit, const Symbol& calculated) const;	    
   /**
    * Calculate correct checkdigit - standard "product" version
    * 
@@ -219,65 +221,65 @@ protected:
    * 
    * @param symbolArray
    */
-  int calculateEan2CheckDigit(const QList<ProductSymbology>& symbolArray) const;
+  int calculateEan2CheckDigit(const QList<Symbol>& symbolArray) const;
   /**
    * Calculate Ean-5 check digit
    * 
    * @return check digit 
    */
-  int calculateEan5CheckDigit(const QList<ProductSymbology>& symbolArray) const;
+  int calculateEan5CheckDigit(const QList<Symbol>& symbolArray) const;
   /**
    * Set the raw parsed input from user
    */
-  void setRawInput(QList<ProductSymbology> symbolBlock);
+  void setRawInput(QList<Symbol> symbolBlock);
   /**
    * Raw parsed input from user
    */
-  const QList<AbstractSymbology> local_rawInput() const;
+  const QList<Symbol> local_rawInput() const;
   /**
    * Set the primary code block
    */
-  void setPrimaryBlock(QList<ProductSymbology> symbolBlock);
+  void setPrimaryBlock(QList<Symbol> symbolBlock);
   /**
    * Primary code block
    */
-  const QList<ProductSymbology> local_primaryBlock() const;
+  const QList<Symbol> local_primaryBlock() const;
   /**
    * Save checksum value
    */
-  void setCheckDigit(const ProductSymbology &s);
+  void setCheckDigit(const Symbol &s);
   /**
    * Get checksum value
    */
-    const ProductSymbology& local_checkDigit() const;  
+    const Symbol& local_checkDigit() const;  
   /**
    * Set the extended code block
    */
-  void setExtendedBlock(QList<ProductSymbology> symbolBlock);  
+  void setExtendedBlock(QList<Symbol> symbolBlock);  
   /**
    * extended code block
    */
-    const QList<ProductSymbology> local_extendedBlock() const;  
+    const QList<Symbol> local_extendedBlock() const;  
   /**
    * Main code block (primary code + checksum)
    */
-    const QList<ProductSymbology> local_mainBlock() const;
+    const QList<Symbol> local_mainBlock() const;
   /**
     * Number System 
     * 
     * @note may be blank since EAN-8 dosn't use one
     */
-    const ProductSymbology local_numberSystem() const;
+    const Symbol& local_numberSystem() const;
   /**
     * First block
     */
-  const QList<ProductSymbology> fmt_block1() const;
+  const QList<Symbol> fmt_block1() const;
   /**
     * Second block
     * 
     * @note  may be blank; UPC-E doesn't have one
     */
-    const QList< ProductSymbology > fmt_block2() const;
+    const QList<Symbol> fmt_block2() const;
   /**
    * Encode complete number according to current barcode type
    * 
@@ -288,7 +290,7 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */ 
-  virtual QList<QStringList> encodeMainBlock(const SymbolList& mainBlock) const = 0; 
+  virtual QList<QStringList> encodeMainBlock(const QList<Symbol>& mainBlock) const = 0; 
   /**
    * Attempt to encode any remaining symbols as UPC SUPPLEMENTAL digits
    * 
@@ -300,12 +302,12 @@ protected:
    * @param extendedBlock list of symbols
    * @returns encoded version of passed symbol list 
    */
-  QStringList encodeExtendedBlock(const QList< product::ProductSymbology >& extendedBlock) const;
+  QStringList encodeExtendedBlock(const QList<Symbol>& extendedBlock) const;
   /**
    * Generates "user" for default constructor
    */
   QString defaultInputString(int size) const;
-  QList<AbstractSymbology> defaultInputSymbols(int size) const;
+  QList<Symbol> defaultInputSymbols(int size) const;
   /**
    * Draw "bars" on image
    */

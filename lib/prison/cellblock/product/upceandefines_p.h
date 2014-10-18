@@ -199,6 +199,12 @@ namespace upc_common
     PS__UPC_5 = 10
   };
   
+  enum PARITY_NAMES {
+   LEFT_EVEN, 
+   LEFT_ODD, 
+   RIGHT
+  };
+  
   /**
    * L-Code: Left hand "Odd" parity symbol encoding
    *

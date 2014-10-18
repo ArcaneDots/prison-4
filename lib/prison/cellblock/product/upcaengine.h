@@ -23,16 +23,14 @@
     OTHER DEALINGS IN THE SOFTWARE.
 */
 
-
 #ifndef UPCAENGINE_H
 #define UPCAENGINE_H
-
 
 #include "productengine.h"
 
 namespace product
 {
-  
+  class UpcAEnginePrivate;
 /**
  * UPC-A barcode generator
  */
@@ -56,7 +54,7 @@ public:
    *
    * @param productCode constant indicating the current product code
    **/
-  UpcAEngine(const shared::SymbolList &userBarcode, 
+  UpcAEngine(const QList<Symbol> &userBarcode, 
 	     CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   /**
    * destructor
@@ -80,7 +78,7 @@ protected:
    * 
    * @param mainBlock first portion of the list of symbols 
    */ 
-  QList< QStringList > encodeMainBlock(const shared::SymbolList& mainBlock) const;
+  QList< QStringList > encodeMainBlock(const QList<Symbol>& mainBlock) const;
   /**
     * Compress UPC-A barcode information into UPC-E format
     *
@@ -92,7 +90,7 @@ protected:
     * 
     * @param inputSymbolList list of symbols, not including the extended block
     */
-  shared::SymbolList compressUpc(const shared::SymbolList& inputSymbolList) const;
+  QList<Symbol> compressUpc(const QList<Symbol>& inputSymbolList) const;
   /**
     * Expand UPC-E barcode information into UPC-A format
     *
@@ -104,7 +102,12 @@ protected:
     * 
     * @param inputSymbolList list of symbols, not including the extended block
     */
-  shared::SymbolList expandUpc(const shared::SymbolList& inputSymbolList) const;
+  QList<Symbol> expandUpc(const QList<Symbol>& inputSymbolList) const;
+
+ UpcAEngine(UpcAEnginePrivate &d);
+private:
+  Q_DECLARE_PRIVATE(UpcAEngine);
+    
 };
-};
+}
 #endif // UPCAENGINE_H

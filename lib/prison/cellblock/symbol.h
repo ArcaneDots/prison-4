@@ -27,10 +27,9 @@
 #ifndef SYMBOLS_H
 #define SYMBOLS_H
 
-#include <QSharedData>
 #include <QString>
 #include <QStringList>
-
+#include <QDebug>
 
 
 //#include "abstractsymbology.h"
@@ -39,20 +38,15 @@
   
 namespace linearSymbology{
   
-  //class SymbolPrivate;
-  
-//   const int NOT_FOUND = -1;  
-//   const QString DEFAULT_SET("__DEFAULT_SET__");
-//    const QString EmptyString("");
-//   
   class SymbolNode;
   class AbstractSymbology; 
   class AbstractSymbologyPrivate;
   
-  
-
   /**
    * Object that represents a single distinct symbol
+   * 
+   * @note Symbol object should act as a wrapper
+   * for a Symbology and a particualr SymbolNode it generated
    */
   class Symbol 
   {
@@ -77,6 +71,8 @@ namespace linearSymbology{
      */
     Symbol(SymbolNode * symbolData);
     
+    Symbol(AbstractSymbology * symbology);
+    
     ~Symbol();
     
      /**
@@ -91,16 +87,19 @@ namespace linearSymbology{
     QString encoding(const QChar& encodingType) const;
     QString encoding(const QString& encodingType) const;
     /**
-     * Attempt to parse a single QString into a list of ordered Symbols
+     * Attempt to parse a single Symbol into a list of ordered Symbols
      */
     virtual QList<Symbol> parse(const QString& userInput) const;
     /**
-     * Attempt to parse a list of QStrings into a list of ordered Symbols
+     * Attempt to parse a list of Symbol into a list of ordered Symbols
      */
     virtual QList<Symbol> parse(const QStringList& userInput) const;
   
     
     const Symbol & operator=(const Symbol &other);
+    /**
+     * Point this object to a different symbol in to the same set
+     */
     const Symbol & operator=(int index);
     
     //  stl operators
@@ -109,7 +108,7 @@ namespace linearSymbology{
     *
     * @note will return if matching not if not self-test  
     */
-   bool operator==(const Symbol& right) const;
+   bool operator==(const Symbol& other) const;
     bool operator!=(const Symbol &other) const;
 
     /**
@@ -148,6 +147,10 @@ bool operator> (const Symbol& left, const Symbol& right);
 bool operator<= (const Symbol& left, const Symbol& right);
 bool operator>= (const Symbol& left, const Symbol& right);
 
-QDebug operator<<(QDebug& dbg, const Symbol& s);
+QString toString (const QList<Symbol>& symbolList);
+QStringList toStringList (const QList<Symbol>& symbolList);
+
+QDebug operator<< (QDebug& dbg, const Symbol& s);
+
 }
 #endif // SYMBOLS_H

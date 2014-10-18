@@ -162,6 +162,6 @@ public:
     mutable int m_multipler;
   };      
  
-};
+}
   
 #endif // ABSTRACTENGINE_PRIVATE

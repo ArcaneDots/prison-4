@@ -25,6 +25,6 @@ namespace product{
   };
   
   
-};
+}
 
 #endif // UPCAENGINE_PRIVATE

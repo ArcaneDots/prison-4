@@ -24,29 +24,37 @@
 */
 
 #include <QtDebug>
-#include "ean8engine.h"
+#include "ean8engine_p.h"
 
 using namespace product;
 
 Ean8Engine::Ean8Engine(): 	
-	ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__EAN_8)
+	ProductEngine(*new Ean8EnginePrivate)
 {
   qDebug("Ean8Engine constructor");
+  Q_D(Ean8Engine);
+  d->m_userInputString = "";
+  d->m_constructionFlags = CodeEngine::AutoProduct;
 }
 
 Ean8Engine::Ean8Engine(const QString &userBarcode, 
-	CodeEngine::ConstructCodes flags):
-	ProductEngine(userBarcode, flags, upc_common::PS__EAN_8)
+	CodeEngine::ConstructCodes flags):	
+	ProductEngine(*new Ean8EnginePrivate)
 {
   qDebug("Ean8Engine constructor");
+  Q_D(Ean8Engine);
+  d->m_userInputString = userBarcode;
+  d->m_constructionFlags = flags;
 }
 
-Ean8Engine::Ean8Engine(const shared::SymbolList& userBarcode,
-	CodeEngine::ConstructCodes flags):
-	ProductEngine(toStrings(userBarcode), flags,
-		      upc_common::PS__EAN_8)
+Ean8Engine::Ean8Engine(const QList<Symbol>& userBarcode, CodeEngine::ConstructCodes flags):	
+	ProductEngine(*new Ean8EnginePrivate)
 {
   qDebug("UpcAEngine constructor::symbol");
+  Q_D(Ean8Engine);
+  d->m_userInputString = "";
+  d->m_userParsedSymbols = userBarcode;
+  d->m_constructionFlags = flags;
 }
 
 Ean8Engine::~Ean8Engine()
@@ -75,23 +83,24 @@ const QList<QStringList> Ean8Engine::encoded() const
   return encodedBlocks;
 }
 
-QList<QStringList> Ean8Engine::encodeMainBlock(const shared::SymbolList& mainBlock) const
+QList<QStringList> Ean8Engine::encodeMainBlock(const QList< Symbol >& mainBlock) const
 {  
+  Q_D(const Ean8Engine);
   qDebug("Ean8Engine encodeMainDigits() : start");
   int encBlockSize = ean8::ENCODE_BLOCK_SIZE;
-  QList<shared::Symbol> l_mainBlock(local_mainBlock());
+  QList<Symbol> l_mainBlock(local_mainBlock());
 
   QList<QStringList> encodeMainBlock;
   if (l_mainBlock.isEmpty()) {
     QStringList e_block;
     for (int count = 0; count < encBlockSize; count++) {
-      e_block.append(shared::Symbol::ERROR_ENCODING);
+      e_block.append(d->m_symbology.data()->errorEncoding());
     }
     encodeMainBlock.append(e_block);
     encodeMainBlock.append(e_block);
   } else {
-    shared::SymbolList l_block1 = l_mainBlock.mid(0, encBlockSize);
-    shared::SymbolList l_block2 = l_mainBlock.mid(encBlockSize, encBlockSize);
+    QList<Symbol> l_block1 = l_mainBlock.mid(0, encBlockSize);
+    QList<Symbol> l_block2 = l_mainBlock.mid(encBlockSize, encBlockSize);
     // "O" and "R"
     QString patternOs = QString(encBlockSize, 'O');
     QString patternRs = QString(encBlockSize, 'R');

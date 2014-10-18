@@ -24,106 +24,54 @@
 */
 
 #include <algorithm>
-#include "ean13engine.h"
+#include "ean13engine_p.h"
 
-namespace product {
-/**
- * @cond PRIVATE
- */
-class Ean13Engine::Private
-{
-public:
-  Private();
-  virtual ~Private();
-  /**
-   * Get productCode specific encoding pattern for the first block of symbols
-   *
-   * @param indexedPattern index of assiocated pattern
-   */
-  QString getFirstBlockEncodePattern(int indexedPattern = 0) const;
-private:
-  /**
-   * Load all encoding patterns based on combo of system number (0-1) and check digit
-   */
-  void fillSystemEncodingList(); 
-  /**
-   * encoding patterns for EAN-13 first block
-   */
-  QStringList m_parity13WidthEncoding;
-};
-};
-/**
- * @endcond
- */
+using namespace product; 
 
-using namespace product;
-using namespace shared;
-// ----------------- Ean13Engine::Private -----------------------
-Ean13Engine::Private::Private() : 
-  m_parity13WidthEncoding()
-{
-  fillSystemEncodingList();
-}
-
-Ean13Engine::Private::~Private()
-{
-  // empty
-}
-
-void Ean13Engine::Private::fillSystemEncodingList()
-{
-  qDebug("ProductEngine::Private fillWidthEncodingList() : start");
-  for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {
-    m_parity13WidthEncoding.append(ean13::PARITY_13[i]);
-  }
-  qDebug("ProductEngine::Private fillWidthEncodingList() : end");
-}
-
-QString Ean13Engine::Private::getFirstBlockEncodePattern(int indexedPattern) const
-{
-  qDebug("Ean13Engine getFirstBlockEncodePattern() : EAN-13 pattern ");
-  if(indexedPattern >= 0 &&
-    indexedPattern <= m_parity13WidthEncoding.size()) {
-    return m_parity13WidthEncoding.at(indexedPattern);
-  } else {
-    qDebug("Ean13Engine getFirstBlockEncodePattern() : bad index ");
-    return QString("");
-  }
-}
-// ----------------------- Ean13Engine -----------------------
-Ean13Engine::Ean13Engine(): 
-  ProductEngine("", CodeEngine::AutoProduct, upc_common::PS__EAN_13)
+Ean13Engine::Ean13Engine() : 
+  ProductEngine(*new Ean13EnginePrivate)
 {
   qDebug("Ean13Engine default constructor");
+  Q_D(Ean13Engine);
+  d->setProductCode(upc_common::PS__EAN_13);
+  d->m_userInputString = "";
+  d->m_constructionFlags = CodeEngine::AutoProduct;
 }
 
 // user constructor
 Ean13Engine::Ean13Engine(const QString &userBarcode, 
 			 CodeEngine::ConstructCodes flags): 
-  ProductEngine(userBarcode, flags, upc_common::PS__EAN_13), d(new Private())
+  ProductEngine(*new Ean13EnginePrivate)
 {
   qDebug("Ean13Engine user constructor");
+  Q_D(Ean13Engine);
+  d->setProductCode(upc_common::PS__EAN_13);
+  d->m_userInputString = userBarcode;
+  d->m_constructionFlags = flags;
 }
 
-Ean13Engine::Ean13Engine(const QList<shared::Symbol> & userSymbols, 
-			 CodeEngine::ConstructCodes flags) : 
-  ProductEngine(toStrings(userSymbols), flags, upc_common::PS__EAN_13), d(new Private())
+Ean13Engine::Ean13Engine(const QList< Symbol >& userBarcode, CodeEngine::ConstructCodes flags) : 
+  ProductEngine(*new Ean13EnginePrivate)
 {
   qDebug("Ean13Engine symbol constructor");
+  Q_D(Ean13Engine);
+  d->setProductCode(upc_common::PS__EAN_13);
+  d->m_userInputString = "";
+  d->m_userParsedSymbols = userBarcode;
+  d->m_constructionFlags = flags;
 }
 
 Ean13Engine::~Ean13Engine()
 {
   qDebug("Ean13Engine destructor");
-  delete d;
 }
 
 const QStringList Ean13Engine::formatedSymbols() const
 {
   QStringList formatedString;
   formatedString << local_numberSystem();
-  formatedString << toStrings(fmt_block1());
-  formatedString << toStrings(fmt_block2());
+  formatedString << toStringList(fmt_block1());
+  formatedString << toStringList(fmt_block2());
   formatedString << QString("");
   formatedString << extendedBlock().join("");
   return formatedString;
@@ -136,29 +84,30 @@ const QList<QStringList> Ean13Engine::encoded() const
   return encodedBlocks;
 }
 
-QList< QStringList > Ean13Engine::encodeMainBlock(const shared::SymbolList& mainBlock) const
+QList< QStringList > Ean13Engine::encodeMainBlock(const QList< Symbol >& mainBlock) const
 {
+  Q_D(const Ean13Engine);
   qDebug("Ean13Engine encodeSymbols() : start");    
   int blockSize = ean13::BLOCK_SIZE;
-  QList<shared::Symbol> l_mainBlock(local_mainBlock());
+  QList<Symbol> l_mainBlock(local_mainBlock());
 
   QList<QStringList> encodeMainBlock;
   if (l_mainBlock.isEmpty()) {
     QStringList e_block;
     for (int count = 0; count < encBlockSize(); count++) {
-      e_block.append(shared::Symbol::ERROR_ENCODING);
+      e_block.append(d->m_symbology.data()->errorEncoding());
     }
     encodeMainBlock.append(e_block);
     encodeMainBlock.append(e_block);
   } else {
-    shared::SymbolList l_block1 = l_mainBlock.mid(1, encBlockSize());
-    shared::SymbolList l_block2 = l_mainBlock.mid(1 + encBlockSize(), encBlockSize());
+    QList<Symbol> l_block1 = l_mainBlock.mid(1, encBlockSize());
+    QList<Symbol> l_block2 = l_mainBlock.mid(1 + encBlockSize(), encBlockSize());
 
     // block1
     int numberSystemIndex = local_numberSystem();
     qDebug() << "Ean13Engine encodeSymbols() : system digit = " << numberSystemIndex;
     QString pattern1 = QString(encBlockSize(), 'O');
-    if (numberSystemIndex != AbstractSymbology::NOT_FOUND) {
+    if (numberSystemIndex != shared::NOT_FOUND) {
       pattern1 = d->getFirstBlockEncodePattern(numberSystemIndex);
     }
     qDebug() << "Ean13Engine encodeSymbols() : pattern = " << pattern1;

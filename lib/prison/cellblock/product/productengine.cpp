@@ -80,13 +80,13 @@ QString ProductEngine::userInput() const
 QString ProductEngine::parsedSymbolList() const
 {
   Q_D(const ProductEngine);
-  return toStrings(local_rawInput());
+  return toString(local_rawInput());
 }
 
 QString ProductEngine::finalSymbolList() const
 { 
   Q_D(const ProductEngine);
-  return toStrings(symbols()) ;
+  return toString(symbols()) ;
 }
 
 int ProductEngine::primaryLength() const
@@ -110,9 +110,9 @@ const QStringList ProductEngine::extendedBlock() const
   return toStringList(local_extendedBlock());
 }
 
-const QList<ProductSymbology> ProductEngine::symbols() const
+const QList<Symbol> ProductEngine::symbols() const
 {
-  QList<ProductSymbology> result(local_primaryBlock());
+  QList<Symbol> result(local_primaryBlock());
   if (local_checkDigit().hasValue()) {
     result += local_checkDigit();
   }
@@ -177,12 +177,12 @@ int ProductEngine::encBlockSize() const
 
 
 
-void ProductEngine::swap(ProductEngine& other)
-{
-  Q_D(const ProductEngine);
-  using std::swap;  
-  swap(d_ptr, other.d_ptr);
-}
+// void ProductEngine::swap(ProductEngine& other)
+// {
+//   Q_D(const ProductEngine);
+//   using std::swap;  
+//   swap(d_ptr, other.d_ptr);
+// }
 
 // -- protected --
 void ProductEngine::initialize()
@@ -192,7 +192,7 @@ void ProductEngine::initialize()
   d->initialize();
 }
 
-void ProductEngine::processSymbolList(const QList< ProductSymbology >& inputSymbols)
+void ProductEngine::processSymbolList(const QList< Symbol >& inputSymbols)
 {
   Q_D(ProductEngine);
   qDebug("ProductEngine::processSymbolList - start");
@@ -203,7 +203,7 @@ void ProductEngine::processSymbolList(const QList< ProductSymbology >& inputSymb
   const int validLength = minLength  + 1;
   const int validEan2Length = validLength + ean2::BLOCK_SIZE;
   const int validEan5Length = validLength + ean5::BLOCK_SIZE;
-  QList<ProductSymbology> localSymbols(inputSymbols);
+  QList<Symbol> localSymbols(inputSymbols);
   
   // completely out of range
   if (inputLength < minLength || inputLength > maxLength) {
@@ -211,14 +211,14 @@ void ProductEngine::processSymbolList(const QList< ProductSymbology >& inputSymb
     d->m_isValid |= CodeEngine::LengthOutOfRange;
     return;
   }
-  QList<ProductSymbology> posPrimaryBlock(localSymbols.mid(0, d->m_checkDigitOffset));
+  QList<Symbol> posPrimaryBlock(localSymbols.mid(0, d->m_checkDigitOffset));
   
   // missing check digit
   if (inputLength == minLength) {    
     qDebug("ProductEngine::processSymbolList - input == primary only");
     setPrimaryBlock(posPrimaryBlock);
   } else if (inputLength > minLength) {
-    QList<ProductSymbology> inputSecondHalf(localSymbols.mid(d->m_checkDigitOffset));
+    QList<Symbol> inputSecondHalf(localSymbols.mid(d->m_checkDigitOffset));
     int secondHalfSize = inputSecondHalf.size();
     switch (secondHalfSize) {
       case 1: // check digit only
@@ -245,7 +245,7 @@ void ProductEngine::processSymbolList(const QList< ProductSymbology >& inputSymb
 }
 
 CodeEngine::ErrorCodes ProductEngine::validateCheckDigit(
-    const ProductSymbology& foundDigit, const ProductSymbology& calculated) const
+    const Symbol& foundDigit, const Symbol& calculated) const
 {
   Q_D(const ProductEngine);
   qDebug() << "CheckDigit : calculated "<< calculated;
@@ -278,16 +278,17 @@ int ProductEngine::calculateCheckDigit() const
   Q_D(const ProductEngine);
   qDebug("ProductEngine calculateCheckDigit");
   const int MODULUS = upc_common::CHECKSUM_MODULUS_VALUE;
-  QList<ProductSymbology> symbolArray(local_primaryBlock());
+  QList<Symbol> symbolArray(local_primaryBlock());
   if (symbolArray.size() < d->m_minLength) {
     qDebug("ProductEngine calculateCheckDigit : bad size");
     return 0;
   }
-  return CommonChecksumOddEven(MODULUS, symbolArray, 3, 1, true);
+  return CommonChecksumOddEven(upc_common::CHECKSUM_MODULUS_VALUE,
+			       symbolArray, 3, 1, true);
 }
 
 int ProductEngine::calculateEan2CheckDigit(
-    const QList< ProductSymbology >& symbolArray) const
+    const QList<Symbol>& symbolArray) const
 {
   qDebug("ProductEngine calculateEan2CheckDigit()");
   if (symbolArray.size() != 2) { 
@@ -299,7 +300,7 @@ int ProductEngine::calculateEan2CheckDigit(
   return checksum;
 }
 
-int ProductEngine::calculateEan5CheckDigit(const QList< ProductSymbology >& symbolArray) const
+int ProductEngine::calculateEan5CheckDigit(const QList< Symbol >& symbolArray) const
 {
   qDebug("ProductEngine calculateEan5CheckDigit()");
   if (symbolArray.size() != 5) { 
@@ -307,10 +308,11 @@ int ProductEngine::calculateEan5CheckDigit(const QList< ProductSymbology >& symb
     return shared::NOT_FOUND; 
   }
   const int MODULUS_VALUE = upc_common::CHECKSUM_MODULUS_VALUE;
-  return CommonChecksumOddEven(MODULUS_VALUE, symbolArray, 3, 9);
+  return CommonChecksumOddEven(upc_common::CHECKSUM_MODULUS_VALUE, 
+			       symbolArray, 3, 9);
 }
 
-QStringList ProductEngine::encodeExtendedBlock(const QList<ProductSymbology>& extendedBlock) const
+QStringList ProductEngine::encodeExtendedBlock(const QList< Symbol >& extendedBlock) const
 {
   Q_D(const ProductEngine);
   qDebug("ProductEngine encodeExtendedDigits() : start");
@@ -353,35 +355,35 @@ QString ProductEngine::defaultInputString(int size) const
   return QString(size,'0');
 }
 
-QList< AbstractSymbology > ProductEngine::defaultInputSymbols(int size) const
+QList< Symbol > ProductEngine::defaultInputSymbols(int size) const
 {
   Q_D(const ProductEngine);
-  return d->m_emptySymbol.parse(defaultInputString(size)); 
+  return d->m_symbology->parse(defaultInputString(size)); 
 }
 
-void ProductEngine::setRawInput(QList<ProductSymbology> symbolBlock)
+void ProductEngine::setRawInput(QList< Symbol > symbolBlock)
 {
   Q_D(ProductEngine);
   qDebug() << " ProductEngine::setRawInput " << symbolBlock;
-  QList<AbstractSymbology> fake_symbols(symbolBlock);
+  QList<Symbol> fake_symbols(symbolBlock);
   if (!fake_symbols.isEmpty()) {
     d->m_symbolSections[shared::RAW] = symbolBlock;
   }
 }
 
-const QList< AbstractSymbology > ProductEngine::local_rawInput() const
+const QList<Symbol> ProductEngine::local_rawInput() const
 {
   Q_D(const ProductEngine);
   return d->m_symbolSections.value(shared::RAW);
 }
 
 
-void ProductEngine::setPrimaryBlock(QList<ProductSymbology> symbolBlock)
+void ProductEngine::setPrimaryBlock(QList<Symbol> symbolBlock)
 {
-  Q_D(const ProductEngine);
+  Q_D(ProductEngine);
   qDebug() << " ProductEngine::setPrimaryBlock " << symbolBlock;
   int inputLength = symbolBlock.size();
-  QList<AbstractSymbology> fake_symbols(symbolBlock);
+  QList<Symbol> fake_symbols(symbolBlock);
   // reset the symbol list in case not a valid length
   if (inputLength != d->m_minLength) {
     fake_symbols.clear();
@@ -389,16 +391,16 @@ void ProductEngine::setPrimaryBlock(QList<ProductSymbology> symbolBlock)
   d->m_symbolSections[shared::PRIMARY] = symbolBlock;
 }
 
-const QList< ProductSymbology > ProductEngine::local_primaryBlock() const
+const QList<Symbol> ProductEngine::local_primaryBlock() const
 {  
   Q_D(const ProductEngine);
   return d->m_symbolSections.value(shared::PRIMARY);
 }
-void ProductEngine::setExtendedBlock(QList<ProductSymbology> symbolBlock)
+void ProductEngine::setExtendedBlock(QList<Symbol> symbolBlock)
 {
-  Q_D(const ProductEngine);
+  Q_D(ProductEngine);
   qDebug() << " ProductEngine::setExtendedBlock " << symbolBlock;
-  QList<ProductSymbology> fake_symbols(symbolBlock);
+  QList<Symbol> fake_symbols(symbolBlock);
   int inputLength = fake_symbols.size();
   // reset the symbol list in case not a valid length
   if (inputLength == 2 || inputLength == 5) {
@@ -406,36 +408,37 @@ void ProductEngine::setExtendedBlock(QList<ProductSymbology> symbolBlock)
   }  
 }
 
-const QList< ProductSymbology > ProductEngine::local_extendedBlock() const
+const QList< Symbol > ProductEngine::local_extendedBlock() const
 {
-  QList<AbstractSymbology> fake_symbols(
+  Q_D(const ProductEngine);
+  QList<Symbol> fake_symbols(
     d->m_symbolSections.value(shared::EXTENDED));
   return fake_symbols;
 }
 
-const QList<ProductSymbology> ProductEngine::local_mainBlock() const
+const QList<Symbol> ProductEngine::local_mainBlock() const
 {
-  SymbolList result(local_primaryBlock());
+  QList<Symbol> result(local_primaryBlock());
   if (local_checkDigit().hasValue()) {
     result += local_checkDigit();
   }
   return result;
 }
 
-void ProductEngine::setCheckDigit(const ProductSymbology& s)
+void ProductEngine::setCheckDigit(const Symbol& s)
 {
-  Q_D(const ProductEngine);
+  Q_D(ProductEngine);
   qDebug("ProductEngine::setCheckDigit - start");
-  QList<ProductSymbology> fake_symbols;
+  QList<Symbol> fake_symbols;
   fake_symbols.append(s);
   qDebug() << "saving " << fake_symbols;
   d->m_symbolSections[shared::CHECK_DIGIT] = fake_symbols;
 }
 
-const ProductSymbology & ProductEngine::local_checkDigit() const
+const Symbol& ProductEngine::local_checkDigit() const
 {
   Q_D(const ProductEngine);
-  QList<ProductSymbology> fake_symbols(
+  QList<Symbol> fake_symbols(
     d->m_symbolSections.value(shared::CHECK_DIGIT));
   if (!fake_symbols.isEmpty()) {
     return fake_symbols.front();
@@ -443,10 +446,10 @@ const ProductSymbology & ProductEngine::local_checkDigit() const
   return d->m_emptySymbol;
 }
 
-const ProductSymbology ProductEngine::local_numberSystem() const
+const Symbol & ProductEngine::local_numberSystem() const
 {  
   Q_D(const ProductEngine);
-  QList<ProductSymbology> fake_symbols(
+  QList<Symbol> fake_symbols(
     d->m_symbolSections.value(shared::PRIMARY));
   if (d->m_hasNumberSystem && fake_symbols.size() >= d->m_minLength) {
     return fake_symbols.at(0);
@@ -454,10 +457,10 @@ const ProductSymbology ProductEngine::local_numberSystem() const
   return d->m_emptySymbol;
 }
 
-const QList<ProductSymbology> ProductEngine::fmt_block1() const
+const QList< Symbol > ProductEngine::fmt_block1() const
 {
   Q_D(const ProductEngine);
-  QList<ProductSymbology> fake_symbols(
+  QList<Symbol> fake_symbols(
     d->m_symbolSections.value(shared::PRIMARY));
   if (!fake_symbols.isEmpty()) {
     return fake_symbols.mid(d->m_fmtFirstBlockOffset, d->m_fmtBlockSize);
@@ -465,11 +468,11 @@ const QList<ProductSymbology> ProductEngine::fmt_block1() const
   return fake_symbols;
 }
 
-const QList<ProductSymbology> ProductEngine::fmt_block2() const
+const QList< Symbol > ProductEngine::fmt_block2() const
 {
   Q_D(const ProductEngine);
-  QList<ProductSymbology> results;
-  QList<ProductSymbology> fake_symbols(
+  QList<Symbol> results;
+  QList<Symbol> fake_symbols(
     d->m_symbolSections.value(shared::PRIMARY));
   if (!fake_symbols.isEmpty() && d->m_fmtHasSecondBlock) {
     results = fake_symbols.mid(d->m_fmtFirstBlockOffset + d->m_fmtBlockSize, 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 ian <email>
+ * Copyright (c) 2013 ian hollander @ gmail dot com
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -27,191 +27,170 @@
 #include <iterator>
 #include <numeric>
 
-#include "symbolnode.h"
-#include "abstractsymbology.h"
-#include "symbol.h"
-//#include "symbol_p.h"
-#include "product/upceandefines_p.h"
+#include "productsymbology_p.h"
+#include "productsymbology.h"
+//#include "product/upceandefines_p.h"
 
-//#include <QRegExp>
+#include <QRegExp>
 
 
+using namespace product;
 
-using namespace linearSymbology;
-// -------- Symbols ----------
-//const QString Symbol::ERROR_ENCODING = "1010101";
+const QString ERROR_ENCODING = "1010101";
 
-Symbol::Symbol() :
-  m_node(0),
-  m_symbology(0)
+ProductSymbology::ProductSymbology() : 
+  AbstractSymbology(*new ProductSymbologyPrivate)
 {
-
 }
 
-Symbol::Symbol(const Symbol& s) :
-  m_node(s.m_node),
-  m_symbology(s.m_symbology)
+ProductSymbology::ProductSymbology(const ProductSymbologyPrivate& other) : 
+  AbstractSymbology(*new ProductSymbologyPrivate)
 {
-  
+  Q_D(ProductSymbology);
 }
 
-Symbol::Symbol(SymbolNode* symbolData) :
-  m_node(symbolData),
-  m_symbology(0)
+ProductSymbology::~ProductSymbology()
 {
-  if (hasValue()) { m_symbology = const_cast<AbstractSymbology *>(m_node->getSymbology()); } //->getSymbology(); }
 }
 
-Symbol::Symbol(AbstractSymbology* symbology) :
-  m_node(0),
-  m_symbology(symbology)
+
+QString ProductSymbology::errorEncoding() const
 {
-
+    return "1010101";
 }
 
-
-Symbol::~Symbol()
-{
-  // don't delete pointers on exit
-}
-
-
-bool Symbol::isValid() const
-{
-  return m_symbology != 0;
-}
-
-bool Symbol::hasValue() const
-{
-  
-  return m_node != 0;
-}
-
-int Symbol::getIndex() const
-{
-  return hasValue() ? m_node->index() : shared::NOT_FOUND;
-}
-
-
-
-QString Symbol::encoding(const QChar& encodingType) const
-{
-  return encoding(QString(encodingType));
-//   Q_D(const Symbol);
-//   QString encodingString(encodingType);
-//   return (hasValue()) ? d->encoding(encodingType) : d->encoding();
-}
-
-QString Symbol::encoding(const QString& encodingType) const
-{  
-  if (hasValue()) {
-    m_node->encoding(encodingType);
-  } else if (isValid()) {
-    m_symbology->errorEncoding();
-  } else { 
-    return QString(""); 
-  }
-//   Q_D(const Symbol);
-//   return (hasValue()) ? d->encoding(encodingType) : d->encoding();
-}
-
-
-
-
-
-QString Symbol::toString() const
-{
-  return (hasValue()) ? m_node->toString() : QString("");
-//   Q_D(const Symbol);
-//   return (hasValue()) ? d->m_node->toString() : QString("");
-}
-
-QList<Symbol> Symbol::parse(const QString& userInput) const
-{
-  if (!isValid()) { 
-    return QList<Symbol>();    
-  }
-  
-  return m_symbology->parse(userInput);
-}
-
-QList<Symbol> Symbol::parse(const QStringList& userInput) const
-{
-  QList<Symbol> parsedSymbols;
-  
-  QStringList::const_iterator itrString = userInput.begin();
-  QStringList::const_iterator itrLast = userInput.end(); 
-  for (; itrString != itrLast; ++itrString) {
-    parsedSymbols += parse(*itrString);    
-  }
-  return parsedSymbols;
-}
-
-// const Symbol::SymbolNode* Symbol::getNode() const
+// QString ProductSymbology::encoding(const QChar& encodingType) const
 // {
-//   Q_D(const Symbol);
-//   return d->m_node;
+//   Q_D(ProductSymbology);
+//   
+//   QString encodingString(encodingType);
+//   return (hasValue()) ? d->encoding(encodingType) : ERROR_ENCODING;
 // }
-
-
-
-const Symbol& Symbol::operator=(const Symbol& other)
-{ 
-  m_node = other.m_node;
-  m_symbology = other.m_symbology; 
-  
-  return *this;
-//   Q_D(Symbol);
-//   if (d->m_node != other.d_ptr.data()->m_node) {
-//     d->m_node = other.d_ptr.data()->m_node;
+// 
+// QString ProductSymbology::encoding(const QString& encodingType) const
+// {  
+//   return (hasValue()) ? d->encoding(encodingType) : ERROR_ENCODING;
+// }
+// 
+// const ProductSymbology& ProductSymbology::operator=(const Symbol& other)
+// {
+//   if (d != other.d) {
+//     d = other.d;
 //   }
 //   return *this;
-}
+// }
+// 
+// const ProductSymbology& ProductSymbology::operator=(int index)
+// {
+//   setSymbolIndex(index);
+//   return *this;
+// }
+// 
+// QList< ProductSymbology > ProductSymbology::operator+=(const ProductSymbology& other)
+// {
+//   return QList<ProductSymbology>(linearSymbology::Symbol::operator+=(other));
+// }
+// 
+// 
+// bool ProductSymbology::operator==(const ProductSymbology& other) const
+// {
+//   return linearSymbology::Symbol::operator==(other);
+// }
+// 
+// bool ProductSymbology::operator==(int index) const
+// {
+//   return linearSymbology::Symbol::operator==(index);
+// }
+// 
+// 
+// bool ProductSymbology::isValid() const
+// {
+//   return (!d == false &&
+// 	  d.constData()->isValid());
+// }
+// 
+// bool ProductSymbology::hasValue() const
+// {
+//   Q_D(const ProductSymbol);
+//   return d->hasValue();
+// }
+// 
+// QString ProductSymbology::toString() const
+// {
+//   Q_D(const ProductSymbol);
+//   return (hasValue()) ? d->str() : QString("");
+// }
 
-bool Symbol::operator==(const Symbol& other) const
-{
-  return (m_node == other.m_node && m_symbology == other.m_symbology);
-}
-
-bool Symbol::operator!=(const Symbol& other) const
-{
-  return !operator==(other);
-}
-
-
-bool Symbol::operator==(int index) const
-{  
-  return (hasValue() && (index == m_node->index()));
-}
-
-
+// QList< Symbol > ProductSymbology::parse(const QString& userInput) const
+// {
+//   Q_D(const ProductSymbol);
+//   if (!isValid()) { 
+//     return QList<ProductSymbology>();    
+//   }  
+//   QList<ProductSymbology> parsedSymbols(d->parse(userInput));
+//   return parsedSymbols;
+// }
+// 
+// QList< Symbol > ProductSymbology::parse(const QStringList& userInput) const
+// {
+//   Q_D(const ProductSymbol);
+//   QList<ProductSymbology> parsedSymbols;
+//   if (d->isValid() == false) { 
+//     return QList<ProductSymbology>();  
+//   }
+//      
+//   QStringList::const_iterator itrString = userInput.begin();
+//   QStringList::const_iterator itrLast = userInput.end(); 
+//   while (itrString != itrLast) {
+//     parsedSymbols += d->parse(*itrString++);
+//   }
+//   return parsedSymbols;
+// }
+// 
+// QList<Symbol> Symbol::operator+=(const Symbol& other)
+// {
+//   QList<Symbol> parsedSymbols;
+//   parsedSymbols.append(*this);
+//   parsedSymbols += parse(other);
+//   return parsedSymbols;
+// }
+// 
+// bool Symbol::operator==(const Symbol& other) const
+// {
+//   // Remove second check once product subclasses symbol::private
+//   return (d == other.d || d->m_index == other.d->m_index);
+// }
+// 
+// bool Symbol::operator==(int index) const
+// {
+//   return (d->m_index == index);
+// }
+// 
+// 
 // bool Symbol::isValidString(const QString& symbolString) const
 // {
-//   Q_D(const Symbol);
-//   return (d->symbolString.contains(symbolString));
+//   return (d.constData()->m_symbolList.contains(symbolString));
 // }
 // 
 // int Symbol::convertStringToIndex(const QString& symbolString) const
 // {  
-//   Q_D(const Symbol);
 //   int index = NOT_FOUND;
 //   if (isValidString(symbolString)) {
-//     index =  d->symbolString.indexOf(symbolString); 
+//     index =  d.constData()->m_symbolList.indexOf(symbolString); 
 //   } 
 //   return index;  
 // }
 // 
 // const QString Symbol::convertIndexToString(const int index) const
 // {  
-//   Q_D(const Symbol);
 //   QString str;
-//   int numSymbols = d->m_symbolList.size();  
+//   int numSymbols = d.constData()->m_symbolList.size();  
 //   if (index > NOT_FOUND && index < numSymbols) {
-//     str = d->m_symbolList.at(index);
+//     str = d.constData()->m_symbolList.at(index);
 //   }
 //   return str;
 // }
-
+// 
 // void Symbol::setSymbolIndex(int index) 
 // {  
 //   int finalIndex = index;
@@ -234,139 +213,12 @@ bool Symbol::operator==(int index) const
 // }
 
 
-const Symbol& Symbol::operator=(int index)
-{
-  //setSymbolIndex(index);
-  return *this;
-}
-
-// static operators
-
-bool operator<(const Symbol& left, const Symbol& right) 
-{
-  return left.getIndex() < right.getIndex();
-}
-
-bool operator>(const Symbol& left, const Symbol& right) 
-{  
-  return left.getIndex() > right.getIndex();
-}
-
-// bool Symbol::operator==(const Symbol& left, const Symbol& right)
-// {
-//   return (left. == right.getNode());
-// }
-bool linearSymbology::operator<=(const Symbol& left, const Symbol& right)
-{
-  return (left < right  || left == right);
-}
-
-bool linearSymbology::operator>=(const Symbol& left, const Symbol& right) 
-{
-  return (left > right  || left == right);
-}
-
-
-QList<Symbol> operator+=(const QList<Symbol> & left, const Symbol& right)
-{
-  QList<Symbol> temp(left);
-  temp.append(right);
-  return temp;
-}
-
-
-
-
-QDebug operator<<(QDebug& dbg, const Symbol& s)
+QDebug operator<<(QDebug& dbg, const ProductSymbology& s)
 { 
-  dbg << s.toString(); 
+  dbg << s.getName(); 
   return dbg;
 }
 
-QList<Symbol> operator<<(const QList<Symbol>& symbols, const QString& userInput)
-{
-  QList<Symbol> tempSymbols(symbols);  
-  tempSymbols += symbols.front().parse(userInput);   
-  return tempSymbols;
-}
-
-QString toString(const QList<Symbol>& symbolList)
-{  
-  return toStringList(symbolList).join("");
-}
-
-QStringList toStringList(const QList<Symbol>& symbolList)
-{
-  QStringList output;
-  for (int i = 0; i < symbolList.count(); ++i) { 
-    output << symbolList.at(i);
-  }
-  return output;
-}
-
-
-
-
-
-
-
-// QString shared::toStrings(const QList<Symbol> & symbolStrings)
-// {
-//   QStringList strings; 
-//   
-//   std::copy(symbolStrings.begin(), symbolStrings.end(),
-// 	    std::back_inserter(strings));
-//   return strings.join("");
-// }
-// 
-// QStringList shared::toStringList(const QList<Symbol>& symbolStrings)
-// {
-//   QStringList strings; 
-//   
-//   QList<Symbol>::const_iterator _first = symbolStrings.begin();
-//   QList<Symbol>::const_iterator _last = symbolStrings.end();
-//   while (_first != _last) {
-//       strings.append(_first->toString());
-//       _first++;      
-//   }
-//   return strings;
-// }
-// 
-// std::vector<int> toIntVector(const QList< Symbol >& symbolStrings)
-// {
-//   std::vector<int> vecInt; 
-//   
-//   std::copy<>(symbolStrings.begin(), 
-// 	      symbolStrings.end(), 
-// 	      std::back_inserter(vecInt));
-//   return vecInt;
-// }
-
-// QStringList shared::encodeSymbolParity(const QList<Symbol>& symbols, 
-// 			       const QString& parityPattern)
-// {
-//   //const QString Zeros(symbols.size(),'0');
-//   
-//   QString pattern(parityPattern);
-//   if ( symbols.isEmpty() ) { 
-//     return QStringList();
-//   }
-//   QStringList encodedList;
-//   if ( !pattern.isEmpty() ) {
-//     std::transform(symbols.begin(), symbols.end(),
-// 	 std::back_inserter(encodedList),
-// 	 PatternEncoder(pattern));
-//   } else { 
-//     qDebug("Missing Parity Pattern string");
-//     int symbolsSize = symbols.size();
-//     for (int i = 0; i < symbolsSize; i++) {
-//       encodedList.append(ERROR_ENCODING);
-//     }
-//   }
-//   return encodedList;
-// }
-// 
-// 
 // PatternEncoder::PatternEncoder(const QString& pattern) : 
 //     m_pattern( pattern ), 
 //     m_index(0)
@@ -383,7 +235,7 @@ QStringList toStringList(const QList<Symbol>& symbolList)
 //   }
 //   return result;
 // }
-//   
+  
 
 
 // int calculateCheckDigit(int modulusValue, const QList<Symbol>& symbolArray) 
@@ -481,12 +333,4 @@ QStringList toStringList(const QList<Symbol>& symbolList)
 //   if (checksumModulus <= 0)  { return checksum; }
 //   return checksum % checksumModulus;
 // }    
-
-
-
-
-
-
-  
-
 

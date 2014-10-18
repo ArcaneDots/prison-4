@@ -5,9 +5,9 @@
 #include "productengine_p.h"
 #include "ean8engine.h"
 
-namespace ean8{
+namespace product{
 
-  class Ean8EnginePrivate : public product::ProductEnginePrivate
+  class Ean8EnginePrivate : public ProductEnginePrivate
   {
   public:
     Ean8EnginePrivate(){

@@ -24,100 +24,144 @@
  *
  */
 
-#ifndef ABSTRACTSYMBOLOGY_H
-#define ABSTRACTSYMBOLOGY_H
+#ifndef PRODUCT_SYMBOLOGY_H
+#define PRODUCT_SYMBOLOGY_H
 
-#include <QSharedData>
-#include <QStringList>
+#include "../abstractsymbology.h"
 
-#include "shareddefines.h"
-
-namespace linearSymbology  
+using namespace linearSymbology;
+namespace product  
 {
   
-  class Symbol;
-  class SymbolNode;
-  class SymbolPrivate;
-  
-  class AbstractSymbologyPrivate;
-  
-class AbstractSymbology 
+class ProductSymbologyPrivate;
+
+class ProductSymbology : public AbstractSymbology
 {
-public: 
-  
-  friend class Symbol;
+public:
   /**
    * default constructor
    */
-  AbstractSymbology();
+  ProductSymbology();
   /**
    * Copy constructor
    */
-  AbstractSymbology(const AbstractSymbology &other);
+  ProductSymbology(const product::ProductSymbologyPrivate& other);
   /**
    * destructor
    */
-  ~AbstractSymbology();
-  
-  virtual QString getName() const; 
+  ~ProductSymbology();
   
   virtual QString errorEncoding() const;
   
-  virtual Symbol getSymbol(int index, 
-			   QString symbolSet = shared::DEFAULT_SET);
+//   QString encoding(const QChar& encodingType) const;
+//   QString encoding(const QString& encodingType) const;
+//   
+//   const ProductSymbology & operator=(const ProductSymbology &other);
+//   const ProductSymbology & operator=(int index);
+//   
+//   /**
+//    * Test whereter the current Symbol object contains the same Barcode information and current value
+//    *
+//    * @note will return if matching not if not self-test  
+//    */
+//   bool operator==(const ProductSymbology &other) const;
+//   bool operator==(int index) const;
+//   bool operator!=(int index) const { return !(operator==(index)); }
+//   
+//   QList<ProductSymbology>  operator+=(const ProductSymbology& other);
   
-  virtual Symbol getSymbol(QString string, 
-			   QString symbolSet = shared::DEFAULT_SET);
-   
-  /**
-   * Attempt to parse a single QString into a list of ordered Symbols
-   */ 
-  virtual QList<Symbol> parse(const QString& userInput) const;
-  /**
-   * Attempt to parse a list of QStrings into a list of ordered Symbols
-   */ 
-  virtual QList<Symbol> parse(const QStringList& userInput) const;
-  
-  SymbolNode * findNode(int index,
-	    QString symbolSet = shared::DEFAULT_SET) const;
-  SymbolNode * findNode(const QString& userSymbol,
-	    QString symbolSet = shared::DEFAULT_SET) const;
+//   /**
+//    * Attempt to parse a single QString into a list of ordered Symbols
+//    */ 
+//   virtual QList<Symbol> parse(const QString& userInput) const;
+//   /**
+//    * Attempt to parse a list of QStrings into a list of ordered Symbols
+//    */ 
+//   virtual QList<Symbol> parse(const QStringList& userInput) const;
 
-protected: 
-  AbstractSymbology(AbstractSymbologyPrivate &d);
- 
-    
-  const QScopedPointer<AbstractSymbologyPrivate> d_ptr;
-private:  
-  Q_DECLARE_PRIVATE(AbstractSymbology);
+//   /**
+//    * Symbol has complete barcode symbology
+//    */
+//   bool isValid() const;
+//   /**
+//    * Symbol refers to a particular value
+//    */
+//   bool hasValue() const;
+//   
+//   operator int() const { return getIndex(); }
+//   operator QString() const { return toString(); }
+//   
+//   /**
+//    * Get string version of symbol
+//    * 
+//    * @return empty string if not set
+//    */
+//   QString toString() const;  
+//   /**
+//    * Get symbol's value
+//    * 
+//    * @return integer value
+//    */
+//   int getIndex() const;
+protected:
+  /**
+   * Is the passed string valid according to the shared barcode information
+   * 
+   * @note case sensitive 
+   * 
+   * @rsturns bool
+   */
+  bool isValidString(const QString& symbolString) const;
+  /**
+   * Convert string version to int value
+   * 
+   * @note case sensitive 
+   *
+   * @returns shared::NOT_FOUND if string not valid 
+   */
+  const QString convertIndexToString(const int index) const;
+  /**
+   * Convert int value to printable string 
+   *
+   * @returns empty string if index out of range
+   */  
+  int convertStringToIndex(const QString& symbolString) const;  
+  
+  ProductSymbology(ProductSymbology &ProductSymbolPrivate);
+private:
+  /**
+   * Set symbol's value by index
+   */
+  void setSymbolIndex(int index);
+  /**
+   * Set symbol's value by string version
+   * 
+   * @note case sensitive 
+   */
+  void setSymbolIndex(const QString & string);
+  
+  
+   Q_DECLARE_PRIVATE(ProductSymbology);
 };
 
-QDebug operator<<(QDebug & dbg, const AbstractSymbology &s);
+// typedef QList<Symbol> SymbolList;
+// 
+QDebug operator<<(QDebug & dbg, const ProductSymbology &s);
 
-QList<Symbol> operator<<(const QList<Symbol>& symbols, 
-			 const QString& userInput);
-
-QList<Symbol> operator<<(const AbstractSymbology& symbols, 
-				    const QString& userInput);
-
-QList<Symbol> operator<<(const AbstractSymbology& symbols, 
-				    const QStringList& userInput);
-
-
-class PatternEncoder
-{
-  public:
-    PatternEncoder (const QString & pattern); 
-    QString operator() (const Symbol& s);
-  private:
-    QString m_pattern;
-    int m_index;
-};
+// class PatternEncoder
+// {
+//   public:
+//     PatternEncoder (const QString & pattern); 
+//     QString operator() (Symbol s);
+//   private:
+//     QString m_pattern;
+//     int m_index;
+// };
 
 // shared::LookupIndexArray convertSymbolsToIndexes(
 //   const QList<Symbol>& symbolList);
 
-QStringList encodeSymbolParity(const QList<Symbol> & symbols, 
+QStringList encodeSymbolParity(const QList<AbstractSymbology> & symbols, 
 			       const QString& parityPattern);
 
 // /*
@@ -188,6 +232,6 @@ QStringList encodeSymbolParity(const QList<Symbol> & symbols,
 //   return stream;
 // }
 
-};
+}
 
-#endif // ABSTRACTSYMBOLOGY_H
+#endif // PRODUCT_SYMBOLOGY_H

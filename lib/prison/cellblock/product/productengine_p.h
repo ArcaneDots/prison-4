@@ -5,10 +5,11 @@
 
 #include "../abstractbarcodeengine_p.h"
 #include "productengine.h"
+#include "productsymbology_p.h"
 
 namespace product{
-
-typedef QMap<shared::CODE_SECTIONS, QList<ProductSymbology> >CodeSections;
+  
+typedef QMap<shared::CODE_SECTIONS, QList<Symbol> >CodeSections;
 
 /**
  * @cond PRIVATE
@@ -16,84 +17,18 @@ typedef QMap<shared::CODE_SECTIONS, QList<ProductSymbology> >CodeSections;
 class ProductEnginePrivate : public linearBarcode::AbstractBarcodeEnginePrivate
 {
 public: 
+  ProductEnginePrivate() :
+    m_symbology(new ProductSymbology)
+    {
+      m_emptySymbol = static_cast<AbstractSymbology *>(m_symbology.data());
+    }
   
   /**
    * Symbols 
    */
   CodeSections m_symbolSections;
   
-  // ---------------
-  // Barcode definition
-  
-  /**
-   * default symbol used preform parsing 
-   * 
-   */
-  ProductSymbology m_emptySymbol;
-   /**
-   * The product code number system digit is used by object
-   * 
-   * @note product code specific
-   */
-  upc_common::PRODUCT_CODE_VALUES m_productCode;
-
-  /**
-   * The first digit is treated as a "NumberSystem" and used for encoding
-   */
-  bool m_hasNumberSystem;
-  /**
-   * starting index of first text block
-   *
-   * @note All  = 1 but EAN-8 = 0
-   */
-  int m_fmtFirstBlockOffset;
-  /**
-   * text block size
-   * 
-   * @note format blockSize may/not be equal to m_encodeBlockSize    
-   */
-  int m_fmtBlockSize;
-  /**
-   * Has a second text block
-   * 
-   * @note UPC-E and EAN-8 do not contain a second block(s)
-   */
-  bool m_fmtHasSecondBlock;
-  /**
-   * starting index of first encoded block
-   * 
-   * @note All  = 1 but EAN-8 = 0
-   */
-  int m_encFirstBlockOffset;
-  /**
-  * encoded block size
-  * 
-  * @note format blockSize may/not be equal to m_encodeBlockSize    
-  */
-  int m_encBlockSize;
-  /**
-   * Has a second encoded block
-   * 
-   * @note UPC-E and EAN-8 do not contain a second block(s)
-   */
-  bool m_encHasSecondBlock; 
  
-  QStringList m_parity2WidthEncoding;
-  QStringList m_parity5WidthEncoding;
-  // ---------------
-  
-   
-  // user modifible - I plan on moving these in to Private
-  
-  /**
-   * copy of original user input
-   */
-  QList<ProductSymbology> m_userParsedSymbols;
- 
-  /** 
-   * machine readable/encoded barcode information
-   */
-  QString m_encodedSymbols;
 
   
  void setProductCode(upc_common::PRODUCT_CODE_VALUES productCode) 
@@ -155,10 +90,7 @@ public:
   } 
  }
    
- upc_common::PRODUCT_CODE_VALUES getProductCode()
- {
-   return m_productCode;
- }
+ inline upc_common::PRODUCT_CODE_VALUES getProductCode(){return m_productCode;}
  
   /** 
    * destructor 
@@ -173,6 +105,80 @@ public:
     fillExtendedEncodingList();
   }
   
+   
+   // ---------------
+  // Barcode definition
+  
+  /**
+   * default symbol used preform parsing 
+   * 
+   */
+  QScopedPointer<ProductSymbology> m_symbology;
+  Symbol m_emptySymbol;
+   /**
+   * The product code number system digit is used by object
+   * 
+   * @note product code specific
+   */
+  upc_common::PRODUCT_CODE_VALUES m_productCode;
+
+  /**
+   * The first digit is treated as a "NumberSystem" and used for encoding
+   */
+  bool m_hasNumberSystem;
+  /**
+   * starting index of first text block
+   *
+   * @note All  = 1 but EAN-8 = 0
+   */
+  int m_fmtFirstBlockOffset;
+  /**
+   * text block size
+   * 
+   * @note format blockSize may/not be equal to m_encodeBlockSize    
+   */
+  int m_fmtBlockSize;
+  /**
+   * Has a second text block
+   * 
+   * @note UPC-E and EAN-8 do not contain a second block(s)
+   */
+  bool m_fmtHasSecondBlock;
+  /**
+   * starting index of first encoded block
+   * 
+   * @note All  = 1 but EAN-8 = 0
+   */
+  int m_encFirstBlockOffset;
+  /**
+  * encoded block size
+  * 
+  * @note format blockSize may/not be equal to m_encodeBlockSize    
+  */
+  int m_encBlockSize;
+  /**
+   * Has a second encoded block
+   * 
+   * @note UPC-E and EAN-8 do not contain a second block(s)
+   */
+  bool m_encHasSecondBlock; 
+ 
+  QStringList m_parity2WidthEncoding;
+  QStringList m_parity5WidthEncoding;
+  // ---------------
+  
+   
+  // user modifible - I plan on moving these in to Private
+  
+  /**
+   * copy of original user input
+   */
+  QList<Symbol> m_userParsedSymbols;
+ 
+  /** 
+   * machine readable/encoded barcode information
+   */
+  QString m_encodedSymbols;
 protected:
   
   /**
@@ -192,6 +198,7 @@ protected:
     }
   }
 };
+
 
 /**
  * @endcond

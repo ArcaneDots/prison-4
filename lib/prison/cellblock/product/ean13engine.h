@@ -27,16 +27,18 @@
 #ifndef EAN13ENGINE_H
 #define EAN13ENGINE_H
 
-#include "upcaengine.h"
+#include "productengine.h"
 
 namespace product
 {
   
+  class Ean13EnginePrivate;
 /**
  * EAN-13 barcode generator
  */
 class Ean13Engine :  public ProductEngine 
 {
+  
 public:
   /**
    * @brief default constructor
@@ -54,7 +56,7 @@ public:
    *
    * @param productCode constant indicating the current product code
    **/
-  Ean13Engine(const QList<shared::Symbol>& userBarcode,
+  Ean13Engine(const QList<Symbol>& userBarcode,
 	      CodeEngine::ConstructCodes flags = CodeEngine::AutoProduct);
   /**
    * destructor
@@ -78,13 +80,11 @@ protected:
    *
    * @param mainBlock first portion of the list of symbols
    */ 
-  QList<QStringList> encodeMainBlock(const shared::SymbolList& mainBlock) const; 
+  QList<QStringList> encodeMainBlock(const QList<Symbol>& mainBlock) const; 
+  
+  Ean13Engine(Ean13EnginePrivate &d);
 private:
-  /**
-   * Private barcode information
-   */
-  class Private;
-  Private * d;
+  Q_DECLARE_PRIVATE(Ean13Engine);
 };
-};
+}
 #endif // EAN13ENGINE_H
