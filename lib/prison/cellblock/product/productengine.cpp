@@ -49,10 +49,6 @@ ProductEngine::ProductEngine(ProductEnginePrivate& d) :
 {
 }
 
-
-
- 
-
 ProductEngine::~ProductEngine()
 {
   qDebug("ProductEngine destructor");
@@ -344,7 +340,7 @@ QStringList ProductEngine::encodeExtendedBlock(const QList< Symbol >& extendedBl
 	     "size mismatch",
 	     "Encoding pattern length does not match number of digits");
   
-  workingBlock = encodeSymbolParity(extendedBlock, workingPattern);
+  workingBlock = d->encodeSymbolParity(extendedBlock, workingPattern);
   
   qDebug("ProductEngine encodeExtendedDigits() : end");
   return QStringList(workingBlock);
@@ -443,7 +439,7 @@ const Symbol& ProductEngine::local_checkDigit() const
   if (!fake_symbols.isEmpty()) {
     return fake_symbols.front();
   }
-  return d->m_emptySymbol;
+  return Symbol(d->m_symbology.data());//m_emptySymbol;
 }
 
 const Symbol & ProductEngine::local_numberSystem() const
@@ -454,7 +450,7 @@ const Symbol & ProductEngine::local_numberSystem() const
   if (d->m_hasNumberSystem && fake_symbols.size() >= d->m_minLength) {
     return fake_symbols.at(0);
   }
-  return d->m_emptySymbol;
+  return Symbol(d->m_symbology.data());//m_emptySymbol;
 }
 
 const QList< Symbol > ProductEngine::fmt_block1() const

@@ -31,17 +31,13 @@
 #include <QStringList>
 #include <QDebug>
 
-
-//#include "abstractsymbology.h"
-//#include "abstractsymbology_p.h"
-
-  
 namespace linearSymbology{
   
   class SymbolNode;
   class AbstractSymbology; 
   class AbstractSymbologyPrivate;
   
+  class SymbolPrivate;
   /**
    * Object that represents a single distinct symbol
    * 
@@ -69,7 +65,7 @@ namespace linearSymbology{
     /**
      * unset constructor
      */
-    Symbol(SymbolNode * symbolData);
+    Symbol(const SymbolNode * symbolData);
     
     Symbol(AbstractSymbology * symbology);
     
@@ -84,6 +80,7 @@ namespace linearSymbology{
       */
      bool hasValue() const;
      
+     QString encoding() const;
     QString encoding(const QChar& encodingType) const;
     QString encoding(const QString& encodingType) const;
     /**
@@ -95,30 +92,35 @@ namespace linearSymbology{
      */
     virtual QList<Symbol> parse(const QStringList& userInput) const;
   
+    bool isSameSymbology(const Symbol &s);
     
+    /**
+     * Set current Symbol to point to other symbol "value" 
+     */
     const Symbol & operator=(const Symbol &other);
     /**
-     * Point this object to a different symbol in to the same set
+     * Point this object to a different symbol in to the same set based on index
+     * 
+     * Symbol will become undefine if index value is outside range of symbology 
      */
-    const Symbol & operator=(int index);
-    
-    //  stl operators
-   /**
-    * Equals
-    *
-    * @note will return if matching not if not self-test  
-    */
-   bool operator==(const Symbol& other) const;
-    bool operator!=(const Symbol &other) const;
-
+    const Symbol & operator=(int index); 
     /**
-    * Only compares index
-    */
+     * Compares symbol's index only
+     */
     bool operator==(int index) const;
- 
+    /**
+     * Compares symbol's full value 
+     */
+    bool operator==(const Symbol& other) const;
   
-  operator int() const { return getIndex(); }
-  operator QString() const { return toString(); }
+    /**
+     * integer value of symbol
+     */
+    operator int() const { return getIndex(); }
+    /**
+     *  string "value" of symbol 
+     */
+    operator QString() const { return toString(); }
   
   /**
    * Get string version of symbol
@@ -133,24 +135,54 @@ namespace linearSymbology{
    */
   int getIndex() const;  
   
-  protected:            
-    //friend Symbol(const SymbolNode * symbolData);
-    
-  private:  
-    AbstractSymbology * m_symbology;
-    SymbolNode * m_node;    
+  protected:
+     const QScopedPointer<SymbolPrivate> d_ptr;
+  
+     /**
+      * Copy constructor
+      */
+     Symbol(SymbolPrivate &d);
+     
+  private:
+    Q_DECLARE_PRIVATE(Symbol);
+  
 };
 
+//  stl operators
+/**
+ * Not Equal
+ *
+ * @returns true if contents of symbols are not equal  
+ */
+bool operator!= (const Symbol& left, const Symbol& right);
+/**
+ * Less than
+ * 
+ * @returns true if left-hand symbol has a smaller index than right-hand symbol
+ * @note required for Set<>
+ */
 bool operator< (const Symbol& left, const Symbol& right);
-bool operator> (const Symbol& left, const Symbol& right);
-
-bool operator<= (const Symbol& left, const Symbol& right);
-bool operator>= (const Symbol& left, const Symbol& right);
 
 QString toString (const QList<Symbol>& symbolList);
 QStringList toStringList (const QList<Symbol>& symbolList);
 
 QDebug operator<< (QDebug& dbg, const Symbol& s);
+
+QList<Symbol> operator+=(const QList<Symbol> & left, const Symbol& right);
+
+QList<Symbol> operator<<(const QList<Symbol>& symbols, 
+			 const QChar& userInput);
+
+QList<Symbol> operator<<(const QList<Symbol>& symbols, 
+			 const char* userInput);
+
+QList<Symbol> operator<<(const QList<Symbol>& symbols, 
+			 const QString& userInput);
+
+QList<Symbol> operator<<(const QList<Symbol> & left,
+			 const Symbol& right);
+
+QStringList toRawEncoding (const QList<Symbol>& symbolList);
 
 }
 #endif // SYMBOLS_H

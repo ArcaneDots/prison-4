@@ -27,7 +27,6 @@
 #ifndef ABSTRACTSYMBOLOGY_H
 #define ABSTRACTSYMBOLOGY_H
 
-#include <QSharedData>
 #include <QStringList>
 
 #include "shareddefines.h"
@@ -37,7 +36,6 @@ namespace linearSymbology
   
   class Symbol;
   class SymbolNode;
-  class SymbolPrivate;
   
   class AbstractSymbologyPrivate;
   
@@ -50,10 +48,8 @@ public:
    * default constructor
    */
   AbstractSymbology();
-  /**
-   * Copy constructor
-   */
-  AbstractSymbology(const AbstractSymbology &other);
+  
+  //AbstractSymbology(const AbstractSymbology &other);
   /**
    * destructor
    */
@@ -77,17 +73,19 @@ public:
    * Attempt to parse a list of QStrings into a list of ordered Symbols
    */ 
   virtual QList<Symbol> parse(const QStringList& userInput) const;
-  
-  SymbolNode * findNode(int index,
+
+protected:       
+  SymbolNode const * findNode(int index,
 	    QString symbolSet = shared::DEFAULT_SET) const;
-  SymbolNode * findNode(const QString& userSymbol,
+  SymbolNode const * findNode(const QString& userSymbol,
 	    QString symbolSet = shared::DEFAULT_SET) const;
 
-protected: 
-  AbstractSymbology(AbstractSymbologyPrivate &d);
- 
-    
   const QScopedPointer<AbstractSymbologyPrivate> d_ptr;
+
+  /**
+   * Copy constructor
+   */
+  AbstractSymbology(AbstractSymbologyPrivate &d);
 private:  
   Q_DECLARE_PRIVATE(AbstractSymbology);
 };
@@ -102,92 +100,6 @@ QList<Symbol> operator<<(const AbstractSymbology& symbols,
 
 QList<Symbol> operator<<(const AbstractSymbology& symbols, 
 				    const QStringList& userInput);
-
-
-class PatternEncoder
-{
-  public:
-    PatternEncoder (const QString & pattern); 
-    QString operator() (const Symbol& s);
-  private:
-    QString m_pattern;
-    int m_index;
-};
-
-// shared::LookupIndexArray convertSymbolsToIndexes(
-//   const QList<Symbol>& symbolList);
-
-QStringList encodeSymbolParity(const QList<Symbol> & symbols, 
-			       const QString& parityPattern);
-
-// /*
-// /**
-//   * Calculate check sum digit for a array of symbol look-up indexes
-//   * 
-//   * Uses the most common method of calculating a check digit; 
-//   * = Sum(index values) % modulus value
-//   * @note used by Code 39, MSI (2 Mod 10)
-//   * 
-//   * @param symbolArray array of symbol's look-up index
-//   * @return number of valid check digit
-//   */
-// int calculateCheckDigit(int modulusValue, const QList<Symbol>& symbolArray);  
-// /**
-//  * Get the remainder of the check sum divided by the modulus value
-//  * 
-//  * @param checksum total of all the individual symbol's index and positional value
-//  * @return = (checksum % modulus value
-//  */
-// int SimpleRemainderCheckDigit(int checksumModulus, int checksum);
-// /**
-//  * Calculate "Odd/Even" check sum pattern for a array of symbol look-up indexes
-//  * 
-//  * Move left -> right, the left-most index treated as "odd".
-//  * Uses the  method of calculating a check sum; 
-//  * @sa = NextMultipleCheckDigit(
-//  * @sa sum of all odd indexes * oddMultipler + sum of all even indexes * evenMultipler)
-//  * 
-//  * @param symbolArray array of symbol's look-up index
-//  * @param oddMultipler value multipled with indexes in the "Odd" position
-//  * @param evenMultipler value multiplied with indexes in the "Odd" position
-//  * @param reverse move right -> left, the right-most index treated as "odd" 
-//  * @return value of valid check digit
-//  */
-// int CommonChecksumOddEven(int checksumModulus,
-// 			  const SymbolList& symbols, 
-// 			  int oddMultipler,
-// 			  int evenMultipler,
-// 			  bool reverse = false);
-// /**
-//  * Calculate "Linear" check sum digit for a array of symbol look-up indexes
-//  * 
-//  * Uses the  method of calculating a check digit; 
-//  * = modulus - Sum(index * (counter < modulus)) % modulus value
-//  * 
-//  * @param symbolArray array of symbol's look-up index
-//  * @param reverse
-//  * @return number of valid check digit
-//  */
-// int CommonChecksumLinear(int checksumModulus,
-// 			 const shared::SymbolList& symbols,
-// 			 bool reverse = false);
-// /**
-//  * Get the value when added to the check sum makes it a multiple of the "Modulus" value
-//  * 
-//  * @param checksum total of all the individual symbol's index and positional value 
-//  * @return modulus value - (checksum & modulus value)
-//  */
-// int NextMultipleCheckDigit(int modulusValue, int checksum);
-// */
-
-
-// std::ostream& operator<<(std::ostream& stream, const A& val)
-// {
-//   stream << val.toString(); // would need to make function const, of course
-//   
-//   return stream;
-// }
-
 };
 
 #endif // ABSTRACTSYMBOLOGY_H

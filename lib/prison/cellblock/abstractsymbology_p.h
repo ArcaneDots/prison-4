@@ -5,11 +5,29 @@
 #include <QMap>
 
 #include "symbol.h"
-#include "symbolnode.h"
+#include "symbolnode_p.h"
 #include "abstractsymbology.h"
 
 namespace linearSymbology{
     
+  struct find_string {
+    find_string(const QString & string) : symbolString(string) {}
+    bool operator()(const SymbolNode & node) const {
+      return node.toString() == symbolString;
+    }
+  private:
+    QString symbolString;
+  };
+  
+  struct find_index {
+    find_index(int index) : m_index(index) {}
+    bool operator()(const SymbolNode & node) const {
+      return node.index() == m_index;
+    }
+  private:
+    int m_index;
+  };
+  
   // -------- Private ----------
 class AbstractSymbologyPrivate 
 {
@@ -21,10 +39,10 @@ public:
   {  
     qDebug("SymbolPrivate::SymbolPrivate default constructor");
   }
-  AbstractSymbologyPrivate(const QScopedPointer<AbstractSymbologyPrivate> & other):
+  AbstractSymbologyPrivate(const AbstractSymbologyPrivate & other):
     m_name("Abstract Symbology"),
-    m_nodeSet(other->m_nodeSet),
-    m_expandedNodeList(other->m_expandedNodeList){  /* empty */ }
+    m_nodeSet(other.m_nodeSet),
+    m_expandedNodeList(other.m_expandedNodeList){  /* empty */ }
   
   virtual ~AbstractSymbologyPrivate(){  /* empty */ }
   
@@ -32,33 +50,34 @@ public:
   /// Initialize
   void init(){  /* empty? */ }
   
-  virtual SymbolNode * findNode(int index,
+  virtual const SymbolNode * findNode(int index,
 	   const QString & symbolSet = shared::DEFAULT_SET) const
   {
-    SymbolNode * foundNode = 0;
+    const SymbolNode * foundNode = 0;
     
     SymbolNodeSet::const_iterator result = 
       std::find_if(m_nodeSet.constBegin(), 
 		   m_nodeSet.constEnd(), 
 		   find_index(index));
     if(result != m_nodeSet.constEnd()) {
-      foundNode = static_cast<SymbolNode *>(*result);
+      //foundNode = static_cast<SymbolNode *>(*result);
+      foundNode = static_cast<const SymbolNode *>(&*result);
     }
     
     return foundNode;
   }
  
- virtual SymbolNode * findNode(const QString& userSymbol,
+ virtual const SymbolNode * findNode(const QString& userSymbol,
 	   const QString & symbolSet = shared::DEFAULT_SET) const
   {
-    SymbolNode * foundNode = 0;
+    const SymbolNode * foundNode = 0;
     
     SymbolNodeSet::const_iterator result = 
       std::find_if(m_nodeSet.constBegin(), 
 		   m_nodeSet.constEnd(), 
 		   find_string(userSymbol));
     if(result != m_nodeSet.constEnd()) {
-      foundNode = static_cast<SymbolNode *>(*result);
+      foundNode = static_cast<const SymbolNode *>(&*result);
     }
     
     return foundNode;
@@ -78,14 +97,14 @@ public:
     QList<Symbol> parsedSymbols;
     
     // try matching whole QString
-    SymbolNode * foundNode = findNode(userInput);
+    const SymbolNode * foundNode = findNode(userInput);
     if (foundNode != 0) {
       parsedSymbols.append(foundNode);
     } else {
       QString::const_iterator itrFirstChar = userInput.begin();
       QString::const_iterator itrLastChar = userInput.end(); 
       for (;itrFirstChar != itrLastChar; ++itrFirstChar) {
-	SymbolNode * foundNode = findNode(QString(*itrFirstChar));
+	SymbolNode const * foundNode = findNode(QString(*itrFirstChar));
 	if (foundNode != 0) {
 	  parsedSymbols.append(foundNode);
 	}
@@ -118,8 +137,13 @@ public:
   virtual QString str() const { return m_name; };
 
   QString m_name;
+  QString m_errorEncoding;
   SymbolNodeSet m_nodeSet;
-  SymbolNodeSet m_expandedNodeList;
+  SymbolNodeList m_expandedNodeList;
+  
+protected:
+     
+ 
 };
   
 }

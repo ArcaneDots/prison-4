@@ -27,9 +27,13 @@
 #include <numeric>
 #include "abstractbarcodeengine_p.h"
 
-using namespace linearBarcode;
+namespace linearBarcode
+{
 
+// WidthEncoding: number of contigous segments that are in a bar or space
+// BarEncoding: actual value for each segment 
 
+  
 // -------------- AbstractBarcodeEngine --------------
 
 AbstractBarcodeEngine::AbstractBarcodeEngine() : 
@@ -57,6 +61,104 @@ int AbstractBarcodeEngine::calculateCheckDigit() const
   return 0;
 }
 
+// // ------------  -----
+// RawEncoding::RawEncoding(){}
+// 
+// QString RawEncoding::operator()(Symbol& s1, Symbol& s2) {
+//     return s1.encoding();
+// }
+
+
+// QStringList encodePattern(const QList<Symbol>& symbols, 
+// 			  int Wide, int Narrow, 
+// 			  bool LeftBar1)
+// {
+//   if ( symbols.isEmpty() ) { 
+//     return QStringList();
+//   }
+//   
+//   QList<Symbol>& l_symbols(const_cast<QList<Symbol> &>(symbols));
+//   QStringList rawEncoding;
+//   rawEncoding << toRawEncoding(symbols);
+// //   std::copy(l_symbols.begin(), l_symbols.end(), 
+// // 			  rawEncoding.begin(),RawEncoding());
+// 
+//   QStringList encodedList;
+//   std::transform<QString>(rawEncoding.begin(), rawEncoding.end(), 
+// 			  encodedList.begin(), 
+// 			  WidthModulationEncoder(Wide, Narrow. leftBar1));
+//   
+//   return encodedList;
+// }
+
+// ------- PatternEncoder ------
+WidthModulationEncoder::WidthModulationEncoder(int Wide, int Narrow, bool leftBar1) :
+  m_wide(Wide),
+  m_narrow(Narrow),
+  m_leftBar1( m_leftBar1 ), 
+  m_index(0),
+  m_W("W"),
+  m_N("N")
+{ /* Empty */ }
+
+int WidthModulationEncoder::decodeCharWidth(QString& str)
+{  
+  bool ok;
+  bool isWide;
+  int parity = str.toInt(&ok, 10);
+  if (ok) {
+    if ( parity != 0 && parity != 1) { return shared::NOT_FOUND; }
+    isWide = (parity == 1) ? true : false;
+  } else if (str.toUpper() == m_W || str.toUpper() == m_N) {
+    isWide = (str.toUpper() == m_W) ? true : false;
+  } else { 
+    return shared::NOT_FOUND; 
+  }
+  
+  return (isWide) ? m_wide : m_narrow;
+}
+
+QList<int> WidthModulationEncoder::decodeWidth(Symbol& s)
+{
+  QStringList encoding = s.encoding().split("");
+  QList<int> numEncodings;
+  for(QStringList::iterator itEncoding = encoding.begin();
+   encoding.end() !=  itEncoding; 
+    ++itEncoding)
+  {
+    numEncodings.append(decodeCharWidth(*itEncoding));
+  }
+}
+
+QString WidthModulationEncoder::encodeBarModulation(QList<int>  widthLengths)
+{
+  
+  QString result = "";
+  
+  for (int i = 0; i < widthLengths.length(); ++i)
+  {
+    bool Even = (i % 2 == 0 );
+    bool isWide = false;
+    QChar barDigit = (
+	(Even && m_leftBar1) || 
+	(!Even && !m_leftBar1 )) ? '1' : '0';
+    result.append( QString(widthLengths.at(i), barDigit) );
+  }
+  return result;
+}
+
+
+QString WidthModulationEncoder::operator()(Symbol& s)
+{ 
+  return  encodeBarModulation( decodeWidth(s) );  
+}
+
+
+
+
+
+// --- helper functions ---
+
 int CommonChecksumOddEven(int checksumModulus, const QList<Symbol>& symbols, int oddMultipler, int evenMultipler, bool reverse)
 {
   qDebug("CommonChecksumOddEven() : start");
@@ -81,7 +183,9 @@ int CommonChecksumOddEven(int checksumModulus, const QList<Symbol>& symbols, int
   return NextMultipleCheckDigit(checksumModulus, l_accum); 
 }
 
-int CommonChecksumLinear(int checksumModulus, const QList<Symbol>& symbols, bool reverse)
+int CommonChecksumLinear(int checksumModulus, 
+			 const QList<Symbol>& symbols,
+			 bool reverse)
 {
   qDebug("CommonChecksumLinear() : start");
   int total = 0;
@@ -112,4 +216,13 @@ int NextMultipleCheckDigit(int modulusValue, int checksum)
   }
   checkValue = modulusValue - checkValue;
   return checkValue;
+}
+
+int SimpleRemainderCheckDigit(int checksumModulus, int checksum)
+{
+  // prevent divide by zero
+  if (checksumModulus <= 0)  { return checksum; }
+  return checksum % checksumModulus;
+}    
+
 }

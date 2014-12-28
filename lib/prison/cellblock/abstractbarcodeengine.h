@@ -207,6 +207,9 @@ public:
    * final list of symbols
    */
   virtual QString finalSymbolList() const = 0;  
+  
+
+  
   /**
    * Get QImage of barcode data
    * 
@@ -244,6 +247,58 @@ protected:
   private:
     Q_DECLARE_PRIVATE(AbstractBarcodeEngine);
 };
+
+// class AbstractEncoder {
+// public:  
+//     virtual QString operator()(const QString& s) = 0;
+// };
+// struct RawEncoding
+// {
+//   RawEncoding();
+//   QString operator()(Symbol &s1, Symbol &s2);
+// };
+
+// QStringList encodePattern(const QStringList &rawEncodeSymbols, 
+// 			  int Wide, int Narrow, 
+// 			  bool LeftBar1 = true);
+
+
+class WidthModulationEncoder 
+{
+  public:
+    WidthModulationEncoder (int Wide, int Narrow, bool LeftBar1 = true); 
+    QString operator()(Symbol& s1);
+
+  protected:
+    QList<int> decodeWidth(Symbol& s);
+    int decodeCharWidth(QString& str);
+    QString encodeBarModulation(QList< int > widthLengths);
+    
+  private:
+    bool m_leftBar1;
+    int m_index;
+    int m_narrow;
+    int m_wide;
+    QString m_W;
+    QString m_N;
+};
+
+
+class WidthModInterlacedEncoder 
+{
+  public:
+    WidthModInterlacedEncoder (int Wide, int Narrow, bool LeftBar1); 
+    QString operator() (const QString& s1, const QString& s2);
+  private:
+    bool m_leftBar1;
+    int m_index;
+    int m_narrow;
+    int m_wide;
+    QString m_W;
+    QString m_N;
+};
+
+  
 
 
 // helper functions
@@ -286,7 +341,14 @@ protected:
    * @return modulus value - (checksum & modulus value)
    */
   int NextMultipleCheckDigit(int modulusValue, int checksum);
-
+  
+  /**
+  * Get the remainder of the check sum divided by the modulus value
+  * 
+  * @param checksum total of all the individual symbol's index and positional value
+  * @return = (checksum % modulus value
+  */
+  int SimpleRemainderCheckDigit(int checksumModulus, int checksum);
 };	       
 #endif // ABSTRACTBARCODEENGINE_H
 

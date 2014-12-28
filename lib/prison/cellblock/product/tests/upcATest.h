@@ -7,12 +7,12 @@
 
 #include "../upcaengine.h"
  
- Q_DECLARE_METATYPE(QList<shared::Symbol>);
+ Q_DECLARE_METATYPE(QList<Symbol>);
  class TestUpcA: public QObject
  {
    Q_OBJECT
  private:
-   QStringList encodedBlock(QList<shared::Symbol> symbolList, QString encoding); 
+   QStringList encodedBlock(QList<Symbol> symbolList, QString encoding); 
    
    QMap<QString, QStringList> m_encodingMap;
    

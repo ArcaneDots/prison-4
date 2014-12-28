@@ -27,10 +27,7 @@ public:
    * Symbols 
    */
   CodeSections m_symbolSections;
-  
- 
-
-  
+    
  void setProductCode(upc_common::PRODUCT_CODE_VALUES productCode) 
  {
    m_productCode = productCode;
@@ -179,6 +176,32 @@ public:
    * machine readable/encoded barcode information
    */
   QString m_encodedSymbols;
+  
+    // ------------ Encode Symbol Parity -----
+  QStringList encodeSymbolParity(const QList<Symbol>& symbols, 
+				const QString& parityPattern) const
+  {
+    if ( symbols.isEmpty() ) { 
+      return QStringList();
+    }
+    
+    QString pattern(parityPattern);
+    QStringList encodedList;
+    
+    if ( !pattern.isEmpty() ) {
+      std::transform(symbols.begin(), symbols.end(),
+	  std::back_inserter(encodedList),
+	  PatternEncoder(pattern));  
+    } else { 
+      qDebug("Missing Parity Pattern string");
+      int symbolsSize = symbols.size();
+      QString errorEncoding(symbols.constBegin()->encoding(shared::NOT_FOUND));
+      for (int i = 0; i < symbolsSize; i++) {
+	encodedList.append(errorEncoding);
+      }
+    }
+    return encodedList;
+  }
 protected:
   
   /**
@@ -197,12 +220,73 @@ protected:
       }
     }
   }
+
+  // ------- PatternEncoder ------
+  class PatternEncoder
+  {
+    public:
+      PatternEncoder(const QString& pattern) :
+	m_pattern( pattern ), 
+	m_index(0)
+      {}
+      
+      QString operator()(const Symbol & s)
+      { 
+	const int patternSize = m_pattern.size();
+	QString result = s.encoding(shared::NOT_FOUND);
+	if (m_index < patternSize) {
+	  result = s.encoding(m_pattern.at(m_index++));    
+	}
+	return result;
+      }
+      
+      QStringList encodeSymbolParity(const QList<Symbol> & symbols, 
+				const QString& parityPattern){
+    if ( symbols.isEmpty() ) { 
+      return QStringList();
+    }
+    
+    QString pattern(parityPattern);
+    QStringList encodedList;
+    
+    if ( !pattern.isEmpty() ) {
+      std::transform(symbols.begin(), symbols.end(),
+	  std::back_inserter(encodedList),
+	  PatternEncoder(pattern));
+    } else { 
+      qDebug("Missing Parity Pattern string");
+      int symbolsSize = symbols.size();
+      QString errorEncoding(symbols.constBegin()->encoding(shared::NOT_FOUND));
+      for (int i = 0; i < symbolsSize; i++) {
+	encodedList.append(errorEncoding);
+      }
+    }
+    return encodedList;
+  }   
+      
+    private:
+      QString m_pattern;
+      int m_index;
+ 
+  };
+
+
+  
+
+
+
+
+
+
+  
+  
 };
+
 
 
 /**
  * @endcond
  */
 
-};
+}
 #endif // PRODUCTENGINE_PRIVATE

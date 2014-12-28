@@ -3,15 +3,15 @@
 #include "upcATest.h"
 using namespace product;
 
-QStringList TestUpcA::encodedBlock(QList< shared::Symbol > symbolList, QString encoding)
+QStringList TestUpcA::encodedBlock(QList<Symbol > symbolList, QString encoding)
 {
   QStringList temp;
   if (symbolList.isEmpty() || m_encodingMap.value(encoding).isEmpty())  {
     qDebug() << "input symbols are empty";
     return temp;
   }
-  QList<shared::Symbol>::const_iterator _first = symbolList.begin();
-  QList<shared::Symbol>::const_iterator _last = symbolList.end();
+  QList<Symbol>::const_iterator _first = symbolList.begin();
+  QList<Symbol>::const_iterator _last = symbolList.end();
   QStringList encodings = m_encodingMap.value(encoding);
   qDebug() << "encoding list used: " << encodings;
   while (_first != _last) {
@@ -81,7 +81,7 @@ void TestUpcA::initTestCase()
     * 	extended - empty unless extended block present
     */
    QString errorEncoding("1010101,1010101,1010101,1010101,1010101,1010101");
-   QList<shared::Symbol> symbols = shared::Symbol().parse(finalString);  
+   QList<Symbol> symbols = Symbol().parse(finalString);  
    QList<QStringList> local_encode;
    QStringList extEncoding;
    int symbolLength = symbols.size();
@@ -96,7 +96,7 @@ void TestUpcA::initTestCase()
        local_encode.append(encodedBlock(symbols.mid(6, 6),"R"));
        {
 	  // calculate checksum = (tens + one) % 4
-	  QList<shared::Symbol> extendedSymbols(symbols.mid(12));  
+	  QList<Symbol> extendedSymbols(symbols.mid(12));  
 	  int extChecksum = extendedSymbols.at(0).getIndex() * 10 + extendedSymbols.at(1).getIndex();
 	  int extRemainder = extChecksum % 4;
 	  extEncoding.append(extendedSymbols.at(0).encoding((extRemainder < 3)? "O": "E"));	 
@@ -112,7 +112,7 @@ void TestUpcA::initTestCase()
 	  int evenParity = 9;
 	  int extChecksum = 0;
 	  // calculate checksum = (odd * 3 + evem * 9) % 10
-	  QList<shared::Symbol> extendedSymbols(symbols.mid(12));
+	  QList<Symbol> extendedSymbols(symbols.mid(12));
 	  for (int i = 1; i < 6; i++) {
 	    extChecksum += extendedSymbols.at(i - 1) * ((i % 2 == 0) ? evenParity : oddParity);
 	  }

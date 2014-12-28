@@ -105,8 +105,8 @@ QList<QStringList> Ean8Engine::encodeMainBlock(const QList< Symbol >& mainBlock)
     QString patternOs = QString(encBlockSize, 'O');
     QString patternRs = QString(encBlockSize, 'R');
 
-    encodeMainBlock.append( encodeSymbolParity(l_block1, patternOs) );
-    encodeMainBlock.append( encodeSymbolParity(l_block2, patternRs) );
+    encodeMainBlock.append( d->encodeSymbolParity(l_block1, patternOs) );
+    encodeMainBlock.append( d->encodeSymbolParity(l_block2, patternRs) );
     qDebug() << "Ean8Engine::encodeMainBlock() : l_block1" << encodeMainBlock.at(0);
     qDebug() << "Ean8Engine::encodeMainBlock() : l_block2" << encodeMainBlock.at(1);
   }

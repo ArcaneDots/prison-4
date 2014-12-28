@@ -115,8 +115,8 @@ QList< QStringList > Ean13Engine::encodeMainBlock(const QList< Symbol >& mainBlo
     // block2
     QString patternRs = QString(encBlockSize(), 'R');
     qDebug("Ean13Engine encodeSymbols() : encode");
-    encodeMainBlock.append( encodeSymbolParity(l_block1, pattern1) );
-    encodeMainBlock.append( encodeSymbolParity(l_block2, patternRs) );
+    encodeMainBlock.append( d->encodeSymbolParity(l_block1, pattern1) );
+    encodeMainBlock.append( d->encodeSymbolParity(l_block2, patternRs) );
     qDebug() << "Ean13Engine::encodeMainBlock() : l_block1" << encodeMainBlock.at(0);
     qDebug() << "Ean13Engine::encodeMainBlock() : l_block2" << encodeMainBlock.at(1);
   }

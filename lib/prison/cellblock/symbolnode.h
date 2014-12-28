@@ -5,35 +5,32 @@
 #include <QMap>
 #include <QStringList>
 
-//#include "symbol.h"
 #include "abstractsymbology.h"
 
 namespace linearSymbology {
- 
+
   class AbstractSymbology;
   class AbstractSymbologyPrivate;
 
  
   class SymbolNode;
     
-  //     typedef QMap<QString, QStringList> One2Many;
   typedef QMap<QString, QString> SymbolEncoding;
-  //     typedef QMap<QString, QStringList> NamedSet;
   //     
-  typedef QList<SymbolNode *> SymbolNodeList;
-  typedef QSet<SymbolNode *> SymbolNodeSet;
-  //    typedef QMap<QString, SymbolDataList> SymbolDataListMap;
-  typedef QSet<SymbolNode> ExpandedSymbolsSet;
-  typedef QList<SymbolNode> ExpandedSymbolsList;
+  typedef QList<SymbolNode *> SymbolNodePtrList;
+  typedef QSet<SymbolNode *> SymbolNodePtrSet;
+  
+  typedef QList<SymbolNode> SymbolNodeList;
+  typedef QSet<SymbolNode> SymbolNodeSet;
   
   class SymbolNodePrivate;
-   
-   
+      
   
-   
-   /**
-    * Underling indiviual shared Symbol data info object
-    */
+  /**
+   * Underling individual shared Symbol data info object
+   * 
+   * @note create an extended node by setting the index == shared::NOT_FOUND
+   */
    class SymbolNode 
    {
      friend AbstractSymbologyPrivate;
@@ -65,13 +62,15 @@ namespace linearSymbology {
       SymbolNode(const AbstractSymbology* symbology, 
 		const QString& symbolString, 
 		int index, 
-		QString defaultEncoding,
+		const QString defaultEncoding,
 		const QString& symbolSetName = shared::DEFAULT_SET, 
 		const QString& encodingSetName = shared::DEFAULT_SET, 
 		bool isVisible = true);
      
       /**
        * Multiple encoding
+       * 
+       * Product codes (UPC/EAN-13/EAN-8)
        */
       SymbolNode(const AbstractSymbology* symbology, 
 	  const QString& symbolString, 
@@ -80,6 +79,35 @@ namespace linearSymbology {
 	  const QString& symbolSetName = shared::DEFAULT_SET, 
 	  const QString& encodingSetName = shared::DEFAULT_SET, 
 	  bool isVisible = true);
+      
+      /**
+       * Expanded symbols
+       * 
+       * Create expanded symbol node (code 93)
+       * 
+       * @note build expanded node set before creating user visible nodes
+       */
+      SymbolNode(const AbstractSymbology* symbology, 
+		const QString& symbolString, 
+		//extended symbols don't have a usable index 
+		const QString& symbolSet = shared::DEFAULT_SET,
+		const QString& encodingSetName = shared::DEFAULT_SET, 
+		bool isVisible = true);
+      
+      /**
+       * Visible nodes encoded using a special set of expanded symbols
+       * 
+       * example: code 93
+       * 
+       * @note create expand after expanded nodes are built
+       */
+      SymbolNode(const AbstractSymbology* symbology, 
+		const QString& symbolString, 
+		int index, 
+		const SymbolNodePtrList& expandedSymbolNodes, 
+		const QString& symbolSet = shared::DEFAULT_SET,
+		const QString& encodingSetName = shared::DEFAULT_SET,
+		bool isVisible = true);
       
       const AbstractSymbology* getSymbology() const;
       /**
@@ -129,76 +157,18 @@ namespace linearSymbology {
       bool operator== (const QString &string) const;
       
       operator QString() const; 
+      
     protected:   
-//       /**
-//        * "Empty Symbol" constructor
-//        */	
-//       SymbolNode(const AbstractSymbology& symbology, 
-// 		 int index, 
-// 		 const QString& visibleString, 
-// 		 const QString& encoding, 
-// 		 const QString& namedSymbolSet = shared::DEFAULT_SET, 
-// 		 bool isVisible = true);
-//       /**
-//       * 1 to 1 - Visible symbology to Encoding pair
-//       */
-//      SymbolNode(const AbstractSymbology &symbology, 
-// 		int index, 
-// 		QString setName = DEFAULT_SET) :
-// 	  m_symbology(symbology), 
-// 	  m_index(index),
-// 	  m_setName(setName)
-//       {
-// 	
-//       }
-//       
-//       
-//       SymbolNode(QString SymbolString, 
-// 		  SymbolEncoding &EncodingPairList,
-// 		  QString SetName = DEFAULT_SET) :
-// 	m_symbol(SymbolString),
-// 	m_setName(SetName),
-// 	       m_expandedNodes(0),
-// 	m_encoding(&EncodingPairList) 
-//       {
-// 	Q_ASSERT(!SymbolString.isEmpty());
-//       
-//       }
-//       
-//       SymbolNode(QString SymbolString, 
-// 		  ExpandedSymbolsSet &ExpandedSymbols, 
-// 		  QString SetName = DEFAULT_SET) :
-// 	m_symbol(SymbolString),
-// 	m_setName(SetName),
-// 	       m_expandedNodes(&ExpandedSymbols),
-// 	m_encoding(0) 
-//       {
-// 	Q_ASSERT(!SymbolString.isEmpty());
-//       
-//       }
+
+      
+
    protected:
      const QScopedPointer<SymbolNodePrivate> d_ptr;
    private:
      Q_DECLARE_PRIVATE(SymbolNode);
   };  
   
-  struct find_string {
-    find_string(const QString & string) : symbolString(string) {}
-    bool operator()(const SymbolNode * node) {
-      return node->toString() == symbolString;
-    }
-  private:
-    QString symbolString;
-  };
-  
-  struct find_index {
-    find_index(int & index) : m_index(index) {}
-    bool operator()(const SymbolNode * node) {
-      return node->index() == m_index;
-    }
-  private:
-    int m_index;
-  };
+ 
 bool operator<= (const SymbolNode& left, const SymbolNode& right);
 bool operator>= (const SymbolNode& left, const SymbolNode& right);
 

@@ -144,9 +144,9 @@ namespace product{
 class ProductSymbologyPrivate : public AbstractSymbologyPrivate
 {
 public:  
-  inline ProductSymbologyPrivate() : AbstractSymbologyPrivate()  { init(); }
+  ProductSymbologyPrivate() : AbstractSymbologyPrivate()  { init(); }
   
-  inline ProductSymbologyPrivate(const ProductSymbologyPrivate &other): 
+  ProductSymbologyPrivate(const ProductSymbologyPrivate &other): 
     AbstractSymbologyPrivate(other){  /* empty */ }
  
  virtual ~ProductSymbologyPrivate(){  /* empty */ }
@@ -154,28 +154,10 @@ public:
   /// Initialize
   void init()
   {
-    m_name = "Product Symbology";
-    
-//     QStringList symbolList, encodingLE, encodingLO, encodingR;
-//     for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {
-//       symbolList.append(upc_common::SYMBOL_TABLE[i]);
-//       encodingLE.append(upc_common::LEFT_EVEN_ENCODE_TABLE[i]);
-//       encodingLO.append(upc_common::LEFT_ODD_ENCODE_TABLE[i]);
-//       encodingR.append(upc_common::RIGHT_HAND_ENCODE_TABLE[i]);
-
-//     QString symbolString, encodingLE, encodingLO, encodingR;
-    
-//     QMap<upc_common::PARITY_NAMES, QString> indexedSetNames;
-//     indexedSetNames.insert(upc_common::LEFT_EVEN, "E");
-//     indexedSetNames.insert(upc_common::LEFT_ODD,  "0");
-//     indexedSetNames.insert(upc_common::RIGHT,     "R");
-    
+    m_name = "Product";
+    m_errorEncoding = "1010101";
+        
     for (int i = 0; i < upc_common::SYMBOL_TABLE_SIZE; i++) {
-      
-//       symbolString.append(upc_common::SYMBOL_TABLE[i]);
-//       encodingLE.append(upc_common::LEFT_EVEN_ENCODE_TABLE[i]);
-//       encodingLO.append(upc_common::LEFT_ODD_ENCODE_TABLE[i]);
-//       encodingR.append(upc_common::RIGHT_HAND_ENCODE_TABLE[i]);
       
       SymbolEncoding encodingPairs;
       encodingPairs.insert("E", upc_common::LEFT_EVEN_ENCODE_TABLE[i]);
@@ -183,7 +165,7 @@ public:
       encodingPairs.insert("R", upc_common::RIGHT_HAND_ENCODE_TABLE[i]);
       
       m_nodeSet.insert(
-	new SymbolNode(dynamic_cast<AbstractSymbology *>(this),
+	SymbolNode(dynamic_cast<AbstractSymbology *>(this),
 		      upc_common::SYMBOL_TABLE[i],
 		      i,
 		      encodingPairs,
@@ -191,17 +173,18 @@ public:
 		      QString("E")
 		      )
 		    );
-    }    
-    
-    
-    
-    
-    
+    }        
   }
   
   
-//   virtual SymbolNode * findNode(int index) const;
-//   virtual SymbolNode * findNode(const QString& userSymbol) const;
+  const ProductSymbologyPrivate & operator=(const ProductSymbologyPrivate * other){
+    m_name = other->m_name;
+    m_nodeSet = other->m_nodeSet;
+    m_expandedNodeList = other->m_expandedNodeList;
+    
+    return *this;    
+  }
+
 };
 
 

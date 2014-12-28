@@ -29,110 +29,110 @@
 
 #include "symbolnode.h"
 #include "abstractsymbology.h"
-#include "symbol.h"
-//#include "symbol_p.h"
+//#include "symbol.h"
+#include "symbol_p.h"
 #include "product/upceandefines_p.h"
 
-//#include <QRegExp>
-
-
-
-using namespace linearSymbology;
-// -------- Symbols ----------
-//const QString Symbol::ERROR_ENCODING = "1010101";
-
-Symbol::Symbol() :
-  m_node(0),
-  m_symbology(0)
-{
-
-}
-
-Symbol::Symbol(const Symbol& s) :
-  m_node(s.m_node),
-  m_symbology(s.m_symbology)
+namespace linearSymbology
 {
   
+Symbol::Symbol() 
+{
+  Q_D(Symbol);
+  d->m_node = 0;
+  d->m_symbology = 0;
 }
 
-Symbol::Symbol(SymbolNode* symbolData) :
-  m_node(symbolData),
-  m_symbology(0)
-{
-  if (hasValue()) { m_symbology = const_cast<AbstractSymbology *>(m_node->getSymbology()); } //->getSymbology(); }
+Symbol::Symbol(const Symbol& s) 
+{  
+  Q_D(Symbol);
+  d->m_node = s.d_ptr.data()->m_node;
+  d->m_symbology = s.d_ptr.data()->m_symbology;
 }
 
-Symbol::Symbol(AbstractSymbology* symbology) :
-  m_node(0),
-  m_symbology(symbology)
+Symbol::Symbol(const SymbolNode* symbolData) 
 {
+  Q_D(Symbol);
+  d->m_node = symbolData;
+  if (hasValue()) { d->m_symbology = const_cast<AbstractSymbology *>(d->m_node->getSymbology()); } 
+}
 
+Symbol::Symbol(AbstractSymbology* symbology) 
+{
+  Q_D(Symbol);
+  d->m_node = 0;
+  d->m_symbology = symbology;
 }
 
 
 Symbol::~Symbol()
 {
-  // don't delete pointers on exit
+  // don't delete pointers to symbology created objects on exit
 }
 
 
 bool Symbol::isValid() const
 {
-  return m_symbology != 0;
+  Q_D(const Symbol);
+  return d->m_symbology != 0;
 }
 
 bool Symbol::hasValue() const
-{
-  
-  return m_node != 0;
+{  
+  Q_D(const Symbol);
+  return d->m_node != 0;
 }
 
 int Symbol::getIndex() const
 {
-  return hasValue() ? m_node->index() : shared::NOT_FOUND;
+  Q_D(const Symbol);
+  return hasValue() ? d->m_node->index() : shared::NOT_FOUND;
 }
 
+QString Symbol::encoding() const
+{
+  Q_D(const Symbol);
+  if (hasValue()) {
+    d->m_node->encoding();
+  } else if (isValid()) {
+    d->m_symbology->errorEncoding();
+  } else { 
+    return QString(""); 
+  }
+}
 
 
 QString Symbol::encoding(const QChar& encodingType) const
 {
   return encoding(QString(encodingType));
-//   Q_D(const Symbol);
-//   QString encodingString(encodingType);
-//   return (hasValue()) ? d->encoding(encodingType) : d->encoding();
 }
 
 QString Symbol::encoding(const QString& encodingType) const
 {  
+  Q_D(const Symbol);
   if (hasValue()) {
-    m_node->encoding(encodingType);
+    d->m_node->encoding(encodingType);
   } else if (isValid()) {
-    m_symbology->errorEncoding();
+    d->m_symbology->errorEncoding();
   } else { 
     return QString(""); 
   }
-//   Q_D(const Symbol);
-//   return (hasValue()) ? d->encoding(encodingType) : d->encoding();
 }
-
-
-
-
 
 QString Symbol::toString() const
 {
-  return (hasValue()) ? m_node->toString() : QString("");
-//   Q_D(const Symbol);
-//   return (hasValue()) ? d->m_node->toString() : QString("");
+  Q_D(const Symbol);
+  return (hasValue()) ? d->m_node->toString() : QString("");
 }
 
 QList<Symbol> Symbol::parse(const QString& userInput) const
 {
+  Q_D(const Symbol);
   if (!isValid()) { 
     return QList<Symbol>();    
   }
   
-  return m_symbology->parse(userInput);
+  return d->m_symbology->parse(userInput);
 }
 
 QList<Symbol> Symbol::parse(const QStringList& userInput) const
@@ -147,141 +147,92 @@ QList<Symbol> Symbol::parse(const QStringList& userInput) const
   return parsedSymbols;
 }
 
-// const Symbol::SymbolNode* Symbol::getNode() const
-// {
-//   Q_D(const Symbol);
-//   return d->m_node;
-// }
-
+bool Symbol::isSameSymbology(const Symbol& s)
+{
+  Q_D(const Symbol);
+  return d->m_symbology == s.d_ptr.data()->m_symbology;
+}
 
 
 const Symbol& Symbol::operator=(const Symbol& other)
 { 
-  m_node = other.m_node;
-  m_symbology = other.m_symbology; 
+  Q_D(Symbol);
+  d->m_node = other.d_ptr.data()->m_node;
+  d->m_symbology = other.d_ptr.data()->m_symbology; 
   
   return *this;
-//   Q_D(Symbol);
-//   if (d->m_node != other.d_ptr.data()->m_node) {
-//     d->m_node = other.d_ptr.data()->m_node;
-//   }
-//   return *this;
+}
+
+const Symbol& Symbol::operator=(int index)
+{
+  Q_D(Symbol);
+  d->m_node = isValid() ? d->m_symbology->findNode(index) : 0;
+  return *this;
+}
+
+bool Symbol::operator==(int index) const
+{
+  Q_D(const Symbol);
+  return (d->m_node->index() == index);
 }
 
 bool Symbol::operator==(const Symbol& other) const
 {
-  return (m_node == other.m_node && m_symbology == other.m_symbology);
-}
-
-bool Symbol::operator!=(const Symbol& other) const
-{
-  return !operator==(other);
+  Q_D(const Symbol);
+  return (d->m_node == other.d_ptr.data()->m_node);
 }
 
 
-bool Symbol::operator==(int index) const
-{  
-  return (hasValue() && (index == m_node->index()));
-}
-
-
-// bool Symbol::isValidString(const QString& symbolString) const
-// {
-//   Q_D(const Symbol);
-//   return (d->symbolString.contains(symbolString));
-// }
-// 
-// int Symbol::convertStringToIndex(const QString& symbolString) const
-// {  
-//   Q_D(const Symbol);
-//   int index = NOT_FOUND;
-//   if (isValidString(symbolString)) {
-//     index =  d->symbolString.indexOf(symbolString); 
-//   } 
-//   return index;  
-// }
-// 
-// const QString Symbol::convertIndexToString(const int index) const
-// {  
-//   Q_D(const Symbol);
-//   QString str;
-//   int numSymbols = d->m_symbolList.size();  
-//   if (index > NOT_FOUND && index < numSymbols) {
-//     str = d->m_symbolList.at(index);
-//   }
-//   return str;
-// }
-
-// void Symbol::setSymbolIndex(int index) 
-// {  
-//   int finalIndex = index;
-//   if (d.constData()->m_index == finalIndex) {
-//     return;
-//   }
-//   if (finalIndex > shared::NOT_FOUND && 
-//       finalIndex < d.constData()->m_symbolList.size()) {
-//     d->m_index = finalIndex;
-//   }
-// }
-// 
-// void Symbol::setSymbolIndex(const QString & string) 
-// {  
-//   int finalIndex = convertStringToIndex(string);
-//   if (finalIndex != shared::NOT_FOUND &&
-//       finalIndex != d.constData()->m_index)  {
-//     d->m_index = finalIndex; 
-//   }
-// }
-
-
-const Symbol& Symbol::operator=(int index)
-{
-  //setSymbolIndex(index);
-  return *this;
-}
 
 // static operators
 
-bool operator<(const Symbol& left, const Symbol& right) 
+bool operator!= (const Symbol& left, const Symbol& right) 
+{
+  return !(left == right);
+}
+
+bool operator< (const Symbol& left, const Symbol& right) 
 {
   return left.getIndex() < right.getIndex();
 }
 
-bool operator>(const Symbol& left, const Symbol& right) 
-{  
-  return left.getIndex() > right.getIndex();
-}
-
-// bool Symbol::operator==(const Symbol& left, const Symbol& right)
-// {
-//   return (left. == right.getNode());
-// }
-bool linearSymbology::operator<=(const Symbol& left, const Symbol& right)
-{
-  return (left < right  || left == right);
-}
-
-bool linearSymbology::operator>=(const Symbol& left, const Symbol& right) 
-{
-  return (left > right  || left == right);
-}
-
-
 QList<Symbol> operator+=(const QList<Symbol> & left, const Symbol& right)
 {
   QList<Symbol> temp(left);
-  temp.append(right);
+  if (temp.isEmpty() || temp.back().isSameSymbology(right))
+  {
+    temp.append(right);
+  } else {
+    temp.append(temp.back().parse(right.toString()));
+  }
   return temp;
 }
 
-
-
+QList<Symbol> operator<<(const QList<Symbol>& left, const Symbol& right)
+{
+  return left += right;
+}
 
 QDebug operator<<(QDebug& dbg, const Symbol& s)
 { 
   dbg << s.toString(); 
   return dbg;
 }
+
+QList<Symbol> operator<<(const QList<Symbol>& symbols, const QChar& userInput)
+{
+  QList<Symbol> result(symbols);
+  if (!result.isEmpty()) {
+    result += symbols.last().parse(userInput);
+  }
+  return result; 
+}
+
+QList<Symbol> operator<<(const QList<Symbol>& symbols, const char* userInput)
+{
+  return operator<<(symbols, QString(userInput));
+}
+
 
 QList<Symbol> operator<<(const QList<Symbol>& symbols, const QString& userInput)
 {
@@ -303,6 +254,16 @@ QStringList toStringList(const QList<Symbol>& symbolList)
   }
   return output;
 }
+
+QStringList toRawEncoding(const QList<Symbol>& symbolList)
+{
+  QStringList output;
+  for (int i = 0; i < symbolList.count(); ++i) { 
+    output << symbolList.at(i).encoding();
+  }
+  return output;
+}
+
 
 
 
@@ -485,7 +446,7 @@ QStringList toStringList(const QList<Symbol>& symbolList)
 
 
 
-
+}
 
   
 
